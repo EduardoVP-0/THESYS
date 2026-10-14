@@ -22,11 +22,11 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
-    {
+    /*{
         title: 'Productos',
         href: '/products',
         icon: PackageSearch
-    }
+    }*/
 ];
 
 const footerNavItems: NavItem[] = [
