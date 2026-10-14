@@ -1,7 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { dashboard } from '@/routes';
 import { create, edit, destroy as destroyRoute } from '@/routes/products';
-import { Button } from '@/components/ui/button';
 import {
     Table,
     TableBody,
@@ -36,17 +35,23 @@ export default function Index({ products }: { products: Product[] }) {
         <>
             <Head title="Productos | Lista" />
 
-            <div className="m-4">
-                <Button className="mb-4">
-                    <Link href={create()}>
-                        Crear Producto
-                    </Link>
-                </Button>
+            <div className="m-4 flex items-center justify-between">
+                <Link href={create()} className="btn btn-primary btn-sm">
+                    + Crear Producto
+                </Link>
+
+                <div className="badge badge-neutral badge-outline">
+                    Total: {products.length} {products.length === 1 ? 'producto' : 'productos'}
+                </div>
             </div>
 
-            {products.length > 0 && (
+            {products.length === 0 ? (
+                <div className="alert alert-info shadow-sm m-4">
+                    <span>No hay productos registrados todavía. ¡Crea el primero con el botón superior!</span>
+                </div>
+            ) : (
                 <Table>
-                    <TableCaption>A list of your recent invoices.</TableCaption>
+                    <TableCaption>Listado de inventario de productos.</TableCaption>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[100px]">ID</TableHead>
@@ -60,31 +65,39 @@ export default function Index({ products }: { products: Product[] }) {
                     <TableBody>
                         {products.map((product) => (
                             <TableRow key={product.id}>
-                                <TableCell className="font-medium">{product.id}</TableCell>
-                                <TableCell>{product.nombre}</TableCell>
-                                <TableCell>{product.descripcion}</TableCell>
-                                <TableCell>{product.stock}</TableCell>
-                                <TableCell>{product.precio}</TableCell>
+                                <TableCell className="font-medium">#{product.id}</TableCell>
+                                <TableCell className="font-semibold">{product.nombre}</TableCell>
+                                <TableCell className="text-muted-foreground">{product.descripcion}</TableCell>
+                                <TableCell>
+                                    {product.stock > 5 ? (
+                                        <span className="badge badge-success badge-soft">
+                                            {product.stock} en stock
+                                        </span>
+                                    ) : (
+                                        <span className="badge badge-warning badge-soft">
+                                            {product.stock} agotándose
+                                        </span>
+                                    )}
+                                </TableCell>
+                                <TableCell className="font-mono">${Number(product.precio).toFixed(2)}</TableCell>
                                 <TableCell className="text-right space-x-2">
-                                    <Link href={edit(product.id)}>
-                                    <Button className='bg-slate-500 hover:bg-slate-700'>
+                                    <Link href={edit(product.id)} className="btn btn-sm btn-outline btn-neutral">
                                         Editar
-                                    </Button>
                                     </Link>
-                                    <Button
-                                        className='bg-red-500 hover:bg-red-700'
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-error btn-soft"
                                         onClick={() => handleDelete(product.id)}
                                         disabled={processing}
                                     >
                                         Eliminar
-                                    </Button>
+                                    </button>
                                 </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
-            )
-            }
+            )}
 
         </>
     );
