@@ -17,20 +17,19 @@ return new class extends Migration
             $table->id('id_carrera');
 
             //Atributos
-            $table->string('nombre_carrera');
+            $table->string('nombre_carrera', 150)->unique();
             $table->text('descripcion')->nullable();
             $table->tinyInteger('duracion_semestres');
             $table->boolean('estado')->default(true);
-
-            //DATOS DE AUDITORIA
-            $table->timestamp('fecha_registro')->useCurrent();
-            $table->unsignedBigInteger('id_usuario_registro');
             
             //Definicion de llave foranea
-            $table->foreign('id_usuario_registro')
-            ->references('id')
-            ->on('users')
+            $table->foreignId('id_usuario_registro')
+            ->nullable()
+            ->constrained('users')
             ->onDelete('restrict');
+
+            //DATOS DE AUDITORIA
+            $table->timestamps();
         });
     }
 
