@@ -1,0 +1,287 @@
+===========================================
+📁 CREAR ARCHIVOS EN LARAVEL
+===========================================
+
+🧠 MODELOS
+-------------------------------------------
+php artisan make:model Nombre                               # Crear modelo
+php artisan make:model Nombre -m                            # Modelo + migración
+php artisan make:model Nombre -mc                           # Modelo + migración + controlador
+php artisan make:model Nombre -mcr                          # Modelo + migración + controlador CRUD
+php artisan make:model Nombre -mf                           # Modelo + migración + factory
+php artisan make:model Nombre -ms                           # Modelo + migración + seeder
+php artisan make:model Nombre -mfs                          # Modelo + migración + factory + seeder
+
+# EJEMPLOS PRÁCTICOS:
+php artisan make:model Libros -m                            # Modelo Libros + migración
+php artisan make:model Producto -mcr                        # Modelo Producto + migración + controlador CRUD
+php artisan make:model Usuario -mfs                         # Modelo Usuario + migración + factory + seeder
+
+🎮 CONTROLADORES
+-------------------------------------------
+php artisan make:controller NombreController                            # Controlador básico
+php artisan make:controller NombreController --resource                 # Controlador CRUD completo
+php artisan make:controller NombreController --model=Nombre             # Controlador + modelo vinculado
+php artisan make:controller NombreController --resource --model=Nombre  # CRUD + modelo
+php artisan make:controller NombreController --invokable                # Controlador de un solo método
+php artisan make:controller NombreController --api                      # Controlador para API (sin create/edit)
+
+# EJEMPLOS:
+php artisan make:controller LibroController --resource      # CRUD para Libros
+php artisan make:controller ProductoController --model=Producto  # Vinculado al modelo Producto
+
+📄 MIGRACIONES (CREAR Y EJECUTAR)
+-------------------------------------------
+# CREAR MIGRACIONES
+php artisan make:migration create_nombre_tabla_table                                # Crear tabla nueva
+php artisan make:migration add_nombre_columna_to_tabla_table                        # Agregar columna a tabla existente
+php artisan make:migration drop_nombre_columna_from_tabla_table                     # Eliminar columna de tabla existente
+php artisan make:migration rename_nombre_columna_to_nuevo_in_tabla_table            # Renombrar columna
+php artisan make:migration change_nombre_columna_in_tabla_table                     # Cambiar tipo de columna
+php artisan make:migration create_nombre_tabla_table --create=nombre                # Crear tabla específica
+php artisan make:migration add_nombre_columna_to_tabla_table --table=nombre         # Agregar columna a tabla específica
+
+# EJEMPLOS PRÁCTICOS:
+php artisan make:migration create_libros_table                  # Crear tabla libros
+php artisan make:migration add_editorial_to_libros_table        # Agregar columna editorial a libros
+php artisan make:migration add_anio_publicacion_to_libros_table # Agregar año publicación a libros
+php artisan make:migration drop_precio_from_libros_table        # Eliminar columna precio de libros
+php artisan make:migration rename_autor_to_escritor_in_libros_table  # Renombrar autor a escritor
+php artisan make:migration change_precio_to_decimal_in_libros_table  # Cambiar tipo de precio
+
+# EJECUTAR MIGRACIONES
+php artisan migrate                                              # Ejecutar TODAS las migraciones pendientes
+php artisan migrate --pretend                                    # Ver SQL que se ejecutará sin ejecutarlo
+php artisan migrate --force                                      # Forzar ejecución en producción (sin preguntar)
+
+# REVERTIR MIGRACIONES (ROLLBACK)
+php artisan migrate:rollback                                     # Revertir la ÚLTIMA migración
+php artisan migrate:rollback --step=1                            # Revertir 1 migración (es lo mismo que el anterior)
+php artisan migrate:rollback --step=3                            # Revertir las últimas 3 migraciones
+php artisan migrate:rollback --step=5                            # Revertir las últimas 5 migraciones
+php artisan migrate:rollback --batch=2                           # Revertir migraciones del lote 2
+
+# RECREAR TABLAS (¡CUIDADO!)
+php artisan migrate:fresh                                        # ELIMINA TODAS las tablas y las RECREA
+php artisan migrate:fresh --seed                                 # Borra todo, recrea y ejecuta seeders
+php artisan migrate:fresh --seeder=NombreSeeder                  # Borra todo, recrea y ejecuta un seeder específico
+
+# REFRESCAR (Rollback + Migrate)
+php artisan migrate:refresh                                      # Rollback + Migrate (reconstruye todo)
+php artisan migrate:refresh --step=3                             # Revertir 3 pasos y luego migrar
+php artisan migrate:refresh --seed                               # Reconstruir y ejecutar seeders
+
+# VER ESTADO
+php artisan migrate:status                                       # Ver estado de todas las migraciones
+php artisan migrate:status --pending                             # Ver solo migraciones pendientes
+php artisan migrate:status --completed                           # Ver solo migraciones completadas
+
+# RESETEAR TODO
+php artisan migrate:reset                                        # Revertir TODAS las migraciones
+
+===========================================
+📚 EJEMPLOS DE USO SEGÚN NECESIDAD
+===========================================
+
+# 1️⃣ CASO: Crear una tabla nueva (Libros)
+php artisan make:migration create_libros_table
+# Editar migración y agregar columnas
+php artisan migrate
+
+# 2️⃣ CASO: Olvidé agregar una columna (editorial)
+php artisan make:migration add_editorial_to_libros_table
+# Editar migración:
+# public function up() { Schema::table('libros', function ($table) { $table->string('editorial'); }); }
+php artisan migrate
+
+# 3️⃣ CASO: Quiero eliminar una columna (precio)
+php artisan make:migration drop_precio_from_libros_table
+# Editar migración:
+# public function up() { Schema::table('libros', function ($table) { $table->dropColumn('precio'); }); }
+php artisan migrate
+
+# 4️⃣ CASO: Cambiar nombre de columna (autor → escritor)
+php artisan make:migration rename_autor_to_escritor_in_libros_table
+# Editar migración:
+# public function up() { Schema::table('libros', function ($table) { $table->renameColumn('autor', 'escritor'); }); }
+php artisan migrate
+
+# 5️⃣ CASO: Cambiar tipo de columna (precio integer → decimal)
+php artisan make:migration change_precio_to_decimal_in_libros_table
+# Editar migración:
+# public function up() { Schema::table('libros', function ($table) { $table->decimal('precio', 8, 2)->change(); }); }
+php artisan migrate
+
+# 6️⃣ CASO: Revertir última migración (algo salió mal)
+php artisan migrate:rollback
+# Corregir la migración y volver a ejecutar
+php artisan migrate
+
+# 7️⃣ CASO: Revertir varias migraciones (me equivoqué en 3 cambios)
+php artisan migrate:rollback --step=3
+# Corregir las migraciones y volver a ejecutar
+php artisan migrate
+
+# 8️⃣ CASO: Empezar de cero en desarrollo (borrar y recrear todo)
+php artisan migrate:fresh
+# O con datos de prueba
+php artisan migrate:fresh --seed
+
+# 9️⃣ CASO: Ver qué migraciones están pendientes
+php artisan migrate:status
+
+# 🔟 CASO: Ver el SQL que se va a ejecutar (sin ejecutarlo)
+php artisan migrate --pretend
+
+# 1️⃣1️⃣ CASO: Reconstruir todo sin perder tiempo (refresh)
+php artisan migrate:refresh --seed
+
+# 1️⃣2️⃣ CASO: Revertir TODAS las migraciones (empezar de cero pero conservar archivos)
+php artisan migrate:reset
+# Luego ejecutar todas de nuevo
+php artisan migrate
+
+===========================================
+⚠️ CONSEJOS IMPORTANTES
+-------------------------------------------
+# 1. Siempre revisa tus migraciones antes de ejecutarlas:
+php artisan migrate --pretend
+
+# 2. En producción, NUNCA uses migrate:fresh (borra todos los datos)
+# Usa migrate con cuidado y siempre con respaldo
+
+# 3. Si tienes errores, revisa:
+# - Que PostgreSQL está corriendo
+# - Que las credenciales en .env son correctas
+# - Que la base de datos existe
+
+# 4. Para agregar columnas a tablas con datos, usa nullable() si el campo puede estar vacío:
+$table->string('editorial')->nullable();
+
+# 5. Si una migración falla, usa rollback y corrige antes de continuar
+
+🌱 SEEDERS (Datos de prueba)
+-------------------------------------------
+php artisan make:seeder NombreSeeder                        # Crear seeder
+php artisan make:seeder LibrosTableSeeder                  # Seeder específico para Libros
+php artisan make:seeder UsersTableSeeder                   # Seeder para usuarios
+
+🏭 FACTORIES (Datos falsos)
+-------------------------------------------
+php artisan make:factory NombreFactory                      # Crear factory
+php artisan make:factory LibroFactory --model=Libro        # Factory vinculada al modelo Libro
+
+📝 REQUESTS (Validaciones personalizadas)
+-------------------------------------------
+php artisan make:request StoreNombreRequest                 # Request para crear
+php artisan make:request UpdateNombreRequest                # Request para actualizar
+
+# EJEMPLOS:
+php artisan make:request StoreLibroRequest                  # Validación para crear Libro
+php artisan make:request UpdateLibroRequest                 # Validación para actualizar Libro
+
+⚡ MIDDLEWARE
+-------------------------------------------
+php artisan make:middleware NombreMiddleware                # Crear middleware
+php artisan make:middleware VerificarEdad                  # Middleware para verificar edad
+
+📋 MAIL (Correos)
+-------------------------------------------
+php artisan make:mail NombreMail                           # Crear clase de correo
+php artisan make:mail BienvenidaMail                       # Correo de bienvenida
+
+🔔 NOTIFICACIONES
+-------------------------------------------
+php artisan make:notification NombreNotification           # Crear notificación
+php artisan make:notification PedidoConfirmado             # Notificación de pedido
+
+📊 COMMANDS (Comandos personalizados)
+-------------------------------------------
+php artisan make:command NombreCommand                     # Crear comando Artisan
+php artisan make:command EnviarCorreosCommand              # Comando para enviar correos
+
+🔒 POLICIES (Autorizaciones)
+-------------------------------------------
+php artisan make:policy NombrePolicy                       # Crear policy
+php artisan make:policy LibroPolicy --model=Libro         # Policy vinculada al modelo
+
+🔄 OBSERVERS (Observadores de modelos)
+-------------------------------------------
+php artisan make:observer NombreObserver                   # Crear observer
+php artisan make:observer LibroObserver --model=Libro     # Observer para Libro
+
+📡 EVENTS & LISTENERS
+-------------------------------------------
+php artisan make:event NombreEvent                         # Crear evento
+php artisan make:listener NombreListener --event=NombreEvent  # Crear listener para evento
+
+🚦 EXCEPTIONS (Excepciones personalizadas)
+-------------------------------------------
+php artisan make:exception NombreException                 # Crear excepción personalizada
+
+⚙️ PROVIDERS (Proveedores de servicios)
+-------------------------------------------
+php artisan make:provider NombreProvider                   # Crear provider
+
+🧪 TESTS (Pruebas)
+-------------------------------------------
+php artisan make:test NombreTest                          # Crear prueba
+php artisan make:test NombreTest --unit                   # Crear prueba unitaria
+php artisan make:test NombreTest --feature                # Crear prueba de funcionalidad
+
+===========================================
+⚛️ VISTAS EN REACT (FRONTEND)
+-------------------------------------------
+# NOTA: Laravel NO tiene comando para crear vistas en React.
+# Las vistas de React se crean MANUALMENTE:
+
+# 1. Crear carpeta en resources/js/Pages/
+#    Ejemplo: resources/js/Pages/Libros/
+
+# 2. Crear archivos:
+#    Index.jsx   - Listar registros
+#    Create.jsx  - Formulario de creación
+#    Edit.jsx    - Formulario de edición
+#    Show.jsx    - Ver detalle
+
+# 3. Estructura básica de una vista React:
+
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head } from '@inertiajs/react';
+
+export default function Index({ datos }) {
+    return (
+        <AuthenticatedLayout header={<h2>Título</h2>}>
+            <Head title="Título" />
+            <div className="py-12">
+                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    {/* Contenido */}
+                </div>
+            </div>
+        </AuthenticatedLayout>
+    );
+}
+
+# 4. Registrar la ruta en routes/web.php:
+Route::get('/libros', [LibroController::class, 'index'])->name('libros.index');
+
+# 5. En el controlador, retornar la vista con Inertia:
+public function index()
+{
+    $libros = Libros::all();
+    return inertia('Libros/Index', ['libros' => $libros]);
+}
+
+===========================================
+📌 COMANDOS PARA VER LISTA DE ARCHIVOS CREADOS
+-------------------------------------------
+php artisan list                 # Ver todos los comandos disponibles
+php artisan make:model --help    # Ver ayuda para crear modelos
+php artisan make:controller --help  # Ver ayuda para crear controladores
+php artisan route:list           # Ver todas las rutas registradas
+php artisan migrate:status       # Ver estado de migraciones
+php artisan db:show              # Ver información de la BD
+
+===========================================
+✅ ¡LISTO! AHORA SABES CREAR CUALQUIER ARCHIVO
+===========================================

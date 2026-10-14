@@ -1,0 +1,80 @@
+﻿====================================================
+  GUIA DE INSTALACION - THESYS (Laravel + React TSX)
+====================================================
+
+REQUISITOS PREVIOS:
+  - PHP 8.3+
+  - Composer
+  - Node.js + npm 11+
+  - PostgreSQL
+
+----------------------------------------------------
+PASO 1 - Instalar dependencias PHP (Laravel)
+----------------------------------------------------
+  composer install
+
+  (Descarga las librerias PHP: Inertia, Fortify, etc.)
+
+----------------------------------------------------
+PASO 2 - Copiar el archivo de entorno
+----------------------------------------------------
+  copy .env.example .env
+
+  (El .env nunca se sube al repo, hay que crearlo manualmente)
+
+----------------------------------------------------
+PASO 3 - Generar la clave de la aplicacion
+----------------------------------------------------
+  php artisan key:generate
+
+  (Rellena el APP_KEY en el .env, sin esto Laravel no arranca)
+
+----------------------------------------------------
+PASO 4 - Instalar dependencias JavaScript
+----------------------------------------------------
+  npm install
+
+  (Descarga React, Inertia, Vite, Tailwind, Radix UI, etc.)
+
+----------------------------------------------------
+PASO 5 - Configurar PostgreSQL en el .env
+----------------------------------------------------
+  Abrir el archivo .env y reemplazar la seccion de BD:
+
+    DB_CONNECTION=pgsql
+    DB_HOST=127.0.0.1
+    DB_PORT=5432
+    DB_DATABASE=bd_tesis
+    DB_USERNAME=tu_usuario_postgres
+    DB_PASSWORD=tu_contrasena
+
+  Asegurarse de que la base de datos "bd_tesis" ya exista
+  en PostgreSQL antes del siguiente paso.
+
+----------------------------------------------------
+PASO 6 - Crear las tablas en la base de datos
+----------------------------------------------------
+  php artisan migrate
+
+----------------------------------------------------
+PASO 7 - Levantar el servidor de desarrollo
+----------------------------------------------------
+  composer run dev
+
+  (Inicia Laravel en http://localhost:8000 y Vite juntos)
+
+  O por separado en dos terminales:
+    Terminal 1: php artisan serve
+    Terminal 2: npm run dev
+
+====================================================
+  STACK DEL PROYECTO
+====================================================
+  Laravel     v13+
+  React       v19
+  Inertia.js  v3
+  Vite        v8
+  TailwindCSS v4
+  TypeScript  v5
+  Base de datos: PostgreSQL
+====================================================
