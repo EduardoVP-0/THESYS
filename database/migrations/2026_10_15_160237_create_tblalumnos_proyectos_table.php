@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('tblalumnos_proyectos', function (Blueprint $table) {
             $table->id('id_alumno_proyecto');
             $table->foreignId('id_alumno')
-            ->constrained('tblalumnos','id_alumno')
+            ->constrained('tblalumnos', 'id_usuario')
             ->onDelete('cascade');
 
             $table->foreignId('id_proyecto')

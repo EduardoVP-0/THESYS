@@ -18,7 +18,7 @@ return new class extends Migration
             $table->boolean('requiere_minuscula')->default(false);
             $table->boolean('requiere_numero')->default(false);
             $table->boolean('requiere_especiales')->default(false);
-            $table->text('caracteres_especiales')->default('!@#$%^&*()_+-=[]{}|;:,.<>?');
+            $table->string('caracteres_especiales', 255)->default('!@#$%^&*()_+-=[]{}|;:,.<>?');
             $table->timestamps();
         });
     }

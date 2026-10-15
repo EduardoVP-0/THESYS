@@ -21,7 +21,7 @@ return new class extends Migration
 
             //SI BORRAN UN PROYECTO DEL SISTEMA, SE BORRAN SUS ASESORES ASIGNADOS
             $table->foreignId('id_proyecto')
-            ->constrained('tblproyectos')
+            ->constrained('tblproyectos', 'id_proyecto')
             ->onDelete('cascade');
 
             $table->string('estado_asignacion', 50)->default('Activo');
