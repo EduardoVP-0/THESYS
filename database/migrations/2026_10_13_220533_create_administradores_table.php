@@ -18,7 +18,8 @@ return new class extends Migration
             ->onDelete('cascade');
 
             $table->foreignId('id_usuario_registro')
-            ->nullable()->constrained('users')
+            ->nullable()
+            ->constrained('users')
             ->onDelete('restrict');
             
             $table->string('nombre', 100);
