@@ -18,7 +18,7 @@ return new class extends Migration
             /*PARA SABER QUE VERSION DE TESIS SE ESTA REVISANDO
             SE USA CASCADA POR QUE SI SE ELIMINA UNA VERSION, SUS REVISIONES NO SIRVEN*/
             $table->foreignId('id_version')
-            ->constrained('tblversiones_tesis')
+            ->constrained('tblversiones_tesis', 'id_version')
             ->onDelete('cascade');
 
             /*QUIEN HIZO ESTA VERSION
@@ -26,7 +26,7 @@ return new class extends Migration
             Y SE USA CASCADE POR QUE SI SE DESHACE UNA ASIGNACION DEL ASESOR Y PROYECTO
             SUS REVISIONES PENDIENTES DEBERIAN CANCELARSE O ELIMINARSE*/
             $table->foreignId('id_asesor_proyecto')
-            ->constrained('tblasesores_proyectos')
+            ->constrained('tblasesores_proyectos', 'id_asesor_proyecto')
             ->onDelete('cascade');
 
             $table->string('estado_revision', 50)->default('Pendiente');

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('id_version');
 
             $table->foreignId('id_proyecto')
-            ->constrained('tblproyectos')
+            ->constrained('tblproyectos', 'id_proyecto')
             ->onDelete('cascade');
 
             $table->string('numero_version', 20);

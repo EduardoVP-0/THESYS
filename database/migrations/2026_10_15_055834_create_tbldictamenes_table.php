@@ -17,7 +17,7 @@ return new class extends Migration
             //PARA SABER QUIEN ESTA EMITIENDO ESTE DICTAMEN
             //SE USA CASCADE POR QUE SI SE ELIMINA AL DOCENTE DE SER JURAOD SU DICTAMEN DEBE INVALIDARSE
             $table->foreignId('id_jurado_proyecto')
-            ->constrained('tbljurados_proyectos')
+            ->constrained('tbljurados_proyectos', 'id_jurado_proyecto')
             ->onDelete('cascade');
 
             $table->string('voto', 50);

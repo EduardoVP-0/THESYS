@@ -21,7 +21,7 @@ return new class extends Migration
 
             //SI SE BORRA UN PROYECTO DEL SISTEMA, SE BORRAN SUS JURADOS ASIGNADOS
             $table->foreignId('id_proyecto')
-            ->constrained('tblproyectos')
+            ->constrained('tblproyectos', 'id_proyecto')
             ->onDelete('cascade');
 
             $table->string('cargo', 100);
