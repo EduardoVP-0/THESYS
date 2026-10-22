@@ -1,13 +1,14 @@
 <?php
 
 use App\Http\Controllers\Admin\CarreraController;
+use App\Http\Controllers\Admin\OficiosOficialesController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', fn () => redirect()->route('admin.dashboard'))->name('dashboard');
+    Route::get('dashboard', fn() => redirect()->route('admin.dashboard'))->name('dashboard');
 });
 
 // Rutas de Administrador (Roles 1, 2 y 3)
@@ -42,6 +43,13 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         // Exportar e Importar Carreras (CSV)
         Route::get('/carreras/export-csv', [CarreraController::class, 'exportCsv'])->name('carreras.export-csv');
         Route::post('/carreras/import', [CarreraController::class, 'import'])->name('carreras.import');
+
+
+        /*
+        MODULO DE OFICIOS OFICIALES (CRUD ADMINISTRATIVO)
+        */
+
+        Route::get('/oficios_oficiales', [OficiosOficialesController::class, 'index'])->name('oficios_oficiales.index');
     });
 
 /*Route::get('products', [ProductController::class, 'index'])->name('products.index');
@@ -51,4 +59,4 @@ Route::get('products/edit/{product}', [ProductController::class, 'edit'])->name(
 Route::put('products/{product}', [ProductController::class,'update'])->name('products.update');
 Route::delete('products/{product}', [ProductController::class,'destroy'])->name('products.destroy');*/
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';

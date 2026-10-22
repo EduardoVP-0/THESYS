@@ -25,8 +25,21 @@ const mainNavItems: NavItem[] = [
 
     {
         title: 'Usuarios',
-        href: '/users',
-        icon: UsersRound
+        icon: UsersRound,
+        items: [
+            {
+                title: 'Administradores',
+                href: '/admin/administradores'
+            },
+            {
+                title: 'Docentes',
+                href: '/admin/docentes'
+            },
+            {
+                title: 'Estudiantes',
+                href: '/admin/estudiantes'
+            },
+        ]
     },
 
     {

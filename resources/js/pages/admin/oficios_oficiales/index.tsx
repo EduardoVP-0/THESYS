@@ -1,11 +1,27 @@
-import React from 'react';
+import { Head } from '@inertiajs/react';
 
-// El nombre de la función puede ser el que quieras, lo importante es el default export
-export default function Index() {
+export default function CarrerasIndex() {
     return (
-        <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-            <h1>¡Hola desde Oficios Oficiales en React!</h1>
-            <p>Este componente se está renderizando correctamente.</p>
-        </div>
+        <>
+            <Head title="Carreras" />
+
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 bg-white min-h-screen">
+                <h1 className="text-2xl font-bold text-[#000000]">HOLA</h1>
+            </div>
+        </>
     );
 }
+
+// Breadcrumbs para la barra superior (se mantiene igual)
+CarrerasIndex.layout = {
+    breadcrumbs: [
+        {
+            title: 'Admin',
+            href: '/admin/dashboard',
+        },
+        {
+            title: 'Oficios Oficiales',
+            href: '/admin/oficios_oficiales',
+        },
+    ],
+};
