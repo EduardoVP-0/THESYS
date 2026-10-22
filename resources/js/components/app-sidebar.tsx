@@ -78,7 +78,7 @@ const mainNavItems: NavItem[] = [
 
     {
         title: 'Oficios Oficiales',
-        href: '/veredictos',
+        href: '/admin/oficios_oficiales',
         icon: FileBadge
     },
 

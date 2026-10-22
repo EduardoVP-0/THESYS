@@ -38,6 +38,8 @@ import {
 } from '@/components/ui/select';
 
 import { CreateModal } from './create-modal';
+import { EditModal } from './edit-modal'; 
+import { ShowModal } from './show-modal';
 import { ExportImportModal } from './export-import-modal';
 
 // --------------------------------------------------------------------------
@@ -117,6 +119,30 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                 replace: true
             }
         );
+    };
+
+    // Estado para abrir/cerrar el modal de edición
+    const [openEdit, setOpenEdit] = useState(false);
+
+    // Estado para abrir/cerrar el modal de ver detalles
+    const [openShow, setOpenShow] = useState(false);
+
+    // Estado para guardar la carrera que se eligió ver
+    const [carreraToShow, setCarreraToShow] = useState<Carrera | null>(null);
+
+    // Función auxiliar cuando hagan clic en el botón del ojo
+    const handleOpenShow = (carrera: Carrera) => {
+        setCarreraToShow(carrera);
+        setOpenShow(true);
+    };
+
+    // Estado para guardar la carrera que se eligió editar
+    const [carreraToEdit, setCarreraToEdit] = useState<Carrera | null>(null);
+
+    // Función auxiliar para cuando hagan clic en el botón de lápiz
+    const handleOpenEdit = (carrera: Carrera) => {
+        setCarreraToEdit(carrera);
+        setOpenEdit(true);
     };
 
     /**
@@ -375,12 +401,12 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                     />
                                 </TableHead>
                                 <TableHead className="font-semibold text-[#2D2D2D] w-32">Clave</TableHead>
-                                <TableHead className="font-semibold text-[#2D2D2D] min-w-[180px] max-w-[240px]">Nombre de la Carrera</TableHead>
-                                <TableHead className="font-semibold text-[#2D2D2D] min-w-[200px] max-w-[300px]">Descripción</TableHead>
-                                <TableHead className="font-semibold text-[#2D2D2D] w-40 text-center">Duración (Semestres)</TableHead>
-                                <TableHead className="font-semibold text-[#2D2D2D] w-36 text-center">Alumnos Vigentes</TableHead>
+                                <TableHead className="text-centerfont-semibold text-[#2D2D2D] min-w-[180px] max-w-[200px]">Nombre de la Carrera</TableHead>
+                                <TableHead className="font-semibold text-[#2D2D2D] min-w-[180px] max-w-[200px]">Descripción</TableHead>
+                                <TableHead className="font-semibold text-[#2D2D2D] w-30 text-center">Semestres</TableHead>
+                                <TableHead className="font-semibold text-[#2D2D2D] w-30 text-center">Alumnos</TableHead>
                                 <TableHead className="font-semibold text-[#2D2D2D] w-28 text-center">Estado</TableHead>
-                                <TableHead className="text-right font-semibold text-[#2D2D2D] w-32 pr-4">Acciones</TableHead>
+                                <TableHead className="text-center font-semibold text-[#2D2D2D] w-45">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
 
@@ -410,14 +436,14 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                         </TableCell>
 
                                         {/* Nombre de la carrera con límite de desbordamiento */}
-                                        <TableCell className="font-medium text-[#2D2D2D] max-w-[240px]">
+                                        <TableCell className="font-medium text-[#2D2D2D] max-w-[200px]">
                                             <span className="truncate block" title={carrera.nombre_carrera}>
                                                 {carrera.nombre_carrera}
                                             </span>
                                         </TableCell>
 
                                         {/* Descripción con límite de texto */}
-                                        <TableCell className="text-[#2D2D2D] max-w-[300px]">
+                                        <TableCell className="text-[#2D2D2D] max-w-[200px]">
                                             <span className="truncate block text-xs text-[#2D2D2D]/80" title={carrera.descripcion || ''}>
                                                 {carrera.descripcion || 'Sin descripción registrada'}
                                             </span>
@@ -434,23 +460,24 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                         <TableCell className="text-center">
                                             {/* Insignia con color Éxito (#10B981) o Error (#EF4444) del PDF */}
                                             {carrera.estado ? (
-                                                <span className="badge badge-success badge-soft font-semibold text-xs px-2.5 py-1">
+                                                <span className="bg-green-100 text-black badge badge-success badge-soft font-semibold text-xs px-2.5 py-1">
                                                     Vigente
                                                 </span>
                                             ) : (
-                                                <span className="badge badge-error badge-soft font-semibold text-xs px-2.5 py-1">
+                                                <span className="bg-red-500 text-white badge badge-error badge-soft font-semibold text-xs px-2.5 py-1">
                                                     Inactivo
                                                 </span>
                                             )}
                                         </TableCell>
 
                                         {/* Botones de Acción con los colores exactos del PDF (Página 6) */}
-                                        <TableCell className="text-right pr-4">
-                                            <div className="flex items-center justify-end gap-1.5">
+                                        <TableCell className="text-center">
+                                            <div className="flex items-center justify-center gap-1.5">
                                                 {/* Ver: borde y texto en gris (#6B7280) */}
                                                 <div className="tooltip tooltip-top" data-tip="Ver detalles">
                                                     <button
                                                         type="button"
+                                                        onClick={() => handleOpenShow(carrera)}
                                                         className="btn btn-xs bg-white border border-[#6B7280] text-[#6B7280] hover:bg-[#B8D4E3]/20 btn-square"
                                                     >
                                                         <Eye className="size-3.5" />
@@ -459,12 +486,14 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
 
                                                 {/* Editar: borde y texto en azul primario (#B8D4E3) con texto #2D2D2D */}
                                                 <div className="tooltip tooltip-top" data-tip="Editar carrera">
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-xs bg-white border border-[#B8D4E3] text-[#2D2D2D] hover:bg-[#B8D4E3]/20 btn-square"
-                                                    >
-                                                        <Pencil className="size-3.5" />
-                                                    </button>
+                                                    <button 
+                                                    type="button"
+                                                    onClick={() => handleOpenEdit(carrera)} // <-- Aquí abres el modal con esa carrera
+                                                    className="btn btn-xs bg-white border border-[#FFDE21] text-[#2D2D2D] hover:bg-[#B8D4E3]/20 btn-square"
+                                                >
+                                                    <Pencil className="size-3.5" />
+                                                </button>
+
                                                 </div>
 
                                                 {/* Baja: borde y texto en rojo (#EF4444) */}
@@ -556,6 +585,18 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
 
             {/* Modal para Registrar Carrera */}
             <CreateModal open={openCreate} onOpenChange={setOpenCreate} />
+            {/* Modal para Editar Carrera */}
+            <EditModal 
+                open={openEdit} 
+                onOpenChange={setOpenEdit} 
+                carrera={carreraToEdit} 
+            />
+
+            <ShowModal
+                open={openShow}
+                onOpenChange={setOpenShow}
+                carrera={carreraToShow}
+            />
 
             {/* Modal para Exportar / Importar Carreras (CSV y PDF) */}
             <ExportImportModal open={openExportImport} onOpenChange={setOpenExportImport} />
