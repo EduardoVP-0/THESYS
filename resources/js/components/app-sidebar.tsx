@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, PackageSearch } from 'lucide-react';
+import { BookOpen, DollarSign, FileBadge, FilePenLine, FolderClosed, FolderGit2, LayoutGrid, Scale, School, UserRoundCheck, UsersRound } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -21,12 +21,72 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
-    }
-    /*{
-        title: 'Productos',
-        href: '/products',
-        icon: PackageSearch
-    }*/
+    },
+
+    {
+        title: 'Usuarios',
+        href: '/users',
+        icon: UsersRound
+    },
+
+    {
+        title: 'Carreras',
+        href: '/carreras',
+        icon: School
+    },
+
+    {
+        title: 'Anteproyectos',
+        href: '/anteproyectos',
+        icon: FilePenLine
+    },
+
+    {
+        title: 'Asignaciones',
+        icon: UserRoundCheck,
+        items: [
+            {
+                title: 'Asesor',
+                href: '/asignaciones/asesores',
+            },
+            {
+                title: 'Revisor',
+                href: '/asignaciones/revisiones',
+            },
+            {
+                title: 'Jurado',
+                href: '/asignaciones/jurados',
+            },
+            {
+                title: 'Examenes',
+                href: '/asignaciones/examenes',
+            },
+        ],
+    },
+
+    {
+        title: 'Expedientes',
+        href: '/expedientes',
+        icon: FolderClosed
+    },
+
+    {
+        title: 'Veredictos',
+        href: '/veredictos',
+        icon: Scale
+    },
+
+    {
+        title: 'Oficios Oficiales',
+        href: '/veredictos',
+        icon: FileBadge
+    },
+
+    {
+        title: 'Pagos',
+        href: '/pagos',
+        icon: DollarSign
+    },
 ];
 
 const footerNavItems: NavItem[] = [
