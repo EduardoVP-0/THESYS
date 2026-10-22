@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { 
-    School, 
-    CheckCircle2, 
-    XCircle, 
-    Users, 
-    Search, 
-    Plus, 
-    Eye, 
-    Pencil, 
+import {
+    School,
+    CheckCircle2,
+    XCircle,
+    Users,
+    Search,
+    Plus,
+    Eye,
+    Pencil,
     Power,
     Filter,
     RotateCcw,
@@ -107,14 +107,14 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
     const handleFilter = (newSearch = search, newEstado = estado, newDuracion = duracion) => {
         router.get(
             '/admin/carreras',
-            { 
-                search: newSearch, 
+            {
+                search: newSearch,
                 estado: newEstado,
                 duracion: newDuracion
             },
-            { 
-                preserveState: true, 
-                replace: true 
+            {
+                preserveState: true,
+                replace: true
             }
         );
     };
@@ -163,7 +163,7 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
             <Head title="Gestión de Carreras" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 bg-white min-h-screen">
-                
+
                 {/* Alerta de notificación flash de éxito (con colores de éxito del PDF: #10B981) */}
                 {flash?.success && (
                     <div className="alert alert-success alert-soft shadow-xs py-2.5 px-4 text-sm flex items-center justify-between border-l-4 border-l-[#10B981] bg-emerald-50 text-[#2D2D2D]">
@@ -187,7 +187,7 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
 
                     <div className="flex items-center gap-3">
                         {/* Botón Agregar: Fondo blanco, borde y texto en verde (#10B981) según PDF */}
-                        <Button 
+                        <Button
                             onClick={() => setOpenCreate(true)}
                             className="bg-white hover:bg-[#B8D4E3]/20 text-[#10B981] border-2 border-[#10B981] font-semibold shadow-xs gap-2"
                         >
@@ -196,9 +196,9 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                         </Button>
 
                         {/* Botón Exportar / Importar: Fondo blanco, borde gris (#D1D5DB) según PDF */}
-                        <Button 
-                            variant="outline" 
-                            onClick={() => setOpenExportImport(true)} 
+                        <Button
+                            variant="outline"
+                            onClick={() => setOpenExportImport(true)}
                             className="bg-white border-[#D1D5DB] text-[#2D2D2D] hover:bg-[#B8D4E3]/20 gap-2 font-medium"
                         >
                             <ArrowUpDown className="size-4 text-[#2D2D2D]" />
@@ -308,12 +308,11 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                             </Select>
 
                             {/* Botón que despliega el panel de filtros avanzados */}
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={() => setShowFiltersPanel(!showFiltersPanel)}
-                                className={`border-[#D1D5DB] rounded-xl gap-2 font-medium ${
-                                    showFiltersPanel ? 'bg-[#B8D4E3]/20 border-[#B8D4E3]' : 'bg-white text-[#2D2D2D]'
-                                }`}
+                                className={`border-[#D1D5DB] rounded-xl gap-2 font-medium ${showFiltersPanel ? 'bg-[#B8D4E3]/20 border-[#B8D4E3]' : 'bg-white text-[#2D2D2D]'
+                                    }`}
                             >
                                 <Filter className="size-4 text-[#2D2D2D]" />
                                 Filtros
@@ -339,7 +338,7 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                     {showFiltersPanel && (
                         <div className="p-4 bg-neutral-50/70 border border-[#D1D5DB] rounded-xl flex flex-wrap items-center gap-4 animate-in fade-in-50 duration-200">
                             <span className="text-xs font-semibold text-[#2D2D2D]">Filtrar por Duración:</span>
-                            
+
                             <div className="flex items-center gap-2">
                                 {['todos', '6', '8', '9'].map((sem) => (
                                     <button
@@ -349,11 +348,10 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                             setDuracion(sem);
                                             handleFilter(search, estado, sem);
                                         }}
-                                        className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                                            duracion === sem
+                                        className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${duracion === sem
                                                 ? 'bg-[#B8D4E3] border-[#B8D4E3] text-[#2D2D2D] font-bold'
                                                 : 'bg-white border-[#D1D5DB] text-[#2D2D2D] hover:bg-[#B8D4E3]/20'
-                                        }`}
+                                            }`}
                                     >
                                         {sem === 'todos' ? 'Todas' : `${sem} Semestres`}
                                     </button>
@@ -395,8 +393,8 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                 </TableRow>
                             ) : (
                                 carreras.data.map((carrera) => (
-                                    <TableRow 
-                                        key={carrera.id_carrera} 
+                                    <TableRow
+                                        key={carrera.id_carrera}
                                         className="border-b border-[#D1D5DB] hover:bg-[#B8D4E3]/20 transition-colors"
                                     >
                                         <TableCell className="text-center">
@@ -451,7 +449,7 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                             <div className="flex items-center justify-end gap-1.5">
                                                 {/* Ver: borde y texto en gris (#6B7280) */}
                                                 <div className="tooltip tooltip-top" data-tip="Ver detalles">
-                                                    <button 
+                                                    <button
                                                         type="button"
                                                         className="btn btn-xs bg-white border border-[#6B7280] text-[#6B7280] hover:bg-[#B8D4E3]/20 btn-square"
                                                     >
@@ -461,7 +459,7 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
 
                                                 {/* Editar: borde y texto en azul primario (#B8D4E3) con texto #2D2D2D */}
                                                 <div className="tooltip tooltip-top" data-tip="Editar carrera">
-                                                    <button 
+                                                    <button
                                                         type="button"
                                                         className="btn btn-xs bg-white border border-[#B8D4E3] text-[#2D2D2D] hover:bg-[#B8D4E3]/20 btn-square"
                                                     >
@@ -470,18 +468,17 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                                 </div>
 
                                                 {/* Baja: borde y texto en rojo (#EF4444) */}
-                                                <div 
-                                                    className="tooltip tooltip-top" 
+                                                <div
+                                                    className="tooltip tooltip-top"
                                                     data-tip={carrera.estado ? 'Dar de baja' : 'Activar carrera'}
                                                 >
-                                                    <button 
+                                                    <button
                                                         type="button"
                                                         onClick={() => handleToggleStatus(carrera.id_carrera, carrera.estado)}
-                                                        className={`btn btn-xs bg-white border btn-square hover:bg-[#B8D4E3]/20 ${
-                                                            carrera.estado 
-                                                                ? 'border-[#EF4444] text-[#EF4444]' 
+                                                        className={`btn btn-xs bg-white border btn-square hover:bg-[#B8D4E3]/20 ${carrera.estado
+                                                                ? 'border-[#EF4444] text-[#EF4444]'
                                                                 : 'border-[#10B981] text-[#10B981]'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <Power className="size-3.5" />
                                                     </button>
@@ -513,9 +510,8 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                         <Link
                                             key={index}
                                             href={link.url || '#'}
-                                            className={`btn btn-xs border border-[#D1D5DB] bg-white hover:bg-[#B8D4E3]/20 text-[#2D2D2D] gap-1 ${
-                                                !link.url ? 'btn-disabled opacity-40' : ''
-                                            }`}
+                                            className={`btn btn-xs border border-[#D1D5DB] bg-white hover:bg-[#B8D4E3]/20 text-[#2D2D2D] gap-1 ${!link.url ? 'btn-disabled opacity-40' : ''
+                                                }`}
                                             preserveScroll
                                         >
                                             <ChevronLeft className="size-3" />
@@ -529,9 +525,8 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                         <Link
                                             key={index}
                                             href={link.url || '#'}
-                                            className={`btn btn-xs border border-[#D1D5DB] bg-white hover:bg-[#B8D4E3]/20 text-[#2D2D2D] gap-1 ${
-                                                !link.url ? 'btn-disabled opacity-40' : ''
-                                            }`}
+                                            className={`btn btn-xs border border-[#D1D5DB] bg-white hover:bg-[#B8D4E3]/20 text-[#2D2D2D] gap-1 ${!link.url ? 'btn-disabled opacity-40' : ''
+                                                }`}
                                             preserveScroll
                                         >
                                             Siguiente
@@ -544,11 +539,10 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                     <Link
                                         key={index}
                                         href={link.url || '#'}
-                                        className={`btn btn-xs min-w-7 border ${
-                                            link.active
+                                        className={`btn btn-xs min-w-7 border ${link.active
                                                 ? 'bg-[#B8D4E3] border-[#B8D4E3] text-[#2D2D2D] font-bold'
                                                 : 'bg-white border-[#D1D5DB] text-[#2D2D2D] hover:bg-[#B8D4E3]/20'
-                                        } ${!link.url ? 'btn-disabled opacity-40' : ''}`}
+                                            } ${!link.url ? 'btn-disabled opacity-40' : ''}`}
                                         preserveScroll
                                     >
                                         {link.label}
