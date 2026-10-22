@@ -31,7 +31,7 @@ const mainNavItems: NavItem[] = [
 
     {
         title: 'Carreras',
-        href: '/carreras',
+        href: '/admin/carreras',
         icon: School
     },
 
