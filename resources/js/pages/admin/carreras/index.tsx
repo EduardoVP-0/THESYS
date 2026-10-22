@@ -1,26 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { 
-    School, 
-    CheckCircle2, 
-    XCircle, 
-    Users, 
-    Search, 
-    Plus, 
-    Eye, 
-    Pencil, 
+import {
+    School,
+    CheckCircle2,
+    XCircle,
+    Users,
+    Search,
+    Plus,
+    Eye,
+    Pencil,
     Power,
     Filter,
     RotateCcw,
     ChevronLeft,
     ChevronRight,
-    ArrowUpDown
+    Download
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Table,
     TableBody,
@@ -40,11 +39,9 @@ import {
 import { CreateModal } from './create-modal';
 import { EditModal } from './edit-modal'; 
 import { ShowModal } from './show-modal';
-import { ExportImportModal } from './export-import-modal';
+import { ExportModal } from './export-modal';
 
-// --------------------------------------------------------------------------
 // DEFINICIÓN DE TIPOS (TypeScript)
-// --------------------------------------------------------------------------
 interface Carrera {
     id_carrera: number;
     clave: string; // Formateada con el Accessor del modelo (ej: CAR-00001)
@@ -92,16 +89,32 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
     // Obtenemos los mensajes flash de sesión de Laravel
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
 
+    // Estado local para controlar la visibilidad de la alerta (auto-cierre)
+    const [showAlert, setShowAlert] = useState(false);
+
+    /**
+     * useEffect que escucha cambios en flash.success.
+     * Cada vez que Laravel envía un mensaje de éxito, se muestra la alerta
+     * y se configura un setTimeout de 4 segundos para ocultarla automáticamente.
+     * El return limpia el timeout si el componente se desmonta antes.
+     */
+    useEffect(() => {
+        if (flash?.success) {
+            setShowAlert(true);
+            const timer = setTimeout(() => setShowAlert(false), 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [flash?.success]);
+
     // Estados locales para la barra de búsqueda y filtros
     const [search, setSearch] = useState(filters.search || '');
     const [estado, setEstado] = useState(filters.estado || 'todos');
     const [duracion, setDuracion] = useState(filters.duracion || 'todos');
-    const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [showFiltersPanel, setShowFiltersPanel] = useState(false);
 
     // Estados para controlar los modales
     const [openCreate, setOpenCreate] = useState(false);
-    const [openExportImport, setOpenExportImport] = useState(false);
+    const [openExport, setOpenExport] = useState(false);
 
     /**
      * Aplica los filtros enviando una petición GET a través de Inertia
@@ -109,14 +122,14 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
     const handleFilter = (newSearch = search, newEstado = estado, newDuracion = duracion) => {
         router.get(
             '/admin/carreras',
-            { 
-                search: newSearch, 
+            {
+                search: newSearch,
                 estado: newEstado,
                 duracion: newDuracion
             },
-            { 
-                preserveState: true, 
-                replace: true 
+            {
+                preserveState: true,
+                replace: true
             }
         );
     };
@@ -167,129 +180,118 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
         }
     };
 
-    /**
-     * Manejo de selección múltiple con checkboxes
-     */
-    const handleSelectAll = (checked: boolean) => {
-        if (checked) {
-            setSelectedRows(carreras.data.map((c) => c.id_carrera));
-        } else {
-            setSelectedRows([]);
-        }
-    };
-
-    const handleSelectRow = (id: number) => {
-        setSelectedRows((prev) =>
-            prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
-        );
-    };
-
     return (
         <>
             <Head title="Gestión de Carreras" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 bg-white min-h-screen">
-                
-                {/* Alerta de notificación flash de éxito (con colores de éxito del PDF: #10B981) */}
-                {flash?.success && (
-                    <div className="alert alert-success alert-soft shadow-xs py-2.5 px-4 text-sm flex items-center justify-between border-l-4 border-l-[#10B981] bg-emerald-50 text-[#2D2D2D]">
+            {/* 
+              bg-background y text-foreground son variables CSS semánticas definidas en app.css
+              que cambian automáticamente con el tema (claro/oscuro).
+            */}
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 bg-background text-foreground min-h-screen">
+
+                {/* Alerta de notificación flash de éxito con auto-cierre */}
+                {flash?.success && showAlert && (
+                    <div className="alert alert-success alert-soft shadow-xs py-2.5 px-4 text-sm flex items-center justify-between border-l-4 border-l-[#10B981] bg-emerald-50 dark:bg-emerald-950/30 text-foreground animate-in fade-in-50 duration-300">
                         <div className="flex items-center gap-2">
                             <CheckCircle2 className="size-4 text-[#10B981]" />
                             <span className="font-medium">{flash.success}</span>
                         </div>
+                        {/* Botón para cerrar la alerta manualmente */}
+                        <button onClick={() => setShowAlert(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
                     </div>
                 )}
 
                 {/* ENCABEZADO Y BOTONES DE ACCIÓN */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-[#000000]">
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">
                             GESTIÓN DE CARRERAS
                         </h1>
-                        <p className="text-sm text-[#2D2D2D] mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                             Administración de programas académicos de la Escuela de Tecnologías Digitales Aplicadas.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {/* Botón Agregar: Fondo blanco, borde y texto en verde (#10B981) según PDF */}
-                        <Button 
+                        {/* Botón Agregar: Fondo blanco, borde y texto en verde (#10B981) */}
+                        <Button
                             onClick={() => setOpenCreate(true)}
-                            className="bg-white hover:bg-[#B8D4E3]/20 text-[#10B981] border-2 border-[#10B981] font-semibold shadow-xs gap-2"
+                            className="bg-background hover:bg-accent/40 text-[#10B981] border-2 border-[#10B981] font-semibold shadow-xs gap-2"
                         >
                             <Plus className="size-4 text-[#10B981]" />
                             Agregar Carrera
                         </Button>
 
-                        {/* Botón Exportar / Importar: Fondo blanco, borde gris (#D1D5DB) según PDF */}
-                        <Button 
-                            variant="outline" 
-                            onClick={() => setOpenExportImport(true)} 
-                            className="bg-white border-[#D1D5DB] text-[#2D2D2D] hover:bg-[#B8D4E3]/20 gap-2 font-medium"
+                        {/* Botón Exportar */}
+                        <Button
+                            variant="outline"
+                            onClick={() => setOpenExport(true)}
+                            className="bg-background border-border text-foreground hover:bg-accent/40 gap-2 font-medium"
                         >
-                            <ArrowUpDown className="size-4 text-[#2D2D2D]" />
-                            Exportar / Importar
+                            <Download className="size-4" />
+                            Exportar
                         </Button>
                     </div>
                 </div>
 
-                {/* CARDS DE MÉTRICAS (Colores del PDF: Fondo blanco, borde #D1D5DB, iconos en #B8D4E3/#2D2D2D/#10B981/#EF4444) */}
+                {/* CARDS DE MÉTRICAS */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Card: Total Carreras */}
-                    <Card className="border-[#D1D5DB] shadow-xs rounded-xl bg-white">
+                    <Card className="border-border shadow-xs rounded-xl bg-card">
                         <CardContent className="p-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 rounded-full bg-[#B8D4E3]/30 text-[#2D2D2D]">
-                                    <School className="size-5 text-[#2D2D2D]" />
+                                <div className="p-2.5 rounded-full bg-accent/30 text-foreground">
+                                    <School className="size-5" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-medium text-[#2D2D2D]/70">Total Carreras</p>
-                                    <h3 className="text-2xl font-bold text-[#000000]">{stats.total}</h3>
+                                    <p className="text-xs font-medium text-muted-foreground">Total Carreras</p>
+                                    <h3 className="text-2xl font-bold text-foreground">{stats.total}</h3>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Card: Activas (Verde #10B981 del PDF) */}
-                    <Card className="border-[#D1D5DB] shadow-xs rounded-xl bg-white">
+                    {/* Card: Activas */}
+                    <Card className="border-border shadow-xs rounded-xl bg-card">
                         <CardContent className="p-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 rounded-full bg-[#10B981]/15 text-[#10B981]">
                                     <CheckCircle2 className="size-5" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-medium text-[#2D2D2D]/70">Activas</p>
-                                    <h3 className="text-2xl font-bold text-[#000000]">{stats.activas}</h3>
+                                    <p className="text-xs font-medium text-muted-foreground">Activas</p>
+                                    <h3 className="text-2xl font-bold text-foreground">{stats.activas}</h3>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Card: Inactivas (Rojo #EF4444 del PDF) */}
-                    <Card className="border-[#D1D5DB] shadow-xs rounded-xl bg-white">
+                    {/* Card: Inactivas */}
+                    <Card className="border-border shadow-xs rounded-xl bg-card">
                         <CardContent className="p-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 rounded-full bg-[#EF4444]/15 text-[#EF4444]">
                                     <XCircle className="size-5" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-medium text-[#2D2D2D]/70">Inactivas</p>
-                                    <h3 className="text-2xl font-bold text-[#000000]">{stats.inactivas}</h3>
+                                    <p className="text-xs font-medium text-muted-foreground">Inactivas</p>
+                                    <h3 className="text-2xl font-bold text-foreground">{stats.inactivas}</h3>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Card: Alumnos Vigentes */}
-                    <Card className="border-[#D1D5DB] shadow-xs rounded-xl bg-white">
+                    <Card className="border-border shadow-xs rounded-xl bg-card">
                         <CardContent className="p-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 rounded-full bg-[#B8D4E3]/30 text-[#2D2D2D]">
-                                    <Users className="size-5 text-[#2D2D2D]" />
+                                <div className="p-2.5 rounded-full bg-accent/30 text-foreground">
+                                    <Users className="size-5" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-medium text-[#2D2D2D]/70">Alumnos Vigentes</p>
-                                    <h3 className="text-2xl font-bold text-[#000000]">{stats.alumnos_vigentes}</h3>
+                                    <p className="text-xs font-medium text-muted-foreground">Alumnos Vigentes</p>
+                                    <h3 className="text-2xl font-bold text-foreground">{stats.alumnos_vigentes}</h3>
                                 </div>
                             </div>
                         </CardContent>
@@ -301,7 +303,7 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                     <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
                         {/* Buscador reactivo */}
                         <div className="relative w-full md:w-96">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9CA3AF]" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                             <Input
                                 type="text"
                                 placeholder="Buscar por nombre, descripción o semestres..."
@@ -310,7 +312,7 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                     setSearch(e.target.value);
                                     handleFilter(e.target.value, estado, duracion);
                                 }}
-                                className="pl-9 bg-white border-[#D1D5DB] rounded-xl text-sm placeholder:text-[#9CA3AF] focus-visible:ring-[#B8D4E3]"
+                                className="pl-9 bg-background border-border rounded-xl text-sm placeholder:text-muted-foreground focus-visible:ring-ring"
                             />
                         </div>
 
@@ -323,10 +325,10 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                     handleFilter(search, val, duracion);
                                 }}
                             >
-                                <SelectTrigger className="w-full md:w-44 border-[#D1D5DB] rounded-xl bg-white text-sm text-[#2D2D2D]">
+                                <SelectTrigger className="w-full md:w-44 border-border rounded-xl bg-background text-sm text-foreground">
                                     <SelectValue placeholder="Estado" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-white border-[#D1D5DB]">
+                                <SelectContent className="bg-popover border-border">
                                     <SelectItem value="todos">Todos los estados</SelectItem>
                                     <SelectItem value="activa">Solo vigentes</SelectItem>
                                     <SelectItem value="inactiva">Solo inactivas</SelectItem>
@@ -334,14 +336,13 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                             </Select>
 
                             {/* Botón que despliega el panel de filtros avanzados */}
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={() => setShowFiltersPanel(!showFiltersPanel)}
-                                className={`border-[#D1D5DB] rounded-xl gap-2 font-medium ${
-                                    showFiltersPanel ? 'bg-[#B8D4E3]/20 border-[#B8D4E3]' : 'bg-white text-[#2D2D2D]'
-                                }`}
+                                className={`border-border rounded-xl gap-2 font-medium ${showFiltersPanel ? 'bg-accent/40 border-accent' : 'bg-background text-foreground'
+                                    }`}
                             >
-                                <Filter className="size-4 text-[#2D2D2D]" />
+                                <Filter className="size-4" />
                                 Filtros
                             </Button>
 
@@ -351,7 +352,7 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                     variant="ghost"
                                     size="sm"
                                     onClick={handleResetFilters}
-                                    className="text-xs text-[#2D2D2D]/70 hover:text-[#000000] gap-1"
+                                    className="text-xs text-muted-foreground hover:text-foreground gap-1"
                                     title="Restablecer filtros"
                                 >
                                     <RotateCcw className="size-3" />
@@ -363,9 +364,9 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
 
                     {/* Panel desplegable de filtros avanzados (Duración y Semestres) */}
                     {showFiltersPanel && (
-                        <div className="p-4 bg-neutral-50/70 border border-[#D1D5DB] rounded-xl flex flex-wrap items-center gap-4 animate-in fade-in-50 duration-200">
-                            <span className="text-xs font-semibold text-[#2D2D2D]">Filtrar por Duración:</span>
-                            
+                        <div className="p-4 bg-muted/30 border border-border rounded-xl flex flex-wrap items-center gap-4 animate-in fade-in-50 duration-200">
+                            <span className="text-xs font-semibold text-foreground">Filtrar por Duración:</span>
+
                             <div className="flex items-center gap-2">
                                 {['todos', '6', '8', '9'].map((sem) => (
                                     <button
@@ -375,11 +376,10 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                             setDuracion(sem);
                                             handleFilter(search, estado, sem);
                                         }}
-                                        className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                                            duracion === sem
-                                                ? 'bg-[#B8D4E3] border-[#B8D4E3] text-[#2D2D2D] font-bold'
-                                                : 'bg-white border-[#D1D5DB] text-[#2D2D2D] hover:bg-[#B8D4E3]/20'
-                                        }`}
+                                        className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${duracion === sem
+                                                ? 'bg-accent border-accent text-foreground font-bold'
+                                                : 'bg-background border-border text-foreground hover:bg-accent/40'
+                                            }`}
                                     >
                                         {sem === 'todos' ? 'Todas' : `${sem} Semestres`}
                                     </button>
@@ -390,127 +390,111 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                 </div>
 
                 {/* TABLA DE CARRERAS (Con control estricto de desbordamiento horizontal) */}
-                <div className="rounded-xl border border-[#D1D5DB] overflow-hidden bg-white shadow-xs">
+                <div className="rounded-xl border border-border overflow-hidden bg-card shadow-xs">
                     <Table>
-                        <TableHeader className="bg-neutral-50/70">
-                            <TableRow className="border-b border-[#D1D5DB]">
-                                <TableHead className="w-12 text-center">
-                                    <Checkbox
-                                        checked={
-                                            carreras.data.length > 0 && selectedRows.length === carreras.data.length
-                                        }
-                                        onCheckedChange={handleSelectAll}
-                                    />
-                                </TableHead>
-                                <TableHead className="font-semibold text-[#2D2D2D] w-32">Clave</TableHead>
-                                <TableHead className="text-centerfont-semibold text-[#2D2D2D] min-w-[180px] max-w-[200px]">Nombre de la Carrera</TableHead>
-                                <TableHead className="font-semibold text-[#2D2D2D] min-w-[180px] max-w-[200px]">Descripción</TableHead>
-                                <TableHead className="font-semibold text-[#2D2D2D] w-30 text-center">Semestres</TableHead>
-                                <TableHead className="font-semibold text-[#2D2D2D] w-30 text-center">Alumnos</TableHead>
-                                <TableHead className="font-semibold text-[#2D2D2D] w-28 text-center">Estado</TableHead>
-                                <TableHead className="text-center font-semibold text-[#2D2D2D] w-45">Acciones</TableHead>
+                        <TableHeader className="bg-muted/30">
+                            <TableRow className="border-b border-border">
+                                <TableHead className="font-semibold text-foreground w-32">Clave</TableHead>
+                                <TableHead className="text-center font-semibold text-foreground min-w-[180px] max-w-[200px]">Nombre de la Carrera</TableHead>
+                                <TableHead className="font-semibold text-foreground min-w-[180px] max-w-[200px]">Descripción</TableHead>
+                                <TableHead className="font-semibold text-foreground w-30 text-center">Semestres</TableHead>
+                                <TableHead className="font-semibold text-foreground w-30 text-center">Alumnos</TableHead>
+                                <TableHead className="font-semibold text-foreground w-28 text-center">Estado</TableHead>
+                                <TableHead className="text-center font-semibold text-foreground w-45">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
 
                         <TableBody>
                             {carreras.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center py-10 text-[#9CA3AF]">
+                                    <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                                         No se encontraron carreras registradas con los filtros aplicados.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 carreras.data.map((carrera) => (
-                                    <TableRow 
-                                        key={carrera.id_carrera} 
-                                        className="border-b border-[#D1D5DB] hover:bg-[#B8D4E3]/20 transition-colors"
+                                    <TableRow
+                                        key={carrera.id_carrera}
+                                        className="border-b border-border hover:bg-accent/20 transition-colors"
                                     >
-                                        <TableCell className="text-center">
-                                            <Checkbox
-                                                checked={selectedRows.includes(carrera.id_carrera)}
-                                                onCheckedChange={() => handleSelectRow(carrera.id_carrera)}
-                                            />
-                                        </TableCell>
-
                                         {/* Clave formateada (CAR-00001) */}
-                                        <TableCell className="font-bold text-[#000000]">
+                                        <TableCell className="font-bold text-foreground">
                                             {carrera.clave}
                                         </TableCell>
 
                                         {/* Nombre de la carrera con límite de desbordamiento */}
-                                        <TableCell className="font-medium text-[#2D2D2D] max-w-[200px]">
+                                        <TableCell className="font-medium text-foreground max-w-[200px]">
                                             <span className="truncate block" title={carrera.nombre_carrera}>
                                                 {carrera.nombre_carrera}
                                             </span>
                                         </TableCell>
 
                                         {/* Descripción con límite de texto */}
-                                        <TableCell className="text-[#2D2D2D] max-w-[200px]">
-                                            <span className="truncate block text-xs text-[#2D2D2D]/80" title={carrera.descripcion || ''}>
+                                        <TableCell className="text-muted-foreground max-w-[200px]">
+                                            <span className="truncate block text-xs" title={carrera.descripcion || ''}>
                                                 {carrera.descripcion || 'Sin descripción registrada'}
                                             </span>
                                         </TableCell>
 
-                                        <TableCell className="text-[#2D2D2D] text-center">
+                                        <TableCell className="text-foreground text-center">
                                             {carrera.duracion_semestres}
                                         </TableCell>
 
-                                        <TableCell className="text-[#2D2D2D] font-medium text-center">
+                                        <TableCell className="text-foreground font-medium text-center">
                                             0
                                         </TableCell>
 
                                         <TableCell className="text-center">
-                                            {/* Insignia con color Éxito (#10B981) o Error (#EF4444) del PDF */}
+                                            {/* Insignia con color Éxito (#10B981) o Error (#EF4444) */}
                                             {carrera.estado ? (
-                                                <span className="bg-green-100 text-black badge badge-success badge-soft font-semibold text-xs px-2.5 py-1">
+                                                <span className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 badge badge-success badge-soft font-semibold text-xs px-2.5 py-1">
                                                     Vigente
                                                 </span>
                                             ) : (
-                                                <span className="bg-red-500 text-white badge badge-error badge-soft font-semibold text-xs px-2.5 py-1">
+                                                <span className="bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 badge badge-error badge-soft font-semibold text-xs px-2.5 py-1">
                                                     Inactivo
                                                 </span>
                                             )}
                                         </TableCell>
 
-                                        {/* Botones de Acción con los colores exactos del PDF (Página 6) */}
+                                        {/* Botones de Acción */}
                                         <TableCell className="text-center">
                                             <div className="flex items-center justify-center gap-1.5">
-                                                {/* Ver: borde y texto en gris (#6B7280) */}
+                                                {/* Ver: borde y texto en gris */}
                                                 <div className="tooltip tooltip-top" data-tip="Ver detalles">
-                                                    <button 
+                                                    <button
                                                         type="button"
                                                         onClick={() => handleOpenShow(carrera)}
-                                                        className="btn btn-xs bg-white border border-[#6B7280] text-[#6B7280] hover:bg-[#B8D4E3]/20 btn-square"
+                                                        className="btn btn-xs bg-background border border-muted-foreground/40 text-muted-foreground hover:bg-accent/40 btn-square"
                                                     >
                                                         <Eye className="size-3.5" />
                                                     </button>
                                                 </div>
 
-                                                {/* Editar: borde y texto en azul primario (#B8D4E3) con texto #2D2D2D */}
+                                                {/* Editar: borde y texto en amarillo */}
                                                 <div className="tooltip tooltip-top" data-tip="Editar carrera">
                                                     <button 
                                                     type="button"
-                                                    onClick={() => handleOpenEdit(carrera)} // <-- Aquí abres el modal con esa carrera
-                                                    className="btn btn-xs bg-white border border-[#FFDE21] text-[#2D2D2D] hover:bg-[#B8D4E3]/20 btn-square"
+                                                    onClick={() => handleOpenEdit(carrera)}
+                                                    className="btn btn-xs bg-background border border-[#FFDE21] text-foreground hover:bg-accent/40 btn-square"
                                                 >
                                                     <Pencil className="size-3.5" />
                                                 </button>
 
                                                 </div>
 
-                                                {/* Baja: borde y texto en rojo (#EF4444) */}
-                                                <div 
-                                                    className="tooltip tooltip-top" 
+                                                {/* Baja: borde y texto en rojo o verde */}
+                                                <div
+                                                    className="tooltip tooltip-top"
                                                     data-tip={carrera.estado ? 'Dar de baja' : 'Activar carrera'}
                                                 >
-                                                    <button 
+                                                    <button
                                                         type="button"
                                                         onClick={() => handleToggleStatus(carrera.id_carrera, carrera.estado)}
-                                                        className={`btn btn-xs bg-white border btn-square hover:bg-[#B8D4E3]/20 ${
-                                                            carrera.estado 
-                                                                ? 'border-[#EF4444] text-[#EF4444]' 
+                                                        className={`btn btn-xs bg-background border btn-square hover:bg-accent/40 ${carrera.estado
+                                                                ? 'border-[#EF4444] text-[#EF4444]'
                                                                 : 'border-[#10B981] text-[#10B981]'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <Power className="size-3.5" />
                                                     </button>
@@ -523,12 +507,12 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                         </TableBody>
                     </Table>
 
-                    {/* PAGINACIÓN INSTITUCIONAL ("Mostrando X de Y registros" y botones de navegación) */}
-                    <div className="p-4 border-t border-[#D1D5DB] bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-[#2D2D2D]">
-                        <p className="text-xs text-[#2D2D2D]/80">
-                            Mostrando <span className="font-semibold text-[#000000]">{carreras.from || 0}</span> a{' '}
-                            <span className="font-semibold text-[#000000]">{carreras.to || 0}</span> de{' '}
-                            <span className="font-semibold text-[#000000]">{carreras.total}</span> registros
+                    {/* PAGINACIÓN ("Mostrando X de Y registros" y botones de navegación) */}
+                    <div className="p-4 border-t border-border bg-card flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-foreground">
+                        <p className="text-xs text-muted-foreground">
+                            Mostrando <span className="font-semibold text-foreground">{carreras.from || 0}</span> a{' '}
+                            <span className="font-semibold text-foreground">{carreras.to || 0}</span> de{' '}
+                            <span className="font-semibold text-foreground">{carreras.total}</span> registros
                         </p>
 
                         <div className="flex items-center gap-1">
@@ -542,9 +526,8 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                         <Link
                                             key={index}
                                             href={link.url || '#'}
-                                            className={`btn btn-xs border border-[#D1D5DB] bg-white hover:bg-[#B8D4E3]/20 text-[#2D2D2D] gap-1 ${
-                                                !link.url ? 'btn-disabled opacity-40' : ''
-                                            }`}
+                                            className={`btn btn-xs border border-border bg-card hover:bg-accent/40 text-foreground gap-1 ${!link.url ? 'btn-disabled opacity-40' : ''
+                                                }`}
                                             preserveScroll
                                         >
                                             <ChevronLeft className="size-3" />
@@ -558,9 +541,8 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                         <Link
                                             key={index}
                                             href={link.url || '#'}
-                                            className={`btn btn-xs border border-[#D1D5DB] bg-white hover:bg-[#B8D4E3]/20 text-[#2D2D2D] gap-1 ${
-                                                !link.url ? 'btn-disabled opacity-40' : ''
-                                            }`}
+                                            className={`btn btn-xs border border-border bg-card hover:bg-accent/40 text-foreground gap-1 ${!link.url ? 'btn-disabled opacity-40' : ''
+                                                }`}
                                             preserveScroll
                                         >
                                             Siguiente
@@ -573,11 +555,10 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                     <Link
                                         key={index}
                                         href={link.url || '#'}
-                                        className={`btn btn-xs min-w-7 border ${
-                                            link.active
-                                                ? 'bg-[#B8D4E3] border-[#B8D4E3] text-[#2D2D2D] font-bold'
-                                                : 'bg-white border-[#D1D5DB] text-[#2D2D2D] hover:bg-[#B8D4E3]/20'
-                                        } ${!link.url ? 'btn-disabled opacity-40' : ''}`}
+                                        className={`btn btn-xs min-w-7 border ${link.active
+                                                ? 'bg-accent border-accent text-foreground font-bold'
+                                                : 'bg-card border-border text-foreground hover:bg-accent/40'
+                                            } ${!link.url ? 'btn-disabled opacity-40' : ''}`}
                                         preserveScroll
                                     >
                                         {link.label}
@@ -604,8 +585,8 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                 carrera={carreraToShow}
             />
 
-            {/* Modal para Exportar / Importar Carreras (CSV y PDF) */}
-            <ExportImportModal open={openExportImport} onOpenChange={setOpenExportImport} />
+            {/* Modal para Exportar Carreras (CSV, PDF, Word) */}
+            <ExportModal open={openExport} onOpenChange={setOpenExport} />
         </>
     );
 }

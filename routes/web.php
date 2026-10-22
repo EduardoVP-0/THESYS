@@ -40,10 +40,10 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         // Alternar estado (Activar / Desactivar carrera - Baja lógica)
         Route::patch('/carreras/{carrera}/toggle-status', [CarreraController::class, 'toggleStatus'])->name('carreras.toggle-status');
 
-        // Exportar e Importar Carreras (CSV)
+        // Exportar Carreras (CSV, PDF, Word)
         Route::get('/carreras/export-csv', [CarreraController::class, 'exportCsv'])->name('carreras.export-csv');
-        Route::post('/carreras/import', [CarreraController::class, 'import'])->name('carreras.import');
-
+        Route::get('/carreras/export-pdf', [CarreraController::class, 'exportPdf'])->name('carreras.export-pdf');
+        Route::get('/carreras/export-word', [CarreraController::class, 'exportWord'])->name('carreras.export-word');
 
         /*
         MODULO DE OFICIOS OFICIALES (CRUD ADMINISTRATIVO)

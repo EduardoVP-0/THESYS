@@ -139,16 +139,16 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
             <DialogContent
                 onPointerDownOutside={(e) => e.preventDefault()}
                 onInteractOutside={(e) => e.preventDefault()}
-                className="sm:max-w-[520px] bg-white border-[#D1D5DB] rounded-xl shadow-lg"
+                className="sm:max-w-[520px] bg-background border-border rounded-xl shadow-lg"
             >
                 <form onSubmit={handleSubmit}>
 
                     {/* Encabezado del Modal */}
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-[#000000]">
+                        <DialogTitle className="text-xl font-bold text-foreground">
                             Editar Carrera
                         </DialogTitle>
-                        <DialogDescription className="text-sm text-[#2D2D2D]/70">
+                        <DialogDescription className="text-sm text-muted-foreground">
                             Actualiza los datos de la carrera seleccionada.
                         </DialogDescription>
                     </DialogHeader>
@@ -158,15 +158,21 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
 
                         {/* Campo: Nombre de la Carrera (Obligatorio) */}
                         <div className="grid gap-1.5">
-                            <Label htmlFor="nombre_carrera" className="text-sm font-semibold text-[#2D2D2D]">
-                                Nombre de la Carrera <span className="text-[#EF4444]">*</span>
-                            </Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="nombre_carrera" className="text-sm font-semibold text-foreground">
+                                    Nombre de la Carrera <span className="text-[#EF4444]">*</span>
+                                </Label>
+                                <span className="text-[11px] text-muted-foreground">
+                                    {data.nombre_carrera.length}/50
+                                </span>
+                            </div>
                             <Input
                                 id="nombre_carrera"
+                                maxLength={50}
                                 value={data.nombre_carrera}
                                 onChange={(e) => setData('nombre_carrera', e.target.value)}
-                                placeholder="Ej: Ingeniería en Desarrollo de Software"
-                                className={`border-[#D1D5DB] focus-visible:ring-[#B8D4E3] ${
+                                placeholder="Ej: Ing. en Desarrollo de Software"
+                                className={`border-border focus-visible:ring-ring ${
                                     errors.nombre_carrera ? 'border-[#EF4444]' : ''
                                 }`}
                                 autoFocus
@@ -179,7 +185,7 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
 
                         {/* Campo: Duración en Semestres (Obligatorio, entre 1 y 9) */}
                         <div className="grid gap-1.5">
-                            <Label htmlFor="duracion_semestres" className="text-sm font-semibold text-[#2D2D2D]">
+                            <Label htmlFor="duracion_semestres" className="text-sm font-semibold text-foreground">
                                 Duración (Semestres) <span className="text-[#EF4444]">*</span>
                             </Label>
                             <Input
@@ -189,7 +195,7 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
                                 max={9}
                                 value={data.duracion_semestres}
                                 onChange={(e) => setData('duracion_semestres', parseInt(e.target.value) || 0)}
-                                className={`border-[#D1D5DB] focus-visible:ring-[#B8D4E3] ${
+                                className={`border-border focus-visible:ring-ring ${
                                     errors.duracion_semestres ? 'border-[#EF4444]' : ''
                                 }`}
                             />
@@ -200,7 +206,7 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
 
                         {/* Campo: Descripción (Opcional) */}
                         <div className="grid gap-1.5">
-                            <Label htmlFor="descripcion" className="text-sm font-semibold text-[#2D2D2D]">
+                            <Label htmlFor="descripcion" className="text-sm font-semibold text-foreground">
                                 Descripción de la carrera
                             </Label>
                             <Textarea
@@ -209,7 +215,7 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
                                 value={data.descripcion}
                                 onChange={(e) => setData('descripcion', e.target.value)}
                                 placeholder="Breve descripción del perfil o enfoque de la carrera..."
-                                className="border-[#D1D5DB] focus-visible:ring-[#B8D4E3] resize-none"
+                                className="border-border focus-visible:ring-ring resize-none"
                             />
                             {errors.descripcion && (
                                 <p className="text-xs text-[#EF4444] mt-0.5">{errors.descripcion}</p>
@@ -225,7 +231,7 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
                             type="button"
                             variant="outline"
                             onClick={() => handleClose(false)}
-                            className="btn btn-ghost btn-sm border-[#D1D5DB] text-[#2D2D2D] gap-2"
+                            className="btn btn-ghost btn-sm border-border text-foreground gap-2"
                             disabled={processing}
                         >
                             Cancelar
@@ -235,9 +241,9 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="btn btn-sm border-2 border-[#10B981] text-[#10B981] bg-white hover:bg-[#B8D4E3]/20 font-medium shadow-sm flex items-center gap-2"
+                            className="btn btn-sm border-2 border-[#10B981] text-[#10B981] bg-background hover:bg-accent/40 font-medium shadow-sm flex items-center gap-2"
                         >
-                            {/* Spinner de DaisyUI visible sólo mientras `processing` es true */}
+                            {/* Spinner de visible sólo mientras `processing` es true */}
                             {processing && <span className="loading loading-spinner loading-xs text-[#10B981]"></span>}
                             {processing ? 'Actualizando...' : 'Actualizar Carrera'}
                         </button>
