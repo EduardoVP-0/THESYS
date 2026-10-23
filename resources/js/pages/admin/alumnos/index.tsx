@@ -277,7 +277,7 @@ export default function AlumnosIndex({ alumnos, stats, carreras, filters }: Prop
                 <div className="flex flex-col gap-3">
                     <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
                         {/* Buscador reactivo */}
-                        <div className="relative w-full md:w-96">
+                        <div className="relative w-full md:w-[420px]">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                             <Input
                                 type="text"
@@ -394,16 +394,16 @@ export default function AlumnosIndex({ alumnos, stats, carreras, filters }: Prop
 
                 {/* TABLA DE ALUMNOS */}
                 <div className="rounded-xl border border-border overflow-hidden bg-card shadow-xs">
-                    <Table>
+                    <Table className="table-fixed min-w-[900px]">
                         <TableHeader className="bg-muted/30">
                             <TableRow className="border-b border-border">
-                                <TableHead className="font-semibold text-foreground min-w-[220px]">Alumno</TableHead>
-                                <TableHead className="font-semibold text-foreground w-28 text-center">Matrícula</TableHead>
-                                <TableHead className="font-semibold text-foreground min-w-[180px]">Carrera</TableHead>
-                                <TableHead className="font-semibold text-foreground w-36 text-center">Turno / Generación</TableHead>
-                                <TableHead className="font-semibold text-foreground w-32 text-center">Estado Académico</TableHead>
-                                <TableHead className="font-semibold text-foreground w-28 text-center">Acceso</TableHead>
-                                <TableHead className="text-center font-semibold text-foreground w-36">Acciones</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[23%]">Alumno</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[10%] text-center">Matrícula</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[18%]">Carrera</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[12%] text-center whitespace-normal">Turno / Generación</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[13%] text-center whitespace-normal">Estado Académico</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[11%] text-center">Acceso</TableHead>
+                                <TableHead className="text-center font-semibold text-foreground w-[13%]">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
 

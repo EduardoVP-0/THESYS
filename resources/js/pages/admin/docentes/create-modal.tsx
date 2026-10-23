@@ -8,7 +8,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -89,7 +88,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
             <DialogContent
                 onPointerDownOutside={(e) => e.preventDefault()}
                 onInteractOutside={(e) => e.preventDefault()}
-                className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-background border-border rounded-xl shadow-xl"
+                className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto overscroll-contain bg-background border-border rounded-xl shadow-xl [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/40 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/60"
             >
                 <form onSubmit={handleSubmit}>
                     {/* ENCABEZADO */}
@@ -109,9 +108,9 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                         </div>
                     </DialogHeader>
 
-                    <div className="space-y-5 py-4 text-sm">
+                    <div className="space-y-10 py-5 text-sm">
                         {/* SECCION 1: DATOS PERSONALES */}
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             <div className="flex items-center gap-2 pb-1 border-b border-border">
                                 <User className="size-4 text-[#10B981]" />
                                 <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
@@ -119,8 +118,8 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                 </h3>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div className="grid gap-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-5">
+                                <div className="grid gap-1.5">
                                     <Label htmlFor="nombre" className="text-xs font-semibold text-foreground">
                                         Nombre(s) <span className="text-[#EF4444]">*</span>
                                     </Label>
@@ -136,7 +135,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                     {errors.nombre && <p className="text-[11px] text-[#EF4444]">{errors.nombre}</p>}
                                 </div>
 
-                                <div className="grid gap-1">
+                                <div className="grid gap-1.5">
                                     <Label htmlFor="apellido_p" className="text-xs font-semibold text-foreground">
                                         Apellido Paterno <span className="text-[#EF4444]">*</span>
                                     </Label>
@@ -151,7 +150,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                     {errors.apellido_p && <p className="text-[11px] text-[#EF4444]">{errors.apellido_p}</p>}
                                 </div>
 
-                                <div className="grid gap-1">
+                                <div className="grid gap-1.5">
                                     <Label htmlFor="apellido_m" className="text-xs font-semibold text-foreground">
                                         Apellido Materno <span className="text-[#EF4444]">*</span>
                                     </Label>
@@ -167,8 +166,8 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="grid gap-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-5">
+                                <div className="grid gap-1.5">
                                     <Label htmlFor="curp" className="text-xs font-semibold text-foreground">
                                         CURP (18 caracteres) <span className="text-[#EF4444]">*</span>
                                     </Label>
@@ -183,7 +182,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                     {errors.curp && <p className="text-[11px] text-[#EF4444]">{errors.curp}</p>}
                                 </div>
 
-                                <div className="grid gap-1">
+                                <div className="grid gap-1.5">
                                     <Label htmlFor="telefono" className="text-xs font-semibold text-foreground">
                                         Teléfono de Contacto
                                     </Label>
@@ -201,7 +200,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                         </div>
 
                         {/* SECCION 2: DATOS ACADEMICOS Y LABORALES */}
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             <div className="flex items-center gap-2 pb-1 border-b border-border">
                                 <Briefcase className="size-4 text-[#10B981]" />
                                 <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
@@ -209,8 +208,8 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                 </h3>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="grid gap-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-5">
+                                <div className="grid gap-1.5">
                                     <Label htmlFor="cedula_profesional" className="text-xs font-semibold text-foreground">
                                         Cédula Profesional <span className="text-[#EF4444]">*</span>
                                     </Label>
@@ -225,7 +224,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                     {errors.cedula_profesional && <p className="text-[11px] text-[#EF4444]">{errors.cedula_profesional}</p>}
                                 </div>
 
-                                <div className="grid gap-1">
+                                <div className="grid gap-1.5">
                                     <Label htmlFor="especialidad" className="text-xs font-semibold text-foreground">
                                         Especialidad / Área de Conocimiento <span className="text-[#EF4444]">*</span>
                                     </Label>
@@ -241,8 +240,8 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="grid gap-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-5">
+                                <div className="grid gap-1.5">
                                     <Label htmlFor="grado_academico" className="text-xs font-semibold text-foreground">
                                         Grado Académico <span className="text-[#EF4444]">*</span>
                                     </Label>
@@ -263,7 +262,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                     {errors.grado_academico && <p className="text-[11px] text-[#EF4444]">{errors.grado_academico}</p>}
                                 </div>
 
-                                <div className="grid gap-1">
+                                <div className="grid gap-1.5">
                                     <Label htmlFor="tipo_contrato" className="text-xs font-semibold text-foreground">
                                         Tipo de Contrato <span className="text-[#EF4444]">*</span>
                                     </Label>
@@ -287,7 +286,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                         </div>
 
                         {/* SECCION 3: CUENTA INSTITUCIONAL */}
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             <div className="flex items-center gap-2 pb-1 border-b border-border">
                                 <Mail className="size-4 text-[#10B981]" />
                                 <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
@@ -295,7 +294,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                 </h3>
                             </div>
 
-                            <div className="grid gap-1.5">
+                            <div className="grid gap-2">
                                 <Label htmlFor="email" className="text-xs font-semibold text-foreground">
                                     Correo Institucional (Debe terminar en @unach.mx) <span className="text-[#EF4444]">*</span>
                                 </Label>
@@ -320,21 +319,20 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                     </div>
 
                     {/* PIE */}
-                    <DialogFooter className="gap-2 sm:gap-0 mt-2">
-                        <Button
+                    <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end items-center gap-3 mt-4">
+                        <button
                             type="button"
-                            variant="outline"
                             onClick={() => handleClose(false)}
-                            className="btn btn-ghost btn-sm border-border text-foreground"
                             disabled={processing}
+                            className="btn btn-sm min-w-[140px] border-2 border-border text-foreground hover:bg-accent/40 hover:border-muted-foreground/50 bg-background font-medium shadow-sm flex items-center justify-center gap-2 transition-colors"
                         >
                             Cancelar
-                        </Button>
+                        </button>
 
                         <button
                             type="submit"
                             disabled={processing}
-                            className="btn btn-sm border-2 border-[#10B981] text-[#10B981] bg-background hover:bg-accent/40 font-semibold shadow-xs flex items-center gap-2"
+                            className="btn btn-sm min-w-[140px] border-2 border-[#10B981] text-[#10B981] bg-background hover:bg-accent/40 font-medium shadow-sm flex items-center justify-center gap-2 transition-colors"
                         >
                             {processing && <span className="loading loading-spinner loading-xs text-[#10B981]"></span>}
                             {processing ? 'Registrando y enviando...' : 'Registrar Docente'}
