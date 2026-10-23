@@ -40,44 +40,11 @@ import { CreateModal } from './create-modal';
 import { EditModal } from './edit-modal'; 
 import { ShowModal } from './show-modal';
 import { ExportModal } from './export-modal';
-
-// DEFINICIÓN DE TIPOS (TypeScript)
-interface Carrera {
-    id_carrera: number;
-    clave: string; // Formateada con el Accessor del modelo (ej: CAR-00001)
-    nombre_carrera: string;
-    descripcion: string | null;
-    duracion_semestres: number;
-    estado: boolean;
-}
-
-interface Stats {
-    total: number;
-    activas: number;
-    inactivas: number;
-    alumnos_vigentes: number;
-}
-
-interface PaginationLink {
-    url: string | null;
-    label: string;
-    active: boolean;
-}
-
-interface PaginatedCarreras {
-    data: Carrera[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    from: number | null;
-    to: number | null;
-    links: PaginationLink[];
-}
+import { Carrera, CarreraStats, PaginatedCarreras } from './types';
 
 interface Props {
     carreras: PaginatedCarreras;
-    stats: Stats;
+    stats: CarreraStats;
     filters: {
         search?: string;
         estado?: string;

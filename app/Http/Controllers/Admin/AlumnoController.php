@@ -127,18 +127,8 @@ class AlumnoController extends Controller
             Log::error("Error al enviar correo de credenciales al alumno: {$e->getMessage()}");
         }
 
-        // Registro de log local en storage/logs/laravel.log para referencia durante desarrollo, eliminar despues
-        Log::info("Alumno registrado: Matrícula {$alumno->matricula} | Correo: {$validated['email']} | Clave temporal: {$plainPassword}");
-
-        // Redirección con mensaje de éxito y datos de credenciales para mostrar al administrador
         return redirect()->route('admin.alumnos.index')
-            ->with('success', 'Alumno registrado exitosamente en el sistema.')
-            ->with('credentials', [
-                'nombre' => $alumno->nombre_completo,
-                'matricula' => $alumno->matricula,
-                'email' => strtolower($validated['email']),
-                'password' => $plainPassword,
-            ]);
+            ->with('success', 'Alumno registrado exitosamente en el sistema.');
     }
 
     /**

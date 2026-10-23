@@ -7,7 +7,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlumnoData } from './edit-modal';
+import { AlumnoData } from './types';
 import {
     UserCheck,
     GraduationCap,

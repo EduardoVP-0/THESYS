@@ -11,22 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-
-// ─── TIPOS ────────────────────────────────────────────────────────────────────
-
-/**
- * Tipo Carrera: espejo del modelo Eloquent en PHP.
- * Debe mantenerse sincronizado con los campos de la tabla `tblcarreras`
- * y con el accessor `clave` definido en App\Models\Carrera.
- */
-interface Carrera {
-    id_carrera: number;        // Clave primaria de la tabla
-    clave: string;             // Accessor calculado: "CAR-00001"
-    nombre_carrera: string;
-    descripcion: string | null;
-    duracion_semestres: number;
-    estado: boolean;           // Baja lógica: true = vigente, false = inactiva
-}
+import { Carrera } from './types';
 
 // ─── PROPS DEL COMPONENTE ─────────────────────────────────────────────────────
 

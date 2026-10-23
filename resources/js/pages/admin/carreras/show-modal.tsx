@@ -8,15 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Clock, Info } from 'lucide-react';
-
-// 1. Definimos qué datos tiene la carrera
-interface Carrera {
-    id_carrera: number;
-    nombre_carrera: string;
-    descripcion: string | null;
-    duracion_semestres: number;
-    estado: boolean;
-}
+import { Carrera } from './types';
 
 // 2. Definimos las props que recibirá el componente desde index.tsx
 interface ShowModalProps {

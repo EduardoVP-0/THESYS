@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AlumnoController;
 use App\Http\Controllers\Admin\CarreraController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DocenteController;
 use App\Http\Controllers\Admin\OficiosOficialesController;
 use Illuminate\Support\Facades\Route;
 
@@ -78,6 +79,20 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
 
         // Redirección amigable por si se accede mediante /admin/estudiantes
         Route::redirect('/estudiantes', '/admin/alumnos');
+
+        /*
+        MODULO DE DOCENTES (CRUD ADMINISTRATIVO)
+        */
+        // Listado de docentes con paginacion, filtros y metricas
+        Route::get('/docentes', [DocenteController::class, 'index'])->name('docentes.index');
+        // Registrar un nuevo docente (transaccion en users + tbldocentes)
+        Route::post('/docentes', [DocenteController::class, 'store'])->name('docentes.store');
+        // Actualizar datos del docente
+        Route::put('/docentes/{docente}', [DocenteController::class, 'update'])->name('docentes.update');
+        // Alternar estado de la cuenta (Activar / Suspender acceso)
+        Route::patch('/docentes/{docente}/toggle-status', [DocenteController::class, 'toggleStatus'])->name('docentes.toggle-status');
+        // Redireccion amigable por si se accede mediante /admin/profesores
+        Route::redirect('/profesores', '/admin/docentes');
     });
 
 /*Route::get('products', [ProductController::class, 'index'])->name('products.index');

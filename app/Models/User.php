@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Admin\Alumno;
+use App\Models\Admin\Docente;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -56,5 +57,13 @@ class User extends Authenticatable
     public function alumno(): HasOne
     {
         return $this->hasOne(Alumno::class, 'id_usuario', 'id');
+    }
+
+    /**
+     * Relación uno a uno con los datos del docente (expediente en tbldocentes).
+     */
+    public function docente(): HasOne
+    {
+        return $this->hasOne(Docente::class, 'id_usuario', 'id');
     }
 }

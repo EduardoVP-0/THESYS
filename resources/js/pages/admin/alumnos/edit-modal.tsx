@@ -19,44 +19,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Pencil, User, GraduationCap, Mail } from 'lucide-react';
-
-interface CarreraItem {
-    id_carrera: number;
-    nombre_carrera: string;
-}
-
-export interface AlumnoData {
-    id_usuario: number;
-    matricula: string;
-    nombre: string;
-    apellido_p: string;
-    apellido_m: string;
-    nombre_completo?: string;
-    iniciales?: string;
-    fecha_nacimiento?: string;
-    sexo?: string;
-    curp: string;
-    telefono?: string;
-    calle?: string;
-    colonia?: string;
-    codigo_postal?: string;
-    id_carrera: number;
-    turno: 'Matutino' | 'Vespertino' | 'Mixto';
-    fecha_ingreso?: string;
-    generacion?: string;
-    estado_academico: string;
-    user?: {
-        id: number;
-        name: string;
-        email: string;
-        estado: boolean;
-        id_rol: number;
-    };
-    carrera?: {
-        id_carrera: number;
-        nombre_carrera: string;
-    };
-}
+import { AlumnoData, CarreraItem } from './types';
+export type { AlumnoData, CarreraItem };
 
 interface EditModalProps {
     open: boolean;

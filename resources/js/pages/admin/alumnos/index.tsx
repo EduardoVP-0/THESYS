@@ -39,43 +39,13 @@ import {
 
 // Modales del módulo de Alumnos
 import { CreateModal } from './create-modal';
-import { EditModal, AlumnoData } from './edit-modal';
+import { EditModal } from './edit-modal';
 import { ShowModal } from './show-modal';
-import { CredencialesModal, CredentialsData } from './credenciales-modal';
-
-// DEFINICIÓN DE INTERFACES TYPESCRIPT
-interface CarreraItem {
-    id_carrera: number;
-    nombre_carrera: string;
-}
-
-interface Stats {
-    total: number;
-    activos: number;
-    egresados: number;
-    bajas: number;
-}
-
-interface PaginationLink {
-    url: string | null;
-    label: string;
-    active: boolean;
-}
-
-interface PaginatedAlumnos {
-    data: AlumnoData[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    from: number | null;
-    to: number | null;
-    links: PaginationLink[];
-}
+import { AlumnoData, AlumnoStats, CarreraItem, PaginatedAlumnos } from './types';
 
 interface Props {
     alumnos: PaginatedAlumnos;
-    stats: Stats;
+    stats: AlumnoStats;
     carreras: CarreraItem[];
     filters: {
         search?: string;
@@ -98,7 +68,6 @@ export default function AlumnosIndex({ alumnos, stats, carreras, filters }: Prop
         flash?: { 
             success?: string; 
             error?: string; 
-            credentials?: CredentialsData; 
         } 
     }>().props;
 
@@ -109,12 +78,10 @@ export default function AlumnosIndex({ alumnos, stats, carreras, filters }: Prop
     const [openCreate, setOpenCreate] = useState(false);
     const [openEdit, setOpenEdit] = useState(false);
     const [openShow, setOpenShow] = useState(false);
-    const [openCredentials, setOpenCredentials] = useState(false);
 
     // Registros seleccionados para ver/editar
     const [alumnoToShow, setAlumnoToShow] = useState<AlumnoData | null>(null);
     const [alumnoToEdit, setAlumnoToEdit] = useState<AlumnoData | null>(null);
-    const [credentialsData, setCredentialsData] = useState<CredentialsData | null>(null);
 
     // Filtros de búsqueda locales
     const [search, setSearch] = useState(filters.search || '');
@@ -133,16 +100,6 @@ export default function AlumnosIndex({ alumnos, stats, carreras, filters }: Prop
             return () => clearTimeout(timer);
         }
     }, [flash?.success]);
-
-    /**
-     * EFECTO: Apertura automática del modal de credenciales al crear un alumno
-     */
-    useEffect(() => {
-        if (flash?.credentials) {
-            setCredentialsData(flash.credentials);
-            setOpenCredentials(true);
-        }
-    }, [flash?.credentials]);
 
     /**
      * Aplica los filtros reactivos enviando petición GET con Inertia
@@ -662,12 +619,6 @@ export default function AlumnosIndex({ alumnos, stats, carreras, filters }: Prop
                 open={openShow}
                 onOpenChange={setOpenShow}
                 alumno={alumnoToShow}
-            />
-
-            <CredencialesModal
-                open={openCredentials}
-                onOpenChange={setOpenCredentials}
-                credentials={credentialsData}
             />
         </>
     );

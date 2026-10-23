@@ -19,11 +19,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { UserPlus, User, GraduationCap, Mail, Info, MapPin } from 'lucide-react';
-
-interface CarreraItem {
-    id_carrera: number;
-    nombre_carrera: string;
-}
+import { CarreraItem } from './types';
 
 interface CreateModalProps {
     open: boolean;
