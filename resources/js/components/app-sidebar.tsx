@@ -36,10 +36,10 @@ const mainNavItems: NavItem[] = [
                 href: '/admin/docentes'
             },
             {
-                title: 'Estudiantes',
-                href: '/admin/estudiantes'
+                title: 'Alumnos',
+                href: '/admin/alumnos',
             },
-        ]
+        ],
     },
 
     {
