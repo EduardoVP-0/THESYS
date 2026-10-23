@@ -31,7 +31,7 @@ export function ShowModal({ open, onOpenChange, carrera }: ShowModalProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[480px] bg-background border border-border">
+            <DialogContent className="sm:max-w-[480px] bg-background border border-border overflow-hidden">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
                         <BookOpen className="size-5 text-[#B8D4E3]" />
@@ -43,13 +43,13 @@ export function ShowModal({ open, onOpenChange, carrera }: ShowModalProps) {
                 </DialogHeader>
 
                 {/* CUERPO: Mostramos la información formateada */}
-                <div className="space-y-4 py-2">
+                <div className="space-y-4 py-2 min-w-0">
                     {/* Nombre */}
-                    <div className="rounded-lg bg-muted/30 p-3 border border-border">
+                    <div className="rounded-lg bg-muted/30 p-3 border border-border min-w-0">
                         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Nombre de la Carrera
                         </span>
-                        <p className="text-base font-semibold text-foreground mt-0.5">
+                        <p className="text-base font-semibold text-foreground mt-0.5 break-all">
                             {carrera.nombre_carrera}
                         </p>
                     </div>
@@ -83,22 +83,24 @@ export function ShowModal({ open, onOpenChange, carrera }: ShowModalProps) {
                         </div>
                     </div>
 
-                    {/* Descripción */}
-                    <div className="rounded-lg bg-muted/30 p-3 border border-border">
+                    {/* Descripción con scroll vertical y salto de línea */}
+                    <div className="rounded-lg bg-muted/30 p-3 border border-border min-w-0">
                         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Descripción
                         </span>
-                        <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
-                            {carrera.descripcion ? carrera.descripcion : 'Sin descripción registrada.'}
-                        </p>
+                        <div className="max-h-48 overflow-y-auto pr-1 mt-1">
+                            <p className="text-sm text-muted-foreground whitespace-pre-line break-all">
+                                {carrera.descripcion ? carrera.descripcion : 'Sin descripción registrada.'}
+                            </p>
+                        </div>
                     </div>
                 </div>
 
                 {/* Pie con botón para cerrar */}
                 <DialogFooter>
-                    <Button 
-                        type="button" 
-                        variant="outline" 
+                    <Button
+                        type="button"
+                        variant="outline"
                         onClick={() => onOpenChange(false)}
                         className="border-border text-foreground"
                     >
