@@ -8,7 +8,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -224,24 +223,23 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
                     </div>
 
                     {/* ── BOTONES DE ACCIÓN ─────────────────────────────────── */}
-                    <DialogFooter className="gap-2 sm:gap-0 mt-2">
+                    <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end items-center gap-3 mt-4">
 
                         {/* Cancelar: limpia el formulario y cierra el modal */}
-                        <Button
+                        <button
                             type="button"
-                            variant="outline"
                             onClick={() => handleClose(false)}
-                            className="btn btn-ghost btn-sm border-border text-foreground gap-2"
                             disabled={processing}
+                            className="btn btn-sm min-w-[140px] border-2 border-border text-foreground hover:bg-accent/40 hover:border-muted-foreground/50 bg-background font-medium shadow-sm flex items-center justify-center gap-2 transition-colors"
                         >
                             Cancelar
-                        </Button>
+                        </button>
 
                         {/* Actualizar: envía PUT y muestra spinner mientras procesa */}
                         <button
                             type="submit"
                             disabled={processing}
-                            className="btn btn-sm border-2 border-[#10B981] text-[#10B981] bg-background hover:bg-accent/40 font-medium shadow-sm flex items-center gap-2"
+                            className="btn btn-sm min-w-[140px] border-2 border-[#10B981] text-[#10B981] bg-background hover:bg-accent/40 font-medium shadow-sm flex items-center justify-center gap-2 transition-colors"
                         >
                             {/* Spinner de visible sólo mientras `processing` es true */}
                             {processing && <span className="loading loading-spinner loading-xs text-[#10B981]"></span>}

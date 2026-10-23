@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AlumnoController;
 use App\Http\Controllers\Admin\CarreraController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OficiosOficialesController;
@@ -8,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', fn() => redirect()->route('admin.dashboard'))->name('dashboard');
+    Route::get('dashboard', fn () => redirect()->route('admin.dashboard'))->name('dashboard');
 });
 
 // Rutas de Administrador (Roles 1, 2 y 3)
@@ -58,6 +59,25 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         // Formulario de edición con los datos cargados
         // Actualizar la información del oficio oficial
         // Alternar estado (Activar / Desactivar oficio oficial - Baja lógica)
+
+        /*
+        MODULO DE ALUMNOS (CRUD ADMINISTRATIVO)
+        */
+
+        // Listado de alumnos con paginación, filtros y métricas
+        Route::get('/alumnos', [AlumnoController::class, 'index'])->name('alumnos.index');
+
+        // Registrar un nuevo alumno (transacción en users + tblalumnos)
+        Route::post('/alumnos', [AlumnoController::class, 'store'])->name('alumnos.store');
+
+        // Actualizar datos del alumno
+        Route::put('/alumnos/{alumno}', [AlumnoController::class, 'update'])->name('alumnos.update');
+
+        // Alternar estado de la cuenta (Activar / Suspender acceso)
+        Route::patch('/alumnos/{alumno}/toggle-status', [AlumnoController::class, 'toggleStatus'])->name('alumnos.toggle-status');
+
+        // Redirección amigable por si se accede mediante /admin/estudiantes
+        Route::redirect('/estudiantes', '/admin/alumnos');
     });
 
 /*Route::get('products', [ProductController::class, 'index'])->name('products.index');
@@ -67,4 +87,4 @@ Route::get('products/edit/{product}', [ProductController::class, 'edit'])->name(
 Route::put('products/{product}', [ProductController::class,'update'])->name('products.update');
 Route::delete('products/{product}', [ProductController::class,'destroy'])->name('products.destroy');*/
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';
