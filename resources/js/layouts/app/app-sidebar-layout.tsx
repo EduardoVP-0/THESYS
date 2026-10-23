@@ -16,5 +16,5 @@ export default function AppSidebarLayout({
                 {children}
             </AppContent>
         </AppShell>
-    );
+    
 }
