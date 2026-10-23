@@ -97,7 +97,7 @@ const mainNavItems: NavItem[] = [
 
     {
         title: 'Pagos',
-        href: '/pagos',
+        href: '/admin/pagos',
         icon: DollarSign
     },
 ];

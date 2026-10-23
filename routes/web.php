@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CarreraController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DocenteController;
 use App\Http\Controllers\Admin\OficiosOficialesController;
+use App\Http\Controllers\Admin\PagoController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -89,6 +90,7 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         /*
         MODULO DE DOCENTES (CRUD ADMINISTRATIVO)
         */
+
         // Listado de docentes con paginacion, filtros y metricas
         Route::get('/docentes', [DocenteController::class, 'index'])->name('docentes.index');
         // Registrar un nuevo docente (transaccion en users + tbldocentes)
@@ -99,6 +101,15 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::patch('/docentes/{docente}/toggle-status', [DocenteController::class, 'toggleStatus'])->name('docentes.toggle-status');
         // Redireccion amigable por si se accede mediante /admin/profesores
         Route::redirect('/profesores', '/admin/docentes');
+
+        /*
+        MODULO DE PAGOS (CRUD ADMINISTRATIVO)
+        */
+
+        // Listado de pagos con paginacion, filtros y metricas
+        Route::get('/pagos', [PagoController::class, 'index'])->name('pagos.index');
+        // Actualizar estado de validación (Validar / Rechazar pago)
+        Route::patch('/pagos/{id}/estado', [PagoController::class, 'updateEstado'])->name('pagos.update-estado');
     });
 
 /*Route::get('products', [ProductController::class, 'index'])->name('products.index');

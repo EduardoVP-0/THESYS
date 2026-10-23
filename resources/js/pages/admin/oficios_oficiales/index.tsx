@@ -520,7 +520,7 @@ export default function OficiosIndex({ oficios, pendientesPorTipo = {}, filters 
 OficiosIndex.layout = {
     breadcrumbs: [
         {
-            title: 'Admin',
+            title: 'Inicio',
             href: '/admin/dashboard',
         },
         {
