@@ -45,7 +45,7 @@ export function EditModal({ open, onOpenChange, docente }: EditModalProps) {
     });
 
     useEffect(() => {
-        if (docente) {
+        if (docente && open) {
             setData({
                 email: docente.user?.email || '',
                 nombre: docente.nombre || '',
@@ -59,7 +59,7 @@ export function EditModal({ open, onOpenChange, docente }: EditModalProps) {
                 tipo_contrato: docente.tipo_contrato || 'Tiempo completo',
             });
         }
-    }, [docente]);
+    }, [docente, open]);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -102,21 +102,21 @@ export function EditModal({ open, onOpenChange, docente }: EditModalProps) {
             <DialogContent
                 onPointerDownOutside={(e) => e.preventDefault()}
                 onInteractOutside={(e) => e.preventDefault()}
-                className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-background border-border rounded-xl shadow-xl"
+                className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto overflow-x-hidden bg-background border-border rounded-xl shadow-xl"
             >
                 <form onSubmit={handleSubmit}>
                     {/* ENCABEZADO */}
                     <DialogHeader>
                         <div className="flex items-center gap-2">
-                            <div className="p-2 rounded-lg bg-[#10B981]/15 text-[#10B981]">
+                            <div className="p-2 rounded-lg bg-amber-500/15 text-amber-500">
                                 <Pencil className="size-5" />
                             </div>
                             <div>
                                 <DialogTitle className="text-xl font-bold text-foreground">
-                                    Editar Expediente Docente
+                                    Editar Expediente del Docente
                                 </DialogTitle>
                                 <DialogDescription className="text-xs text-muted-foreground">
-                                    Actualiza la información personal, académica o cuenta de {docente?.nombre_completo || 'docente'}.
+                                    Modifica los datos personales, laborales o de acceso del docente.
                                 </DialogDescription>
                             </div>
                         </div>
@@ -126,7 +126,7 @@ export function EditModal({ open, onOpenChange, docente }: EditModalProps) {
                         {/* SECCIÓN 1: DATOS PERSONALES */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 pb-1 border-b border-border">
-                                <User className="size-4 text-[#10B981]" />
+                                <User className="size-4 text-amber-500" />
                                 <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                                     Información Personal
                                 </h3>
@@ -210,7 +210,7 @@ export function EditModal({ open, onOpenChange, docente }: EditModalProps) {
                         {/* SECCIÓN 2: DATOS ACADÉMICOS Y LABORALES */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 pb-1 border-b border-border">
-                                <Briefcase className="size-4 text-[#10B981]" />
+                                <Briefcase className="size-4 text-amber-500" />
                                 <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                                     Información Académica y Laboral
                                 </h3>
@@ -294,7 +294,7 @@ export function EditModal({ open, onOpenChange, docente }: EditModalProps) {
                         {/* SECCIÓN 3: CUENTA INSTITUCIONAL */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 pb-1 border-b border-border">
-                                <Mail className="size-4 text-[#10B981]" />
+                                <Mail className="size-4 text-amber-500" />
                                 <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                                     Cuenta y Acceso al Sistema
                                 </h3>
@@ -317,24 +317,23 @@ export function EditModal({ open, onOpenChange, docente }: EditModalProps) {
                     </div>
 
                     {/* PIE */}
-                    <DialogFooter className="gap-2 sm:gap-0 mt-2">
-                        <Button
+                    <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end items-center gap-3 mt-4">
+                        <button
                             type="button"
-                            variant="outline"
                             onClick={() => handleClose(false)}
-                            className="btn btn-ghost btn-sm border-border text-foreground"
+                            className="btn btn-sm min-w-[140px] border-2 border-border text-foreground hover:bg-accent/40 hover:border-muted-foreground/50 bg-background font-medium shadow-sm flex items-center justify-center gap-2 transition-colors"
                             disabled={processing}
                         >
                             Cancelar
-                        </Button>
+                        </button>
 
                         <button
                             type="submit"
                             disabled={processing}
-                            className="btn btn-sm border-2 border-[#10B981] text-[#10B981] bg-background hover:bg-accent/40 font-semibold shadow-xs flex items-center gap-2"
+                            className="btn btn-sm border-2 border-amber-500 text-amber-600 dark:text-amber-400 bg-background hover:bg-accent/40 font-semibold shadow-xs flex items-center gap-2"
                         >
-                            {processing && <span className="loading loading-spinner loading-xs text-[#10B981]"></span>}
-                            {processing ? 'Guardando cambios...' : 'Guardar Cambios'}
+                            {processing && <span className="loading loading-spinner loading-xs text-amber-500"></span>}
+                            {processing ? 'Actualizando...' : 'Actualizar Expediente'}
                         </button>
                     </DialogFooter>
                 </form>

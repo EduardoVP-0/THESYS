@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdministradorController;
 use App\Http\Controllers\Admin\AlumnoController;
 use App\Http\Controllers\Admin\CarreraController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -99,6 +100,18 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::patch('/docentes/{docente}/toggle-status', [DocenteController::class, 'toggleStatus'])->name('docentes.toggle-status');
         // Redireccion amigable por si se accede mediante /admin/profesores
         Route::redirect('/profesores', '/admin/docentes');
+
+        /*
+        MODULO DE ADMINISTRADORES (CRUD ADMINISTRATIVO)
+        */
+        // Listado de administradores con paginacion, filtros y metricas
+        Route::get('/administradores', [AdministradorController::class, 'index'])->name('administradores.index');
+        // Registrar un nuevo administrador (transaccion en users + tbladministradores)
+        Route::post('/administradores', [AdministradorController::class, 'store'])->name('administradores.store');
+        // Actualizar datos del administrador
+        Route::put('/administradores/{administrador}', [AdministradorController::class, 'update'])->name('administradores.update');
+        // Alternar estado de la cuenta (Activar / Suspender acceso)
+        Route::patch('/administradores/{administrador}/toggle-status', [AdministradorController::class, 'toggleStatus'])->name('administradores.toggle-status');
     });
 
 /*Route::get('products', [ProductController::class, 'index'])->name('products.index');

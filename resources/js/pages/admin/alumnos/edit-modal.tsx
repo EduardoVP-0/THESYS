@@ -51,7 +51,7 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
     });
 
     useEffect(() => {
-        if (alumno) {
+        if (alumno && open) {
             setData({
                 email: alumno.user?.email || '',
                 nombre: alumno.nombre || '',
@@ -69,7 +69,7 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
                 estado_academico: alumno.estado_academico || 'Activo',
             });
         }
-    }, [alumno]);
+    }, [alumno, open]);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -208,7 +208,6 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
                                         <SelectContent className="bg-popover border-border">
                                             <SelectItem value="Masculino">Masculino</SelectItem>
                                             <SelectItem value="Femenino">Femenino</SelectItem>
-                                            <SelectItem value="Otro">Otro</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -383,16 +382,15 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
                     </div>
 
                     {/* PIE */}
-                    <DialogFooter className="gap-2 sm:gap-0 mt-2">
-                        <Button
+                    <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end items-center gap-3 mt-4">
+                        <button
                             type="button"
-                            variant="outline"
                             onClick={() => handleClose(false)}
-                            className="btn btn-ghost btn-sm border-border text-foreground"
+                            className="btn btn-sm min-w-[140px] border-2 border-border text-foreground hover:bg-accent/40 hover:border-muted-foreground/50 bg-background font-medium shadow-sm flex items-center justify-center gap-2 transition-colors"
                             disabled={processing}
                         >
                             Cancelar
-                        </Button>
+                        </button>
 
                         <button
                             type="submit"

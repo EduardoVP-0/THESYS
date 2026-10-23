@@ -246,7 +246,7 @@ export default function DocentesIndex({ docentes, stats, filters }: Props) {
                 <div className="flex flex-col gap-3">
                     <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
                         {/* Buscador reactivo */}
-                        <div className="relative w-full md:w-96">
+                        <div className="relative w-full md:w-[480px] lg:w-[540px]">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                             <Input
                                 type="text"
