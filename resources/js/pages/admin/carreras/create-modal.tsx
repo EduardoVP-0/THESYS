@@ -8,7 +8,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -66,7 +65,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
     return (
         <Dialog open={open} onOpenChange={handleClose}>
             {/* onPointerDownOutside y onInteractOutside evitan que el modal se cierre al hacer clic afuera */}
-            <DialogContent 
+            <DialogContent
                 onPointerDownOutside={(e) => e.preventDefault()}
                 onInteractOutside={(e) => e.preventDefault()}
                 className="sm:max-w-[520px] bg-background border-border rounded-xl shadow-lg"
@@ -100,9 +99,8 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                 value={data.nombre_carrera}
                                 onChange={(e) => setData('nombre_carrera', e.target.value)}
                                 placeholder="Ej: Ing. en Desarrollo de Software"
-                                className={`border-border focus-visible:ring-ring ${
-                                    errors.nombre_carrera ? 'border-[#EF4444]' : ''
-                                }`}
+                                className={`border-border focus-visible:ring-ring ${errors.nombre_carrera ? 'border-[#EF4444]' : ''
+                                    }`}
                                 autoFocus
                             />
                             {/* Mensaje de error de validación (proviene de StoreCarreraRequest) */}
@@ -123,9 +121,8 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                 max={9}
                                 value={data.duracion_semestres}
                                 onChange={(e) => setData('duracion_semestres', parseInt(e.target.value) || 0)}
-                                className={`border-border focus-visible:ring-ring ${
-                                    errors.duracion_semestres ? 'border-[#EF4444]' : ''
-                                }`}
+                                className={`border-border focus-visible:ring-ring ${errors.duracion_semestres ? 'border-[#EF4444]' : ''
+                                    }`}
                             />
                             {errors.duracion_semestres && (
                                 <p className="text-xs text-[#EF4444] mt-0.5">{errors.duracion_semestres}</p>
@@ -152,21 +149,20 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                     </div>
 
                     {/* Botones de acción del Modal */}
-                    <DialogFooter className="gap-2 sm:gap-0 mt-2">
-                        <Button
+                    <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end items-center gap-3 mt-4">
+                        <button
                             type="button"
-                            variant="outline"
                             onClick={() => handleClose(false)}
-                            className="btn btn-ghost btn-sm border-border text-foreground gap-2"
                             disabled={processing}
+                            className="btn btn-sm min-w-[140px] border-2 border-border text-foreground hover:bg-accent/40 hover:border-muted-foreground/50 bg-background font-medium shadow-sm flex items-center justify-center gap-2 transition-colors"
                         >
                             Cancelar
-                        </Button>
+                        </button>
 
                         <button
                             type="submit"
                             disabled={processing}
-                            className="btn btn-sm border-2 border-[#10B981] text-[#10B981] bg-background hover:bg-accent/40 font-medium shadow-sm flex items-center gap-2"
+                            className="btn btn-sm min-w-[140px] border-2 border-[#10B981] text-[#10B981] bg-background hover:bg-accent/40 font-medium shadow-sm flex items-center justify-center gap-2 transition-colors"
                         >
                             {/* Spinner animado mientras se guarda */}
                             {processing && <span className="loading loading-spinner loading-xs text-[#10B981]"></span>}
