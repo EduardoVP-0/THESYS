@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\CarreraController;
-use App\Http\Controllers\Admin\OficiosOficialesController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\OficiosOficialesController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -49,7 +49,15 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         MODULO DE OFICIOS OFICIALES (CRUD ADMINISTRATIVO)
         */
 
+        // Listado de oficios oficiales
         Route::get('/oficios_oficiales', [OficiosOficialesController::class, 'index'])->name('oficios_oficiales.index');
+        // Formulario para registrar un nuevo oficio oficial
+        Route::get('oficios_oficiales/create', [OficiosOficialesController::class, 'create'])->name('oficios_oficiales.create');
+        // Almacenar el nuevo oficio oficial en la base de datos
+        Route::post('oficios_oficiales', [OficiosOficialesController::class, 'store'])->name('oficios_oficiales.store');
+        // Formulario de edición con los datos cargados
+        // Actualizar la información del oficio oficial
+        // Alternar estado (Activar / Desactivar oficio oficial - Baja lógica)
     });
 
 /*Route::get('products', [ProductController::class, 'index'])->name('products.index');
