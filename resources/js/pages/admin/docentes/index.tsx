@@ -363,16 +363,16 @@ export default function DocentesIndex({ docentes, stats, filters }: Props) {
 
                 {/* TABLA DE DOCENTES */}
                 <div className="rounded-xl border border-border overflow-hidden bg-card shadow-xs">
-                    <Table>
+                    <Table className="table-fixed min-w-[900px]">
                         <TableHeader className="bg-muted/30">
                             <TableRow className="border-b border-border">
-                                <TableHead className="font-semibold text-foreground min-w-[220px]">Docente</TableHead>
-                                <TableHead className="font-semibold text-foreground w-28 text-center">Cédula</TableHead>
-                                <TableHead className="font-semibold text-foreground min-w-[180px]">Especialidad</TableHead>
-                                <TableHead className="font-semibold text-foreground w-32 text-center">Grado</TableHead>
-                                <TableHead className="font-semibold text-foreground w-36 text-center">Contrato</TableHead>
-                                <TableHead className="font-semibold text-foreground w-28 text-center">Acceso</TableHead>
-                                <TableHead className="text-center font-semibold text-foreground w-36">Acciones</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[24%]">Docente</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[10%] text-center">Cédula</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[19%]">Especialidad</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[11%] text-center">Grado</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[12%] text-center">Contrato</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[11%] text-center">Acceso</TableHead>
+                                <TableHead className="text-center font-semibold text-foreground w-[13%]">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
 

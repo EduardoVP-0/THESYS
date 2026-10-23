@@ -45,18 +45,18 @@ export function ShowModal({ open, onOpenChange, alumno }: ShowModalProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px] bg-background border border-border rounded-xl shadow-xl">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto overflow-x-hidden bg-background border border-border rounded-xl shadow-xl">
                 {/* ENCABEZADO CON AVATAR */}
                 <DialogHeader className="border-b border-border pb-4">
                     <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-full bg-[#10B981]/15 text-[#10B981] flex items-center justify-center font-bold text-lg border border-[#10B981]/30">
+                        <div className="size-12 rounded-full bg-[#10B981]/15 text-[#10B981] flex items-center justify-center font-bold text-lg border border-[#10B981]/30 shrink-0">
                             {alumno.iniciales || 'AL'}
                         </div>
-                        <div>
-                            <DialogTitle className="text-lg font-bold text-foreground">
+                        <div className="min-w-0 flex-1">
+                            <DialogTitle className="text-lg font-bold text-foreground break-all">
                                 {alumno.nombre_completo || `${alumno.nombre} ${alumno.apellido_p} ${alumno.apellido_m}`}
                             </DialogTitle>
-                            <DialogDescription className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                            <DialogDescription className="text-xs text-muted-foreground flex flex-wrap items-center gap-2 mt-0.5 min-w-0">
                                 <span>Matrícula: <strong className="text-foreground">{alumno.matricula}</strong></span>
                                 <span>•</span>
                                 <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${getBadgeStatusColor(alumno.estado_academico)}`}>
@@ -68,7 +68,7 @@ export function ShowModal({ open, onOpenChange, alumno }: ShowModalProps) {
                 </DialogHeader>
 
                 {/* CUERPO DE LA FICHA */}
-                <div className="space-y-4 py-3 text-xs">
+                <div className="space-y-4 py-3 text-xs min-w-0">
                     {/* SECCIÓN 1: DATOS ACADÉMICOS */}
                     <div className="space-y-2">
                         <span className="flex items-center gap-1.5 font-semibold uppercase tracking-wider text-muted-foreground text-[11px]">
@@ -76,29 +76,29 @@ export function ShowModal({ open, onOpenChange, alumno }: ShowModalProps) {
                         </span>
 
                         <div className="grid grid-cols-2 gap-2.5">
-                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border col-span-2">
+                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border col-span-2 min-w-0">
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Carrera
                                 </span>
-                                <p className="text-sm font-semibold text-foreground mt-0.5">
+                                <p className="text-sm font-semibold text-foreground mt-0.5 break-all">
                                     {alumno.carrera?.nombre_carrera || 'No asignada'}
                                 </p>
                             </div>
 
-                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
+                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border min-w-0">
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Turno
                                 </span>
-                                <p className="text-xs font-semibold text-foreground mt-0.5">
+                                <p className="text-xs font-semibold text-foreground mt-0.5 break-words">
                                     {alumno.turno}
                                 </p>
                             </div>
 
-                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
+                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border min-w-0">
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Generación
                                 </span>
-                                <p className="text-xs font-semibold text-foreground mt-0.5">
+                                <p className="text-xs font-semibold text-foreground mt-0.5 break-words">
                                     {alumno.generacion || 'No especificada'}
                                 </p>
                             </div>
@@ -112,47 +112,47 @@ export function ShowModal({ open, onOpenChange, alumno }: ShowModalProps) {
                         </span>
 
                         <div className="grid grid-cols-2 gap-2.5">
-                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
+                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border min-w-0">
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     CURP
                                 </span>
-                                <p className="text-xs font-mono font-semibold text-foreground mt-0.5">
+                                <p className="text-xs font-mono font-semibold text-foreground mt-0.5 break-all">
                                     {alumno.curp}
                                 </p>
                             </div>
 
-                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
+                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border min-w-0">
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Teléfono Móvil
                                 </span>
-                                <p className="text-xs font-semibold text-foreground mt-0.5">
+                                <p className="text-xs font-semibold text-foreground mt-0.5 break-all">
                                     {alumno.telefono || 'Sin teléfono'}
                                 </p>
                             </div>
 
-                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
+                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border min-w-0">
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Sexo
                                 </span>
-                                <p className="text-xs font-semibold text-foreground mt-0.5">
+                                <p className="text-xs font-semibold text-foreground mt-0.5 break-words">
                                     {alumno.sexo || 'No registrado'}
                                 </p>
                             </div>
 
-                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
+                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border min-w-0">
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Fecha de Nacimiento
                                 </span>
-                                <p className="text-xs font-semibold text-foreground mt-0.5">
+                                <p className="text-xs font-semibold text-foreground mt-0.5 break-all">
                                     {alumno.fecha_nacimiento ? String(alumno.fecha_nacimiento).split('T')[0] : 'No registrada'}
                                 </p>
                             </div>
 
-                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border col-span-2">
+                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border col-span-2 min-w-0">
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Correo Institucional
                                 </span>
-                                <p className="text-xs font-mono font-semibold text-foreground mt-0.5">
+                                <p className="text-xs font-mono font-semibold text-foreground mt-0.5 break-all">
                                     {alumno.user?.email || 'No registrado'}
                                 </p>
                             </div>
@@ -160,18 +160,18 @@ export function ShowModal({ open, onOpenChange, alumno }: ShowModalProps) {
                     </div>
 
                     {/* SECCIÓN 3: ESTADO DE LA CUENTA */}
-                    <div className="p-3 rounded-lg border border-border bg-muted/20 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                    <div className="p-3 rounded-lg border border-border bg-muted/20 flex items-center justify-between gap-3 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
                             {alumno.user?.estado ? (
-                                <ShieldCheck className="size-4 text-[#10B981]" />
+                                <ShieldCheck className="size-4 text-[#10B981] shrink-0" />
                             ) : (
-                                <ShieldAlert className="size-4 text-[#EF4444]" />
+                                <ShieldAlert className="size-4 text-[#EF4444] shrink-0" />
                             )}
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-xs font-bold text-foreground">
                                     Acceso al Sistema
                                 </p>
-                                <p className="text-[11px] text-muted-foreground">
+                                <p className="text-[11px] text-muted-foreground break-words">
                                     {alumno.user?.estado 
                                         ? 'El alumno tiene permitido el inicio de sesión.' 
                                         : 'El acceso del alumno se encuentra suspendido temporalmente.'}
@@ -180,11 +180,11 @@ export function ShowModal({ open, onOpenChange, alumno }: ShowModalProps) {
                         </div>
 
                         {alumno.user?.estado ? (
-                            <span className="px-2.5 py-1 rounded text-xs font-bold bg-[#10B981]/15 text-[#10B981]">
+                            <span className="px-2.5 py-1 rounded text-xs font-bold bg-[#10B981]/15 text-[#10B981] shrink-0">
                                 Activo
                             </span>
                         ) : (
-                            <span className="px-2.5 py-1 rounded text-xs font-bold bg-[#EF4444]/15 text-[#EF4444]">
+                            <span className="px-2.5 py-1 rounded text-xs font-bold bg-[#EF4444]/15 text-[#EF4444] shrink-0">
                                 Suspendido
                             </span>
                         )}
