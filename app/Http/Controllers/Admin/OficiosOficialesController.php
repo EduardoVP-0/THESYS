@@ -74,6 +74,55 @@ class OficiosOficialesController extends Controller
             'estado' => $request->estado ?? true,
         ]);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Oficio oficial registrado correctamente.');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $oficio = Oficios_Oficiales::findOrFail($id);
+
+        $request->validate([
+            'nombre_oficio' => 'required|string|max:100',
+            'tipo' => 'required|string',
+            'archivo' => 'nullable|file|mimes:pdf|max:20480',
+            'estado' => 'nullable',
+        ]);
+
+        $data = [
+            'nombre_oficio' => $request->nombre_oficio,
+            'tipo' => $request->tipo,
+            'estado' => $request->boolean('estado', true),
+        ];
+
+        if ($request->hasFile('archivo')) {
+            $path = $request->file('archivo')->store('oficios', 'public');
+            $data['url_archivo'] = Storage::url($path);
+        }
+
+        $oficio->update($data);
+
+        return redirect()->back()->with('success', 'Oficio oficial actualizado correctamente.');
+    }
+
+    public function toggleStatus($id)
+    {
+        $oficio = Oficios_Oficiales::findOrFail($id);
+        $oficio->update([
+            'estado' => ! $oficio->estado,
+        ]);
+
+        $mensaje = $oficio->estado
+            ? 'Oficio oficial activado exitosamente.'
+            : 'Oficio oficial desactivado exitosamente.';
+
+        return redirect()->back()->with('success', $mensaje);
+    }
+
+    public function destroy($id)
+    {
+        $oficio = Oficios_Oficiales::findOrFail($id);
+        $oficio->delete();
+
+        return redirect()->back()->with('success', 'Oficio oficial eliminado correctamente.');
     }
 }

@@ -58,7 +58,13 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::post('oficios_oficiales', [OficiosOficialesController::class, 'store'])->name('oficios_oficiales.store');
         // Formulario de edición con los datos cargados
         // Actualizar la información del oficio oficial
+        Route::match(['post', 'put'], 'oficios_oficiales/{id}', [OficiosOficialesController::class, 'update'])->name('oficios_oficiales.update');
+
         // Alternar estado (Activar / Desactivar oficio oficial - Baja lógica)
+        Route::patch('oficios_oficiales/{id}/toggle-status', [OficiosOficialesController::class, 'toggleStatus'])->name('oficios_oficiales.toggle-status');
+
+        // Eliminar oficio oficial
+        Route::delete('oficios_oficiales/{id}', [OficiosOficialesController::class, 'destroy'])->name('oficios_oficiales.destroy');
 
         /*
         MODULO DE ALUMNOS (CRUD ADMINISTRATIVO)

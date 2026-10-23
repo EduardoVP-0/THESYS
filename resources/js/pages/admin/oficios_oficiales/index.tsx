@@ -1,5 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
 import {
     Search, X, FileText, Download, Check, AlertCircle,
     Eye, Pencil,
@@ -14,6 +14,9 @@ import {
     CalendarCheck,
     ChevronLeft,
     ChevronRight,
+    Power,
+    PowerOff,
+    CheckCircle2,
 } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
@@ -22,8 +25,9 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 
-// Modales Crear
+// Modales Crear y Editar
 import { CreateModal } from './create-modal';
+import { EditModal } from './edit-modal';
 
 // ─── Tipo real proveniente de la base de datos ───
 interface Oficio {
@@ -97,7 +101,55 @@ export default function OficiosIndex({ oficios, pendientesPorTipo = {}, filters 
         );
     };
 
+    // Obtenemos los mensajes flash de sesión de Laravel
+    const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
+
+    // Estado local para controlar la visibilidad de la alerta flash (auto-cierre a los 5 segundos)
+    const [showAlert, setShowAlert] = useState(false);
+
+    useEffect(() => {
+        if (flash?.success) {
+            setShowAlert(true);
+            const timer = setTimeout(() => setShowAlert(false), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [flash?.success]);
+
     const [openCreate, setOpenCreate] = useState(false);
+    const [openEdit, setOpenEdit] = useState(false);
+    const [oficioToEdit, setOficioToEdit] = useState<Oficio | null>(null);
+
+    // Sincronizar oficio seleccionado cuando cambie la información en la lista
+    useEffect(() => {
+        if (oficioSeleccionado) {
+            const actualizado = oficios.data.find((o) => o.id_oficio_oficial === oficioSeleccionado.id_oficio_oficial);
+            if (actualizado) {
+                setOficioSeleccionado(actualizado);
+            }
+        }
+    }, [oficios.data]);
+
+    // Alternar estado (Activar / Desactivar)
+    const handleToggleStatus = (oficio: Oficio) => {
+        const accion = oficio.estado ? 'desactivar' : 'activar';
+        if (confirm(`¿Estás seguro de ${accion} el oficio "${oficio.nombre_oficio}"?`)) {
+            router.patch(
+                `/admin/oficios_oficiales/${oficio.id_oficio_oficial}/toggle-status`,
+                {},
+                {
+                    preserveScroll: true,
+                    preserveState: true,
+                    onSuccess: () => {
+                        setOficioSeleccionado((prev) =>
+                            prev && prev.id_oficio_oficial === oficio.id_oficio_oficial
+                                ? { ...prev, estado: !prev.estado }
+                                : prev
+                        );
+                    },
+                }
+            );
+        }
+    };
     
     const handleSeleccionarTarjeta = (nombre: string) => {
         const nuevoTipo = tipoSeleccionado === nombre ? null : nombre;
@@ -111,6 +163,18 @@ export default function OficiosIndex({ oficios, pendientesPorTipo = {}, filters 
             <Head title="Gestión de Oficios Oficiales" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 bg-background text-foreground min-h-screen">
+
+                {/* Alerta de notificación flash de éxito con auto-cierre en 5 segundos (idéntica a Carreras) */}
+                {flash?.success && showAlert && (
+                    <div className="alert alert-success alert-soft shadow-xs py-2.5 px-4 text-sm flex items-center justify-between border-l-4 border-l-[#10B981] bg-emerald-50 dark:bg-emerald-950/30 text-foreground animate-in fade-in-50 duration-300">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 className="size-4 text-[#10B981]" />
+                            <span className="font-medium">{flash.success}</span>
+                        </div>
+                        {/* Botón para cerrar la alerta manualmente */}
+                        <button onClick={() => setShowAlert(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
+                    </div>
+                )}
 
                 {/* ENCABEZADO */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -363,21 +427,23 @@ export default function OficiosIndex({ oficios, pendientesPorTipo = {}, filters 
                             {oficioSeleccionado && (
                                 <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col h-full">
 
-                                    {/* Vista previa del archivo (ocupa todo el alto disponible) */}
-                                    <div className="flex-1 p-4 flex">
-                                        <div className="flex-1 rounded-lg border-2 border-dashed border-border bg-muted/20 flex flex-col items-center justify-center p-6 text-center min-h-[320px]">
-                                            <div className="size-16 rounded-full bg-[#EF4444]/10 flex items-center justify-center mb-3">
-                                                <FileText className="size-8 text-[#EF4444]" />
-                                            </div>
-                                            <p className="text-sm font-semibold text-foreground">
+                                    {/* Vista previa del archivo (ocupa todo el alto disponible, mostrando página 1) */}
+                                    <div className="flex-1 p-3 flex flex-col min-h-[380px]">
+                                        <div className="w-full flex-1 rounded-lg border border-border bg-muted/10 overflow-hidden relative shadow-inner">
+                                            <iframe
+                                                key={`${oficioSeleccionado.id_oficio_oficial}-${oficioSeleccionado.url_archivo}`}
+                                                src={`${oficioSeleccionado.url_archivo}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                                                title={oficioSeleccionado.nombre_oficio}
+                                                className="w-full h-full min-h-[360px] border-none bg-white dark:bg-card"
+                                            />
+                                        </div>
+                                        <div className="mt-2.5 px-1 flex items-center justify-between text-xs text-muted-foreground">
+                                            <span className="truncate font-medium text-foreground max-w-[200px]" title={oficioSeleccionado.nombre_oficio}>
                                                 {oficioSeleccionado.nombre_oficio}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                Archivo oficial del catálogo
-                                            </p>
-                                            <p className="text-[10px] text-muted-foreground mt-3 px-3 py-1 rounded-full bg-muted">
-                                                {oficioSeleccionado.url_archivo.split('/').pop() || 'oficio.pdf'}
-                                            </p>
+                                            </span>
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0 font-medium">
+                                                Vista previa (Pág. 1)
+                                            </span>
                                         </div>
                                     </div>
 
@@ -390,26 +456,39 @@ export default function OficiosIndex({ oficios, pendientesPorTipo = {}, filters 
                                         >
                                             <a href={oficioSeleccionado.url_archivo} target="_blank" rel="noopener noreferrer">
                                                 <Eye className="size-3.5" />
-                                                Ver Archivo
+                                                Ver Archivo Completo
                                             </a>
                                         </Button>
 
-                                        {/* Fila: Eliminar + Actualizar */}
+                                        {/* Fila: Desactivar/Activar + Actualizar */}
                                         <div className="flex gap-2">
                                             <Button
                                                 variant="outline"
-                                                onClick={() => {
-                                                    if (confirm('¿Eliminar este oficio?')) {
-                                                        setOficioSeleccionado(null);
-                                                    }
-                                                }}
-                                                className="flex-1 border-[#EF4444] text-[#EF4444] hover:bg-[#EF4444]/10 gap-1.5 text-xs font-semibold"
+                                                onClick={() => handleToggleStatus(oficioSeleccionado)}
+                                                className={`flex-1 gap-1.5 text-xs font-semibold transition-colors ${
+                                                    oficioSeleccionado.estado
+                                                        ? 'border-[#EF4444] text-[#EF4444] hover:bg-[#EF4444]/10'
+                                                        : 'border-2 border-[#10B981] text-[#10B981] bg-white hover:bg-[#10B981]/10'
+                                                }`}
                                             >
-                                                <Trash2 className="size-3.5" />
-                                                Eliminar
+                                                {oficioSeleccionado.estado ? (
+                                                    <>
+                                                        <PowerOff className="size-3.5 text-[#EF4444]" />
+                                                        Desactivar
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Power className="size-3.5 text-[#10B981]" />
+                                                        Activar
+                                                    </>
+                                                )}
                                             </Button>
                                             <Button
-                                                className="flex-1 bg-[#10B981] hover:bg-[#0ea371] text-white gap-1.5 text-xs font-semibold"
+                                                onClick={() => {
+                                                    setOficioToEdit({ ...oficioSeleccionado });
+                                                    setOpenEdit(true);
+                                                }}
+                                                className="flex-1 bg-white hover:bg-[#fdff00] text-black border border-[#fdff00] gap-1.5 text-xs font-semibold"
                                             >
                                                 <Pencil className="size-3.5" />
                                                 Editar
@@ -427,6 +506,12 @@ export default function OficiosIndex({ oficios, pendientesPorTipo = {}, filters 
             <CreateModal 
                 open={openCreate} 
                 onOpenChange={setOpenCreate} 
+            />
+
+            <EditModal
+                open={openEdit}
+                onOpenChange={setOpenEdit}
+                oficio={oficioToEdit}
             />
         </>
     );
