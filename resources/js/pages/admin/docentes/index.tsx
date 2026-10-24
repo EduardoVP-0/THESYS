@@ -481,7 +481,7 @@ export default function DocentesIndex({ docentes, stats, filters }: Props) {
 
                                                 {/* Alternar Acceso */}
                                                 <div
-                                                    className="tooltip tooltip-top"
+                                                    className="tooltip tooltip-left"
                                                     data-tip={docente.user?.estado ? 'Suspender acceso' : 'Activar acceso'}
                                                 >
                                                     <button

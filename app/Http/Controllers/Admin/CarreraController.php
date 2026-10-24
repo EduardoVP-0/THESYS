@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCarreraRequest;
 use App\Http\Requests\UpdateCarreraRequest;
+use App\Models\Admin\Alumno;
 use App\Models\Admin\Carrera;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,14 +19,16 @@ class CarreraController extends Controller
     // Muestra la pantalla principal con la tabla de carreras, buscador y estadísticas.
     public function index(Request $request): Response
     {
-        $query = Carrera::query();
+        $query = Carrera::withCount([
+            'alumnos' => fn ($q) => $q->where('estado_academico', 'Activo'),
+        ]);
         // Filtro por buscador (nombre, descripción o duración)
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('nombre_carrera', 'like', "%{$search}%")
-                    ->orWhere('descripcion', 'like', "%{$search}%")
-                    ->orWhere('duracion_semestres', 'like', "%{$search}%");
+                $q->where('nombre_carrera', 'ilike', "%{$search}%")
+                    ->orWhere('descripcion', 'ilike', "%{$search}%")
+                    ->orWhere('duracion_semestres', 'ilike', "%{$search}%");
             });
         }
         // Filtro por estado (activas, inactivas o todas)
@@ -45,7 +48,9 @@ class CarreraController extends Controller
             'total' => Carrera::count(),
             'activas' => Carrera::where('estado', true)->count(),
             'inactivas' => Carrera::where('estado', false)->count(),
-            'alumnos_vigentes' => 0, // Se conectará dinámicamente cuando esté listo el módulo de alumnos
+            'alumnos_vigentes' => Alumno::where('estado_academico', 'Activo')
+                ->whereHas('carrera', fn ($query) => $query->where('estado', true))
+                ->count(),
         ];
 
         // Enviamos los datos a la vista de React mediante Inertia
@@ -100,6 +105,17 @@ class CarreraController extends Controller
      */
     public function toggleStatus(Carrera $carrera): RedirectResponse
     {
+        // Si la carrera esta activa y se intenta dar de baja, validamos que no tenga alumnos activos
+        if ($carrera->estado) {
+            $alumnosActivos = $carrera->alumnos()
+                ->where('estado_academico', 'Activo')
+                ->count();
+
+            if ($alumnosActivos > 0) {
+                return redirect()->route('admin.carreras.index')
+                    ->with('error', "No se puede dar de baja \"{$carrera->nombre_carrera}\" porque tiene {$alumnosActivos} alumno(s) vigente(s).");
+            }
+        }
         $carrera->update([
             'estado' => ! $carrera->estado,
         ]);

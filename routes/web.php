@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdministradorController;
 use App\Http\Controllers\Admin\AlumnoController;
+use App\Http\Controllers\Admin\AnteproyectoController;
 use App\Http\Controllers\Admin\CarreraController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DocenteController;
@@ -91,7 +92,6 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         /*
         MODULO DE DOCENTES (CRUD ADMINISTRATIVO)
         */
-
         // Listado de docentes con paginacion, filtros y metricas
         Route::get('/docentes', [DocenteController::class, 'index'])->name('docentes.index');
         // Registrar un nuevo docente (transaccion en users + tbldocentes)
@@ -111,7 +111,7 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::get('/pagos', [PagoController::class, 'index'])->name('pagos.index');
         // Actualizar estado de validación (Validar / Rechazar pago)
         Route::patch('/pagos/{id}/estado', [PagoController::class, 'updateEstado'])->name('pagos.update-estado');
-        
+
         /*
         MODULO DE ADMINISTRADORES (CRUD ADMINISTRATIVO)
         */
@@ -123,6 +123,16 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::put('/administradores/{administrador}', [AdministradorController::class, 'update'])->name('administradores.update');
         // Alternar estado de la cuenta (Activar / Suspender acceso)
         Route::patch('/administradores/{administrador}/toggle-status', [AdministradorController::class, 'toggleStatus'])->name('administradores.toggle-status');
+
+        /*
+        MODULO DE ANTEPROYECTOS (VALIDACION Y REVISION)
+        */
+        // Bandeja de anteproyectos con paginacion, filtros y panel de revision
+        Route::get('/anteproyectos', [AnteproyectoController::class, 'index'])->name('anteproyectos.index');
+        // Aprobar anteproyecto
+        Route::patch('/anteproyectos/{proyecto}/aprobar', [AnteproyectoController::class, 'aprobar'])->name('anteproyectos.aprobar');
+        // Solicitar cambios al sustentante
+        Route::patch('/anteproyectos/{proyecto}/solicitar-cambios', [AnteproyectoController::class, 'solicitarCambios'])->name('anteproyectos.solicitar-cambios');
     });
 
 /*Route::get('products', [ProductController::class, 'index'])->name('products.index');

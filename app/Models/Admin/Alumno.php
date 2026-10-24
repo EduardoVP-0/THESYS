@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * MODELO DE ALUMNO (SUSTENTANTE DE TITULACIÓN)
@@ -125,5 +126,20 @@ class Alumno extends Model
     public function usuarioRegistro(): BelongsTo
     {
         return $this->belongsTo(User::class, 'id_usuario_registro', 'id');
+    }
+
+    /**
+     * Proyectos / anteproyectos asignados al alumno
+     */
+    public function proyectos(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Proyecto::class,
+            'tblalumnos_proyectos',
+            'id_alumno',
+            'id_proyecto',
+            'id_usuario',
+            'id_proyecto'
+        )->withTimestamps();
     }
 }

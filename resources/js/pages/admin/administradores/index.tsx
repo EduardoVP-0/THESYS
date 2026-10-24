@@ -202,16 +202,16 @@ export default function AdministradoresIndex({ administradores, stats, filters, 
                         </CardContent>
                     </Card>
 
-                    {/* Superadmins */}
+                    {/* Administradores */}
                     <Card className="border-border shadow-xs rounded-xl bg-card">
                         <CardContent className="p-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400">
+                                <div className="p-2.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400">
                                     <ShieldCheck className="size-5" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-medium text-muted-foreground">Superadmins</p>
-                                    <h3 className="text-2xl font-bold text-foreground">{stats.superadmins}</h3>
+                                    <p className="text-xs font-medium text-muted-foreground">Administradores</p>
+                                    <h3 className="text-2xl font-bold text-foreground">{stats.admins}</h3>
                                 </div>
                             </div>
                         </CardContent>
@@ -447,7 +447,7 @@ export default function AdministradoresIndex({ administradores, stats, filters, 
 
                                                     {/* Alternar Acceso */}
                                                     <div
-                                                        className="tooltip tooltip-top"
+                                                        className="tooltip tooltip-left"
                                                         data-tip={admin.user?.estado ? 'Suspender acceso' : 'Activar acceso'}
                                                     >
                                                         <button

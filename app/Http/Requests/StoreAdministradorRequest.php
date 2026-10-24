@@ -39,7 +39,7 @@ class StoreAdministradorRequest extends FormRequest
             'id_rol' => [
                 'required',
                 'integer',
-                'in:1,2,3', // 1=Superadmin, 2=Administrador, 3=Coordinación
+                'in:2,3', // 2=Administrador, 3=Coordinacion (1=Superadmin restringido)
             ],
             // DATOS PERSONALES (tbladministradores)
             'nombre' => ['required', 'string', 'max:100'],

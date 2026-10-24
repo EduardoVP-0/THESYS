@@ -33,7 +33,7 @@ export interface AdministradorData {
 export interface AdministradorStats {
     total: number;
     activos: number;
-    superadmins: number;
+    admins: number;
     coordinacion: number;
 }
 

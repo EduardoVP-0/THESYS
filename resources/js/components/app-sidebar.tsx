@@ -50,7 +50,7 @@ const mainNavItems: NavItem[] = [
 
     {
         title: 'Anteproyectos',
-        href: '/anteproyectos',
+        href: '/admin/anteproyectos',
         icon: FilePenLine
     },
 

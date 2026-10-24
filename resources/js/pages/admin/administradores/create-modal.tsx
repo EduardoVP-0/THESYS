@@ -216,7 +216,7 @@ export function CreateModal({ open, onOpenChange, roles }: CreateModalProps) {
                                         <SelectValue placeholder="Selecciona un rol" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-popover border-border">
-                                        {roles.map((rol) => (
+                                        {roles.filter(r => r.id_rol !== 1).map((rol) => (
                                             <SelectItem key={rol.id_rol} value={String(rol.id_rol)}>
                                                 {rol.nombre_rol}
                                             </SelectItem>

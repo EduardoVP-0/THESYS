@@ -64,12 +64,13 @@ class AdministradorController extends Controller
         $stats = [
             'total' => Administrador::count(),
             'activos' => Administrador::whereHas('user', fn ($q) => $q->where('estado', true))->count(),
-            'superadmins' => Administrador::whereHas('user', fn ($q) => $q->where('id_rol', 1))->count(),
+            'admins' => Administrador::whereHas('user', fn ($q) => $q->where('id_rol', 2))->count(),
             'coordinacion' => Administrador::whereHas('user', fn ($q) => $q->where('id_rol', 3))->count(),
         ];
 
-        // Catálogo de roles administrativos (1=Superadmin, 2=Administrador, 3=Coordinación)
-        $roles = Roles::whereIn('id_rol', [1, 2, 3])
+        // Catalogo de roles administrativos asignables (2=Administrador, 3=Coordinacion)
+        // Por seguridad, el rol 1 (Superadmin) se excluye de la creacion y edición manual
+        $roles = Roles::whereIn('id_rol', [2, 3])
             ->orderBy('id_rol')
             ->get(['id_rol', 'nombre_rol']);
 

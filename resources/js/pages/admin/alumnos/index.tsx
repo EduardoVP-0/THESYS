@@ -513,7 +513,7 @@ export default function AlumnosIndex({ alumnos, stats, carreras, filters }: Prop
 
                                                 {/* Alternar Acceso */}
                                                 <div
-                                                    className="tooltip tooltip-top"
+                                                    className="tooltip tooltip-left"
                                                     data-tip={alumno.user?.estado ? 'Suspender acceso' : 'Activar acceso'}
                                                 >
                                                     <button
