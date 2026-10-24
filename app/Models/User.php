@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Admin\Administrador;
 use App\Models\Admin\Alumno;
 use App\Models\Admin\Docente;
 use Database\Factories\UserFactory;
@@ -65,5 +66,13 @@ class User extends Authenticatable
     public function docente(): HasOne
     {
         return $this->hasOne(Docente::class, 'id_usuario', 'id');
+    }
+
+    /**
+     * Relación uno a uno con los datos del administrador (expediente en tbladministradores).
+     */
+    public function administrador(): HasOne
+    {
+        return $this->hasOne(Administrador::class, 'id_usuario', 'id');
     }
 }
