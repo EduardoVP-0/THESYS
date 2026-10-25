@@ -344,11 +344,11 @@ export default function AnteproyectosIndex({ anteproyectos, stats, filters }: Pr
                                         ) : (
                                             anteproyectos.data.map((proyecto) => {
                                                 const sust = proyecto.sustentante || proyecto.alumnos?.[0];
-                                                const nomSust = sust?.nombre_completo || 
+                                                const nomSust = sust?.nombre_completo ||
                                                     (sust ? `${sust.nombre} ${sust.apellido_p}` : 'Sin asignar');
                                                 const matricula = sust?.matricula || '—';
                                                 const asesor = proyecto.asesor_asignado || proyecto.asesores?.[0];
-                                                const nomAsesor = asesor?.nombre_completo || 
+                                                const nomAsesor = asesor?.nombre_completo ||
                                                     (asesor ? `${asesor.nombre} ${asesor.apellido_p}` : 'Pendiente');
 
                                                 const isSelected = selectedProyecto?.id_proyecto === proyecto.id_proyecto;
@@ -356,9 +356,8 @@ export default function AnteproyectosIndex({ anteproyectos, stats, filters }: Pr
                                                 return (
                                                     <TableRow
                                                         key={proyecto.id_proyecto}
-                                                        className={`border-b border-border hover:bg-accent/20 transition-colors text-xs ${
-                                                            isSelected ? 'bg-accent/30 font-medium' : ''
-                                                        }`}
+                                                        className={`border-b border-border hover:bg-accent/20 transition-colors text-xs ${isSelected ? 'bg-accent/30 font-medium' : ''
+                                                            }`}
                                                     >
                                                         {/* Titulo */}
                                                         <TableCell className="font-medium text-foreground">
@@ -401,11 +400,10 @@ export default function AnteproyectosIndex({ anteproyectos, stats, filters }: Pr
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleOpenRevision(proyecto)}
-                                                                className={`btn btn-xs bg-background border px-3 text-xs font-semibold hover:bg-accent/40 transition-colors ${
-                                                                    isSelected
+                                                                className={`btn btn-xs bg-background border px-3 text-xs font-semibold hover:bg-accent/40 transition-colors ${isSelected
                                                                         ? 'border-blue-600 text-blue-600 bg-blue-50/20'
                                                                         : 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                                                }`}
+                                                                    }`}
                                                             >
                                                                 Revisar
                                                             </button>
@@ -435,9 +433,8 @@ export default function AnteproyectosIndex({ anteproyectos, stats, filters }: Pr
                                                 <Link
                                                     key={index}
                                                     href={link.url || '#'}
-                                                    className={`btn btn-xs border border-border bg-background hover:bg-accent/40 text-foreground gap-1 ${
-                                                        !link.url ? 'btn-disabled opacity-40' : ''
-                                                    }`}
+                                                    className={`btn btn-xs border border-border bg-background hover:bg-accent/40 text-foreground gap-1 ${!link.url ? 'btn-disabled opacity-40' : ''
+                                                        }`}
                                                     preserveScroll
                                                 >
                                                     <ChevronLeft className="size-3" />
@@ -451,9 +448,8 @@ export default function AnteproyectosIndex({ anteproyectos, stats, filters }: Pr
                                                 <Link
                                                     key={index}
                                                     href={link.url || '#'}
-                                                    className={`btn btn-xs border border-border bg-background hover:bg-accent/40 text-foreground gap-1 ${
-                                                        !link.url ? 'btn-disabled opacity-40' : ''
-                                                    }`}
+                                                    className={`btn btn-xs border border-border bg-background hover:bg-accent/40 text-foreground gap-1 ${!link.url ? 'btn-disabled opacity-40' : ''
+                                                        }`}
                                                     preserveScroll
                                                 >
                                                     Siguiente
