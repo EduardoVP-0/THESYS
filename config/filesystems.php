@@ -41,7 +41,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/storage',
+            'url' => rtrim((string) env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
@@ -55,8 +55,11 @@ return [
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL', null),
             'endpoint' => env('AWS_ENDPOINT', null),
-            'use_path_style_endpoint' => true,
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => true,
+            'http' => [
+                'verify' => env('AWS_SSL_VERIFY', false),
+            ],
         ],
 
     ],

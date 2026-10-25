@@ -67,6 +67,21 @@ class Proyecto extends Model
     }
 
     /**
+     * Revisores asignados al proyecto (Relación N:M mediante tblrevisores_proyectos)
+     */
+    public function revisores(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Docente::class,
+            'tblrevisores_proyectos',
+            'id_proyecto',
+            'id_usuario',
+            'id_proyecto',
+            'id_usuario'
+        )->withPivot('estado_asignacion')->withTimestamps();
+    }
+
+    /**
      * Accesor para obtener el sustentante principal
      */
     public function getSustentanteAttribute(): ?Alumno

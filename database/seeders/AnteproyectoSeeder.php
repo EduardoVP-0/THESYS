@@ -132,7 +132,7 @@ class AnteproyectoSeeder extends Seeder
                 'resumen' => 'Estudio sobre estrategias de aprendizaje colaborativo y su impacto en estudiantes universitarios mediante herramientas digitales interactivas.',
                 'estado' => 'Borrador',
                 'fecha_envio' => null,
-                'ruta_documento' => 'anteproyecto-colaborativo.pdf',
+                'ruta_documento' => null,
                 'observaciones_coordinacion' => null,
                 'alumno_matricula' => 'ALU-208',
                 'con_asesor' => false,

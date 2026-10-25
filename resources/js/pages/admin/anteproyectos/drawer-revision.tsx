@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
-import { X, FileText, Calendar, User, Mail, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { X, FileText, Calendar, User, Mail, ShieldAlert, CheckCircle2, Eye, ExternalLink, AlertCircle } from 'lucide-react';
 import { ProyectoData } from './types';
 
 interface DrawerRevisionProps {
@@ -22,6 +22,9 @@ export function DrawerRevision({ open, onClose, proyecto }: DrawerRevisionProps)
     }, [proyecto, open]);
 
     if (!open || !proyecto) return null;
+
+    const isBorrador = proyecto.estado === 'Borrador';
+    const hasDocumento = Boolean(proyecto.ruta_documento && proyecto.ruta_documento.trim() !== '');
 
     const sustentante = proyecto.sustentante || proyecto.alumnos?.[0];
     const nombreSustentante = sustentante?.nombre_completo || 
@@ -108,6 +111,19 @@ export function DrawerRevision({ open, onClose, proyecto }: DrawerRevisionProps)
                     </button>
                 </div>
 
+                {/* AVISO SI ESTA EN FASE DE BORRADOR */}
+                {isBorrador && (
+                    <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 flex items-start gap-2.5 text-xs shadow-xs">
+                        <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                        <div className="space-y-0.5">
+                            <p className="font-semibold">Propuesta en fase de borrador</p>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                El alumno aún no envía formalmente este anteproyecto. Las acciones de dictamen se habilitarán cuando pase a revisión oficial.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* TITULO */}
                 <div className="space-y-1">
                     <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
@@ -153,22 +169,53 @@ export function DrawerRevision({ open, onClose, proyecto }: DrawerRevisionProps)
                     </p>
                 </div>
 
-                {/* DOCUMENTO */}
+                {/* DOCUMENTO DEL ANTEPROYECTO */}
                 <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                        Documento
+                        Documento adjunto
                     </label>
-                    <div className="p-2.5 rounded-lg border border-border bg-background flex items-start gap-2.5">
-                        <FileText className="size-5 text-blue-500 shrink-0 mt-0.5" />
-                        <div className="min-w-0 flex-1">
-                            <p className="text-xs font-semibold text-foreground truncate">
-                                {proyecto.ruta_documento || 'anteproyecto-colaborativo.pdf'} {/*REEMPLAZAR DESPUES*/}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">
-                                Demo: archivo cargado en el expediente del alumno {/*REEMPLAZAR DESPUES*/}
-                            </p>
+                    {hasDocumento ? (
+                        <div className="p-3 rounded-xl border border-border bg-card hover:border-red-500/30 transition-all flex items-center justify-between gap-3 shadow-xs">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="size-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
+                                    <FileText className="size-4" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold text-foreground truncate max-w-[190px]" title={proyecto.ruta_documento || ''}>
+                                        {proyecto.ruta_documento}
+                                    </p>
+                                    <span className="inline-block text-[10px] text-muted-foreground">
+                                        {isBorrador ? 'Documento preliminar' : 'Formato PDF oficial'}
+                                    </span>
+                                </div>
+                            </div>
+                            <a
+                                href={`/admin/anteproyectos/${proyecto.id_proyecto}/documento`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-xs bg-red-600 hover:bg-red-700 text-white border-none gap-1.5 shrink-0 shadow-xs font-medium"
+                                title="Abrir PDF en pestaña nueva"
+                            >
+                                <Eye className="size-3" />
+                                <span>Ver PDF</span>
+                                <ExternalLink className="size-3 opacity-80" />
+                            </a>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="p-3 rounded-xl border border-dashed border-border bg-muted/20 flex items-center gap-3">
+                            <div className="size-8 rounded-lg bg-muted text-muted-foreground/60 flex items-center justify-center shrink-0">
+                                <FileText className="size-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs font-medium text-muted-foreground">
+                                    Sin documento adjunto
+                                </p>
+                                <p className="text-[10px] text-muted-foreground/80">
+                                    El alumno aún no carga su archivo PDF.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* OBSERVACIONES DE COORDINACION */}
@@ -180,12 +227,17 @@ export function DrawerRevision({ open, onClose, proyecto }: DrawerRevisionProps)
                         id="obs_coordinacion"
                         rows={4}
                         value={observaciones}
+                        disabled={isBorrador}
                         onChange={(e) => {
                             setObservaciones(e.target.value);
                             if (errorMessage) setErrorMessage(null);
                         }}
-                        placeholder="Escribe aquí las observaciones o retroalimentación sobre el anteproyecto..."
-                        className={`w-full p-3 rounded-lg border bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#10B981] placeholder:text-muted-foreground transition-colors ${
+                        placeholder={
+                            isBorrador
+                                ? 'No disponible mientras el anteproyecto esté en fase de borrador...'
+                                : 'Escribe aquí las observaciones o retroalimentación sobre el anteproyecto...'
+                        }
+                        className={`w-full p-3 rounded-lg border bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#10B981] placeholder:text-muted-foreground transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
                             errorMessage ? 'border-[#EF4444]' : 'border-border'
                         }`}
                     />
@@ -206,26 +258,34 @@ export function DrawerRevision({ open, onClose, proyecto }: DrawerRevisionProps)
                     disabled={processing}
                     className="btn btn-sm border border-border bg-background hover:bg-accent/40 text-foreground font-medium text-xs px-4"
                 >
-                    Cancelar
+                    {isBorrador ? 'Cerrar' : 'Cancelar'}
                 </button>
 
-                <button
-                    type="button"
-                    onClick={handleSolicitarCambios}
-                    disabled={processing}
-                    className="btn btn-sm border-2 border-red-500 text-red-600 dark:text-red-400 bg-background hover:bg-red-500/10 font-semibold text-xs px-3 shadow-xs"
-                >
-                    {processing ? 'Enviando...' : 'Solicitar cambios'}
-                </button>
+                {isBorrador ? (
+                    <span className="text-[11px] text-muted-foreground italic">
+                        Acciones deshabilitadas en borrador
+                    </span>
+                ) : (
+                    <>
+                        <button
+                            type="button"
+                            onClick={handleSolicitarCambios}
+                            disabled={processing}
+                            className="btn btn-sm border-2 border-red-500 text-red-600 dark:text-red-400 bg-background hover:bg-red-500/10 font-semibold text-xs px-3 shadow-xs"
+                        >
+                            {processing ? 'Enviando...' : 'Solicitar cambios'}
+                        </button>
 
-                <button
-                    type="button"
-                    onClick={handleAprobar}
-                    disabled={processing}
-                    className="btn btn-sm border-2 border-[#10B981] text-[#10B981] bg-background hover:bg-emerald-500/10 font-semibold text-xs px-4 shadow-xs"
-                >
-                    {processing ? 'Aprobando...' : 'Aprobar'}
-                </button>
+                        <button
+                            type="button"
+                            onClick={handleAprobar}
+                            disabled={processing}
+                            className="btn btn-sm border-2 border-[#10B981] text-[#10B981] bg-background hover:bg-emerald-500/10 font-semibold text-xs px-4 shadow-xs"
+                        >
+                            {processing ? 'Aprobando...' : 'Aprobar'}
+                        </button>
+                    </>
+                )}
             </div>
         </aside>
     );

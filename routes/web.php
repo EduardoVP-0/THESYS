@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdministradorController;
 use App\Http\Controllers\Admin\AlumnoController;
 use App\Http\Controllers\Admin\AnteproyectoController;
+use App\Http\Controllers\Admin\AsignacionRevisorController;
 use App\Http\Controllers\Admin\CarreraController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DocenteController;
@@ -129,11 +130,25 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         */
         // Bandeja de anteproyectos con paginacion, filtros y panel de revision
         Route::get('/anteproyectos', [AnteproyectoController::class, 'index'])->name('anteproyectos.index');
+        // Visualizar documento PDF del anteproyecto
+        Route::get('/anteproyectos/{proyecto}/documento', [AnteproyectoController::class, 'verDocumento'])->name('anteproyectos.documento');
         // Aprobar anteproyecto
         Route::patch('/anteproyectos/{proyecto}/aprobar', [AnteproyectoController::class, 'aprobar'])->name('anteproyectos.aprobar');
         // Solicitar cambios al sustentante
         Route::patch('/anteproyectos/{proyecto}/solicitar-cambios', [AnteproyectoController::class, 'solicitarCambios'])->name('anteproyectos.solicitar-cambios');
+
+        /*
+        MODULO DE ASIGNACION DE REVISORES
+        */
+        // Interfaz de asignacion de revisores a anteproyectos aprobados
+        Route::get('/asignaciones/revisores', [AsignacionRevisorController::class, 'index'])->name('asignaciones.revisores.index');
+        // Guardar la asignacion de los 2 revisores
+        Route::post('/asignaciones/revisores', [AsignacionRevisorController::class, 'store'])->name('asignaciones.revisores.store');
     });
+
+// Redireccion amigable para la navegacion del sidebar
+Route::redirect('/asignaciones/revisiones', '/admin/asignaciones/revisores');
+Route::redirect('/asignaciones/revisores', '/admin/asignaciones/revisores');
 
 /*Route::get('products', [ProductController::class, 'index'])->name('products.index');
 Route::get('products/create', [ProductController::class, 'create'])->name('products.create');

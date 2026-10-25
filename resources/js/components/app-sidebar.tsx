@@ -64,7 +64,7 @@ const mainNavItems: NavItem[] = [
             },
             {
                 title: 'Revisor',
-                href: '/asignaciones/revisiones',
+                href: '/admin/asignaciones/revisores',
             },
             {
                 title: 'Jurado',

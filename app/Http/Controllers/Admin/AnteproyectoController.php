@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin\Proyecto;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * CONTROLADOR DE VALIDACION DE ANTEPROYECTOS
@@ -69,6 +72,11 @@ class AnteproyectoController extends Controller
      */
     public function aprobar(Request $request, Proyecto $proyecto): RedirectResponse
     {
+        if ($proyecto->estado === 'Borrador') {
+            return redirect()->route('admin.anteproyectos.index')
+                ->with('error', 'No se puede aprobar un anteproyecto que se encuentra en fase de borrador. El alumno debe enviarlo formalmente primero.');
+        }
+
         $validated = $request->validate([
             'observaciones' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -87,6 +95,11 @@ class AnteproyectoController extends Controller
      */
     public function solicitarCambios(Request $request, Proyecto $proyecto): RedirectResponse
     {
+        if ($proyecto->estado === 'Borrador') {
+            return redirect()->route('admin.anteproyectos.index')
+                ->with('error', 'No se pueden solicitar cambios a un anteproyecto en borrador. El sustentante aún no lo envía para su dictamen.');
+        }
+
         $validated = $request->validate([
             'observaciones' => ['required', 'string', 'min:5', 'max:2000'],
         ], [
@@ -101,5 +114,37 @@ class AnteproyectoController extends Controller
 
         return redirect()->route('admin.anteproyectos.index')
             ->with('success', "Se han solicitado cambios al anteproyecto \"{$proyecto->titulo}\". El alumno podrá corregir su propuesta.");
+    }
+
+    /**
+     * Visualiza o transmite el documento PDF del anteproyecto desde Supabase Storage.
+     */
+    public function verDocumento(Proyecto $proyecto): SymfonyResponse
+    {
+        abort_unless(
+            $proyecto->ruta_documento && trim($proyecto->ruta_documento) !== '',
+            404,
+            'Este anteproyecto aún no cuenta con un documento PDF adjunto.'
+        );
+
+        $filename = basename($proyecto->ruta_documento);
+
+        /** @var FilesystemAdapter $s3 */
+        $s3 = Storage::disk('s3');
+
+        abort_unless(
+            $s3->exists($proyecto->ruta_documento),
+            404,
+            "El archivo físico \"{$filename}\" no fue encontrado en el almacenamiento en la nube. Contacte al sustentante para que vuelva a adjuntarlo."
+        );
+
+        return $s3->response(
+            $proyecto->ruta_documento,
+            $filename,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            ]
+        );
     }
 }

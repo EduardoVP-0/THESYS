@@ -86,4 +86,19 @@ class Docente extends Model
             'id_proyecto'
         )->withPivot('estado_asignacion')->withTimestamps();
     }
+
+    /**
+     * Proyectos donde el docente participa como revisor
+     */
+    public function proyectosComoRevisor(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Proyecto::class,
+            'tblrevisores_proyectos',
+            'id_usuario',
+            'id_proyecto',
+            'id_usuario',
+            'id_proyecto'
+        )->withPivot('estado_asignacion')->withTimestamps();
+    }
 }

@@ -397,16 +397,16 @@ export default function AnteproyectosIndex({ anteproyectos, stats, filters }: Pr
 
                                                         {/* Acciones: Boton Revisar */}
                                                         <TableCell className="text-center">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleOpenRevision(proyecto)}
-                                                                className={`btn btn-xs bg-background border px-3 text-xs font-semibold hover:bg-accent/40 transition-colors ${isSelected
-                                                                        ? 'border-blue-600 text-blue-600 bg-blue-50/20'
-                                                                        : 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                                                    }`}
-                                                            >
-                                                                Revisar
-                                                            </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleOpenRevision(proyecto)}
+                                                                    className={`btn btn-xs bg-background border px-3 text-xs font-semibold hover:bg-accent/40 transition-colors ${isSelected
+                                                                            ? 'border-blue-600 text-blue-600 bg-blue-50/20'
+                                                                            : 'border-blue-500 text-blue-600 dark:text-blue-400'
+                                                                        }`}
+                                                                >
+                                                                    Revisar
+                                                                </button>
                                                         </TableCell>
                                                     </TableRow>
                                                 );
