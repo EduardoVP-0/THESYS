@@ -48,8 +48,13 @@ class AnteproyectoController extends Controller
             $query->where('estado', $request->input('estado'));
         }
 
-        // Paginacion de 6 anteproyectos por pagina
-        $anteproyectos = $query->latest('id_proyecto')->paginate(6)->withQueryString();
+        // Paginacion de 5 anteproyectos por pagina
+        $perPage = (int) $request->input('per_page', 5);
+        if ($perPage <= 0 || $perPage > 50) {
+            $perPage = 5;
+        }
+
+        $anteproyectos = $query->latest('id_proyecto')->paginate($perPage)->withQueryString();
 
         // 5 Fichas de Metricas superiores
         $stats = [
@@ -132,14 +137,23 @@ class AnteproyectoController extends Controller
         /** @var FilesystemAdapter $s3 */
         $s3 = Storage::disk('s3');
 
+        // Determinar la ruta real en Supabase (soporta en la raíz o dentro de la carpeta 'anteproyectos/')
+        $ruta = $proyecto->ruta_documento;
+        if (! $s3->exists($ruta)) {
+            $rutaConCarpeta = 'anteproyectos/'.ltrim($ruta, '/');
+            if ($s3->exists($rutaConCarpeta)) {
+                $ruta = $rutaConCarpeta;
+            }
+        }
+
         abort_unless(
-            $s3->exists($proyecto->ruta_documento),
+            $s3->exists($ruta),
             404,
             "El archivo físico \"{$filename}\" no fue encontrado en el almacenamiento en la nube. Contacte al sustentante para que vuelva a adjuntarlo."
         );
 
         return $s3->response(
-            $proyecto->ruta_documento,
+            $ruta,
             $filename,
             [
                 'Content-Type' => 'application/pdf',

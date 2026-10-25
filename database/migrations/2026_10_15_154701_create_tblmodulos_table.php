@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('tblmodulos', function (Blueprint $table) {
             $table->id('id_modulo');
-            $table->string('nombre_modulo',50);
+            $table->string('nombre_modulo', 50);
             $table->boolean('estado')->default(true);
-            $table->string('descripcion',255);
+            $table->string('descripcion', 255);
             $table->timestamps();
         });
     }

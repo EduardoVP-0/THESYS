@@ -47,6 +47,7 @@ class Docente extends Model
     protected $appends = [
         'nombre_completo',
         'iniciales',
+        'abreviatura_grado',
     ];
 
     public function getNombreCompletoAttribute(): string
@@ -60,6 +61,25 @@ class Docente extends Model
         $segunda = mb_substr($this->apellido_p ?? '', 0, 1);
 
         return strtoupper("{$primera}{$segunda}");
+    }
+
+    public function getAbreviaturaGradoAttribute(): string
+    {
+        $grado = mb_strtolower(trim($this->grado_academico ?? ''));
+        if (str_contains($grado, 'doc') || str_starts_with($grado, 'dr')) {
+            return 'Dr.';
+        }
+        if (str_contains($grado, 'mae') || str_contains($grado, 'mtr') || str_starts_with($grado, 'mt')) {
+            return 'Mtro.';
+        }
+        if (str_contains($grado, 'lic')) {
+            return 'Lic.';
+        }
+        if (str_contains($grado, 'esp')) {
+            return 'Especialista';
+        }
+
+        return $this->grado_academico ?? '';
     }
 
     public function user(): BelongsTo

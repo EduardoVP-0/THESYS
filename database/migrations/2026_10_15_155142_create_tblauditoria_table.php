@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('tblauditoria', function (Blueprint $table) {
             $table->id('id_auditoria');
             $table->foreignId('id_usuario')
-            ->nullable()->constrained('users')
-            ->onDelete('restrict');
-            
+                ->nullable()->constrained('users')
+                ->onDelete('restrict');
+
             $table->string('accion', 50);
             $table->string('modulo', 50);
             $table->text('descripcion');

@@ -179,6 +179,18 @@ export default function AnteproyectosIndex({ anteproyectos, stats, filters }: Pr
                     </div>
                 )}
 
+                {/* ENCABEZADO */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                            REVISIÓN DE ANTEPROYECTOS
+                        </h1>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Evaluación, aprobación y retroalimentación de propuestas de titulación registradas.
+                        </p>
+                    </div>
+                </div>
+
                 {/* 5 FICHAS DE METRICAS SUPERIORES */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
                     {/* Total */}
@@ -254,9 +266,9 @@ export default function AnteproyectosIndex({ anteproyectos, stats, filters }: Pr
                         <CardContent className="p-5 space-y-4">
                             {/* TITULO DE LA SECCION */}
                             <div>
-                                <h1 className="text-lg font-bold tracking-tight text-foreground">
-                                    Validación de anteproyectos
-                                </h1>
+                                <h2 className="text-base font-bold tracking-tight text-foreground">
+                                    Validación de Anteproyectos
+                                </h2>
                             </div>
 
                             {/* FILTROS: BUSCAR + ESTADO */}

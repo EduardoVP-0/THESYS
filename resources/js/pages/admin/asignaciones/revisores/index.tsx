@@ -115,6 +115,14 @@ export default function AsignacionRevisoresIndex({
         }
     };
 
+    // Si cambia el anteproyecto o su asesor, deseleccionar automaticamente a cualquier docente que sea el asesor
+    useEffect(() => {
+        if (currentProyecto?.asesor) {
+            const asesorId = currentProyecto.asesor.id_usuario;
+            setSelectedRevisores((prev) => prev.filter((r) => r.id_usuario !== asesorId));
+        }
+    }, [currentProyecto?.asesor?.id_usuario]);
+
     // Aplicar filtros al backend
     const applyFilters = (
         newSearch = search,
@@ -159,8 +167,19 @@ export default function AsignacionRevisoresIndex({
         );
     };
 
+    // Verificar si alguno de los revisores elegidos entra en conflicto con el asesor
+    const hasConflictAsesor = Boolean(
+        currentProyecto?.asesor &&
+            selectedRevisores.some((r) => r.id_usuario === currentProyecto.asesor!.id_usuario)
+    );
+
     // Manejo de seleccion de revisor en la tabla
     const handleToggleDocente = (docente: DocenteItem) => {
+        // Bloquear si es el asesor del proyecto activo
+        if (currentProyecto?.asesor && docente.id_usuario === currentProyecto.asesor.id_usuario) {
+            return;
+        }
+
         // Verificar si ya esta seleccionado
         const isSelected = selectedRevisores.some((r) => r.id_usuario === docente.id_usuario);
         if (isSelected) {
@@ -184,7 +203,7 @@ export default function AsignacionRevisoresIndex({
 
     // Envio final tras confirmacion en modal
     const handleConfirmSubmit = () => {
-        if (!currentProyecto || selectedRevisores.length !== 2) {
+        if (!currentProyecto || selectedRevisores.length !== 2 || hasConflictAsesor) {
             return;
         }
 
@@ -245,6 +264,18 @@ export default function AsignacionRevisoresIndex({
                         </button>
                     </div>
                 )}
+
+                {/* ENCABEZADO */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                            ASIGNACIÓN DE REVISORES
+                        </h1>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Designación y control de comisiones revisoras para anteproyectos de titulación.
+                        </p>
+                    </div>
+                </div>
 
                 {/* TARJETAS DE METRICAS */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
@@ -854,6 +885,7 @@ export default function AsignacionRevisoresIndex({
                                     <option value="5">5 por pág.</option>
                                     <option value="10">10 por pág.</option>
                                     <option value="15">15 por pág.</option>
+                                    <option value="20">20 por pág.</option>
                                 </select>
                             </div>
                         </div>
@@ -921,10 +953,16 @@ export default function AsignacionRevisoresIndex({
                                 * El anteproyecto requiere tener un Director / Asesor de tesis asignado previamente.
                             </span>
                         )}
-                        {selectedAlumnoId && selectedProyectoId && currentProyecto?.asesor && selectedRevisores.length < 2 && (
+                        {hasConflictAsesor && (
+                            <span className="text-red-600 dark:text-red-400 font-semibold flex items-center gap-1">
+                                <AlertCircle className="size-3.5" />
+                                * El Director de tesis no puede ser asignado como revisor de este anteproyecto.
+                            </span>
+                        )}
+                        {selectedAlumnoId && selectedProyectoId && currentProyecto?.asesor && !hasConflictAsesor && selectedRevisores.length < 2 && (
                             <span>* Faltan {2 - selectedRevisores.length} revisor(es) por seleccionar en la tabla.</span>
                         )}
-                        {selectedAlumnoId && selectedProyectoId && currentProyecto?.asesor && selectedRevisores.length === 2 && (
+                        {selectedAlumnoId && selectedProyectoId && currentProyecto?.asesor && !hasConflictAsesor && selectedRevisores.length === 2 && (
                             <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                                 <CheckCircle2 className="size-3.5" />
                                 Listo para oficializar la designación de los 2 revisores.
@@ -939,6 +977,7 @@ export default function AsignacionRevisoresIndex({
                             !selectedProyectoId ||
                             !currentProyecto?.asesor ||
                             selectedRevisores.length !== 2 ||
+                            hasConflictAsesor ||
                             processing
                         }
                         onClick={() => setConfirmModalOpen(true)}

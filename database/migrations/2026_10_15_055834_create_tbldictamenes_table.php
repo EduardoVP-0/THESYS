@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('tbldictamenes', function (Blueprint $table) {
             $table->id('id_dictamen');
 
-            //PARA SABER QUIEN ESTA EMITIENDO ESTE DICTAMEN
-            //SE USA CASCADE POR QUE SI SE ELIMINA AL DOCENTE DE SER JURAOD SU DICTAMEN DEBE INVALIDARSE
+            // PARA SABER QUIEN ESTA EMITIENDO ESTE DICTAMEN
+            // SE USA CASCADE POR QUE SI SE ELIMINA AL DOCENTE DE SER JURAOD SU DICTAMEN DEBE INVALIDARSE
             $table->foreignId('id_jurado_proyecto')
-            ->constrained('tbljurados_proyectos', 'id_jurado_proyecto')
-            ->onDelete('cascade');
+                ->constrained('tbljurados_proyectos', 'id_jurado_proyecto')
+                ->onDelete('cascade');
 
             $table->string('voto', 50);
 
@@ -26,7 +26,7 @@ return new class extends Migration
 
             $table->timestamps();
 
-            //EL JURADO SOLO PUEDE EMITIR UN UNICO VOTO
+            // EL JURADO SOLO PUEDE EMITIR UN UNICO VOTO
             $table->unique(['id_jurado_proyecto']);
         });
     }

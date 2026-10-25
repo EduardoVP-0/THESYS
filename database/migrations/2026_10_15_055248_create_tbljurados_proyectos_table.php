@@ -14,25 +14,25 @@ return new class extends Migration
         Schema::create('tbljurados_proyectos', function (Blueprint $table) {
             $table->id('id_jurado_proyecto');
 
-            //SE USA CASCADE POR QUE SI SE ELIMINA AL USUARIO, SU PARTICIPACION COMO JURADO TAMBIEN
+            // SE USA CASCADE POR QUE SI SE ELIMINA AL USUARIO, SU PARTICIPACION COMO JURADO TAMBIEN
             $table->foreignId('id_usuario')
-            ->constrained('users')
-            ->onDelete('cascade');
+                ->constrained('users')
+                ->onDelete('cascade');
 
-            //SI SE BORRA UN PROYECTO DEL SISTEMA, SE BORRAN SUS JURADOS ASIGNADOS
+            // SI SE BORRA UN PROYECTO DEL SISTEMA, SE BORRAN SUS JURADOS ASIGNADOS
             $table->foreignId('id_proyecto')
-            ->constrained('tblproyectos', 'id_proyecto')
-            ->onDelete('cascade');
+                ->constrained('tblproyectos', 'id_proyecto')
+                ->onDelete('cascade');
 
             $table->string('cargo', 100);
 
-            //SE ASIGNAN DOCENTES COMO JURADOS Y EL DEBE ACEPTAR O RECHAZAR
+            // SE ASIGNAN DOCENTES COMO JURADOS Y EL DEBE ACEPTAR O RECHAZAR
             $table->string('estado_aceptacion', 50)->default('Pendiente');
 
             $table->timestamps();
 
-            //IMPIDE QUE AGREGUES A UN USUARIO DOS VECES AL MISMO PROYECTO
-            $table->unique(['id_usuario','id_proyecto']);
+            // IMPIDE QUE AGREGUES A UN USUARIO DOS VECES AL MISMO PROYECTO
+            $table->unique(['id_usuario', 'id_proyecto']);
         });
     }
 

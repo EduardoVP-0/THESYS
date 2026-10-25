@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * MODELO DE ALUMNO (SUSTENTANTE DE TITULACIÓN)
@@ -141,5 +142,21 @@ class Alumno extends Model
             'id_usuario',
             'id_proyecto'
         )->withTimestamps();
+    }
+
+    /**
+     * Documentos y oficios oficiales del expediente del alumno
+     */
+    public function oficiosExpediente(): HasMany
+    {
+        return $this->hasMany(OficioExpediente::class, 'id_usuario', 'id_usuario')->latest();
+    }
+
+    /**
+     * Historial de pagos registrados para este alumno
+     */
+    public function pagos(): HasMany
+    {
+        return $this->hasMany(Pago::class, 'id_usuario', 'id_usuario')->latest();
     }
 }

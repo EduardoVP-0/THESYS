@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
         // Sembrado de roles base indispensables para el sistema
         $this->call([
             RoleSeeder::class,
-            AnteproyectoSeeder::class, //ELIMINAR DESPUES
+            AnteproyectoSeeder::class, // ELIMINAR DESPUES
         ]);
 
         // Usuario inicial de prueba si no existe

@@ -5,6 +5,7 @@ namespace App\Models\Admin;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * MODELO DE PROYECTO / ANTEPROYECTO
@@ -79,6 +80,14 @@ class Proyecto extends Model
             'id_proyecto',
             'id_usuario'
         )->withPivot('estado_asignacion')->withTimestamps();
+    }
+
+    /**
+     * Versiones de tesis entregadas por el alumno para este proyecto
+     */
+    public function versiones(): HasMany
+    {
+        return $this->hasMany(VersionTesis::class, 'id_proyecto', 'id_proyecto')->latest();
     }
 
     /**

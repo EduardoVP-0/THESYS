@@ -79,7 +79,7 @@ const mainNavItems: NavItem[] = [
 
     {
         title: 'Expedientes',
-        href: '/expedientes',
+        href: '/admin/expedientes',
         icon: FolderClosed
     },
 

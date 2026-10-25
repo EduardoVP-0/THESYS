@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AsignacionRevisorController;
 use App\Http\Controllers\Admin\CarreraController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DocenteController;
+use App\Http\Controllers\Admin\ExpedienteController;
 use App\Http\Controllers\Admin\OficiosOficialesController;
 use App\Http\Controllers\Admin\PagoController;
 use Illuminate\Support\Facades\Route;
@@ -146,17 +147,25 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::get('/asignaciones/revisores', [AsignacionRevisorController::class, 'index'])->name('asignaciones.revisores.index');
         // Guardar la asignacion de los 2 revisores
         Route::post('/asignaciones/revisores', [AsignacionRevisorController::class, 'store'])->name('asignaciones.revisores.store');
+
+        /*
+        MODULO DE EXPEDIENTES DIGITALES
+        */
+        // Repositorio general de expedientes con metricas y tabla
+        Route::get('/expedientes', [ExpedienteController::class, 'index'])->name('expedientes.index');
+        // Expediente digital detallado del sustentante
+        Route::get('/expedientes/{alumno}', [ExpedienteController::class, 'show'])->name('expedientes.show');
+        // Visor de documentos de anteproyecto
+        Route::get('/expedientes/anteproyecto/{proyecto}/documento', [ExpedienteController::class, 'verAnteproyectoDocumento'])->name('expedientes.anteproyecto.documento');
+        // Visor de versiones de tesis
+        Route::get('/expedientes/version/{version}/documento', [ExpedienteController::class, 'verVersionDocumento'])->name('expedientes.version.documento');
+        // Visor de oficios de expediente
+        Route::get('/expedientes/oficio/{oficio}/documento', [ExpedienteController::class, 'verOficioDocumento'])->name('expedientes.oficio.documento');
     });
 
 // Redireccion amigable para la navegacion del sidebar
+Route::redirect('/expedientes', '/admin/expedientes');
 Route::redirect('/asignaciones/revisiones', '/admin/asignaciones/revisores');
 Route::redirect('/asignaciones/revisores', '/admin/asignaciones/revisores');
-
-/*Route::get('products', [ProductController::class, 'index'])->name('products.index');
-Route::get('products/create', [ProductController::class, 'create'])->name('products.create');
-Route::post('products', [ProductController::class,'store'])->name('products.store');
-Route::get('products/edit/{product}', [ProductController::class, 'edit'])->name('products.edit');
-Route::put('products/{product}', [ProductController::class,'update'])->name('products.update');
-Route::delete('products/{product}', [ProductController::class,'destroy'])->name('products.destroy');*/
 
 require __DIR__.'/settings.php';

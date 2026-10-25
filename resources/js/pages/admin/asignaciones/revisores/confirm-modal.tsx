@@ -43,9 +43,19 @@ export function ConfirmModal({
         return null;
     }
 
+    const isConflictAsesor = Boolean(
+        proyecto.asesor &&
+            (revisor1.id_usuario === proyecto.asesor.id_usuario ||
+                revisor2.id_usuario === proyecto.asesor.id_usuario)
+    );
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-xl p-0 overflow-hidden border-border bg-card">
+            <DialogContent
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onInteractOutside={(e) => e.preventDefault()}
+                className="max-w-xl p-0 overflow-hidden border-border bg-card"
+            >
                 {/* Cabecera institucional */}
                 <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white">
                     <DialogHeader className="text-left space-y-1.5">
@@ -124,7 +134,7 @@ export function ConfirmModal({
                             <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-1">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
-                                        Revisor 1 (Titular)
+                                        Revisor 1
                                     </span>
                                     <span className="text-[11px] font-medium text-muted-foreground">
                                         Carga: {revisor1.carga_total} / {revisor1.max_carga}
@@ -145,7 +155,7 @@ export function ConfirmModal({
                             <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-1">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
-                                        Revisor 2 (Suplente)
+                                        Revisor 2
                                     </span>
                                     <span className="text-[11px] font-medium text-muted-foreground">
                                         Carga: {revisor2.carga_total} / {revisor2.max_carga}
@@ -164,13 +174,23 @@ export function ConfirmModal({
                         </div>
                     </div>
 
-                    {/* Aviso normativo institucional */}
-                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-900 dark:text-amber-200 text-xs">
-                        <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                        <p>
-                            Al confirmar, el sistema registrará oficialmente a ambos docentes como revisores del anteproyecto. Cada docente sumará +1 a su carga académica activa.
-                        </p>
-                    </div>
+                    {/* Aviso de Conflicto de Asesor */}
+                    {isConflictAsesor ? (
+                        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-900 dark:text-red-200 text-xs">
+                            <AlertCircle className="size-4 shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
+                            <p>
+                                <strong>Conflicto normativo:</strong> Uno de los revisores seleccionados es el Director / Asesor de tesis del anteproyecto. Por reglamento institucional, no puede ser revisor de su propio proyecto. Cierra este modal y elige a otro docente.
+                            </p>
+                        </div>
+                    ) : (
+                        /* Aviso normativo institucional */
+                        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-900 dark:text-amber-200 text-xs">
+                            <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                            <p>
+                                Al confirmar, el sistema registrará oficialmente a ambos docentes como revisores del anteproyecto. Cada docente sumará +1 a su carga académica activa.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 <DialogFooter className="p-4 sm:p-6 bg-muted/20 border-t border-border flex flex-col sm:flex-row gap-2 justify-end">
@@ -186,8 +206,8 @@ export function ConfirmModal({
                     <Button
                         type="button"
                         onClick={onConfirm}
-                        disabled={processing}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold cursor-pointer shadow-sm transition-all"
+                        disabled={processing || isConflictAsesor}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold cursor-pointer shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {processing ? (
                             <>
