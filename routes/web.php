@@ -57,6 +57,8 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
 
         // Listado de oficios oficiales
         Route::get('/oficios_oficiales', [OficiosOficialesController::class, 'index'])->name('oficios_oficiales.index');
+        // Visualizar documento PDF del oficio oficial desde Supabase Storage
+        Route::get('oficios_oficiales/{id}/documento/{filename?}', [OficiosOficialesController::class, 'verDocumento'])->name('oficios_oficiales.documento');
         // Formulario para registrar un nuevo oficio oficial
         Route::get('oficios_oficiales/create', [OficiosOficialesController::class, 'create'])->name('oficios_oficiales.create');
         // Almacenar el nuevo oficio oficial en la base de datos
