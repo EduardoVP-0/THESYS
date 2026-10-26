@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\AlumnoController;
+use App\Http\Controllers\Admin\AsignacionAsesorController;
+use App\Http\Controllers\Admin\AsignacionJuradoController;
 use App\Http\Controllers\Admin\CarreraController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DocenteController;
@@ -19,6 +21,7 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard/report', [AdminDashboardController::class, 'report'])->name('dashboard.report');
 
         /*
         MODULO DE CARRERAS (CRUD ADMINISTRATIVO)
@@ -99,6 +102,24 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::patch('/docentes/{docente}/toggle-status', [DocenteController::class, 'toggleStatus'])->name('docentes.toggle-status');
         // Redireccion amigable por si se accede mediante /admin/profesores
         Route::redirect('/profesores', '/admin/docentes');
+
+        /*
+        MODULO DE ASIGNACIONES (ASESORES)
+        */
+        // Listado de anteproyectos aprobados pendientes de asesor
+        Route::get('/asignaciones/asesores', [AsignacionAsesorController::class, 'index'])->name('asignaciones.asesores.index');
+        // Registrar la asignación de un asesor a un anteproyecto
+        Route::post('/asignaciones/asesores', [AsignacionAsesorController::class, 'store'])->name('asignaciones.asesores.store');
+
+        /*
+        MODULO DE ASIGNACIONES (JURADOS)
+        */
+        // Consulta de jurados conformados por proyecto de tesis
+        Route::get('/asignaciones/jurados/consulta', [AsignacionJuradoController::class, 'consulta'])->name('asignaciones.jurados.consulta');
+        // Listado de proyectos con asesor activo y docentes disponibles para integrar el jurado
+        Route::get('/asignaciones/jurados', [AsignacionJuradoController::class, 'index'])->name('asignaciones.jurados.index');
+        // Registrar la estructura completa del jurado de un proyecto
+        Route::post('/asignaciones/jurados', [AsignacionJuradoController::class, 'store'])->name('asignaciones.jurados.store');
     });
 
 /*Route::get('products', [ProductController::class, 'index'])->name('products.index');

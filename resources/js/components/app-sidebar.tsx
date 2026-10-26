@@ -1,7 +1,16 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, DollarSign, FileBadge, FilePenLine, FolderClosed, FolderGit2, LayoutGrid, Scale, School, UserRoundCheck, UsersRound } from 'lucide-react';
+import {
+    DollarSign,
+    FileBadge,
+    FilePenLine,
+    FolderClosed,
+    LayoutGrid,
+    Scale,
+    School,
+    UserRoundCheck,
+    UsersRound,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -13,7 +22,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { dashboard } from '@/routes/admin';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -29,11 +38,11 @@ const mainNavItems: NavItem[] = [
         items: [
             {
                 title: 'Administradores',
-                href: '/admin/administradores'
+                href: '/admin/administradores',
             },
             {
                 title: 'Docentes',
-                href: '/admin/docentes'
+                href: '/admin/docentes',
             },
             {
                 title: 'Alumnos',
@@ -45,13 +54,13 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Carreras',
         href: '/admin/carreras',
-        icon: School
+        icon: School,
     },
 
     {
         title: 'Anteproyectos',
         href: '/anteproyectos',
-        icon: FilePenLine
+        icon: FilePenLine,
     },
 
     {
@@ -60,7 +69,7 @@ const mainNavItems: NavItem[] = [
         items: [
             {
                 title: 'Asesor',
-                href: '/asignaciones/asesores',
+                href: '/admin/asignaciones/asesores',
             },
             {
                 title: 'Revisor',
@@ -68,7 +77,7 @@ const mainNavItems: NavItem[] = [
             },
             {
                 title: 'Jurado',
-                href: '/asignaciones/jurados',
+                href: '/admin/asignaciones/jurados',
             },
             {
                 title: 'Examenes',
@@ -80,29 +89,27 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Expedientes',
         href: '/expedientes',
-        icon: FolderClosed
+        icon: FolderClosed,
     },
 
     {
         title: 'Veredictos',
         href: '/veredictos',
-        icon: Scale
+        icon: Scale,
     },
 
     {
         title: 'Oficios Oficiales',
         href: '/admin/oficios_oficiales',
-        icon: FileBadge
+        icon: FileBadge,
     },
 
     {
         title: 'Pagos',
         href: '/pagos',
-        icon: DollarSign
+        icon: DollarSign,
     },
 ];
-
-
 
 export function AppSidebar() {
     return (

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * MODELO DE DOCENTE
@@ -64,6 +65,21 @@ class Docente extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'id_usuario', 'id');
+    }
+
+    /**
+     * Proyectos en los que el docente participa como asesor.
+     */
+    public function proyectosAsesorados(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Proyecto::class,
+            'tblasesores_proyectos',
+            'id_usuario',
+            'id_proyecto',
+        )
+            ->withPivot('estado_asignacion')
+            ->withTimestamps();
     }
 
     public function usuarioRegistro(): BelongsTo
