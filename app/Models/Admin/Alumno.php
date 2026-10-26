@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * MODELO DE ALUMNO (SUSTENTANTE DE TITULACIÓN)
@@ -121,7 +122,15 @@ class Alumno extends Model
     }
 
     /**
-     * Proyectos/anteproyectos vinculados al alumno.
+     * Relación de auditoría con el usuario administrador que dio de alta al alumno.
+     */
+    public function usuarioRegistro(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'id_usuario_registro', 'id');
+    }
+
+    /**
+     * Proyectos / anteproyectos asignados al alumno
      */
     public function proyectos(): BelongsToMany
     {
@@ -130,14 +139,24 @@ class Alumno extends Model
             'tblalumnos_proyectos',
             'id_alumno',
             'id_proyecto',
+            'id_usuario',
+            'id_proyecto'
         )->withTimestamps();
     }
 
     /**
-     * Relación de auditoría con el usuario administrador que dio de alta al alumno.
+     * Documentos y oficios oficiales del expediente del alumno
      */
-    public function usuarioRegistro(): BelongsTo
+    public function oficiosExpediente(): HasMany
     {
-        return $this->belongsTo(User::class, 'id_usuario_registro', 'id');
+        return $this->hasMany(OficioExpediente::class, 'id_usuario', 'id_usuario')->latest();
+    }
+
+    /**
+     * Historial de pagos registrados para este alumno
+     */
+    public function pagos(): HasMany
+    {
+        return $this->hasMany(Pago::class, 'id_usuario', 'id_usuario')->latest();
     }
 }

@@ -164,7 +164,7 @@
         <!-- CUERPO DEL MENSAJE -->
         <div class="content">
             <div class="greeting">
-                ¡Bienvenido(a), {{ $docente->grado_academico }}. {{ $docente->nombre }}!
+                ¡Bienvenido(a), {{ $docente->abreviatura_grado }} {{ $docente->nombre }}!
             </div>
 
             <p class="text">
@@ -199,7 +199,7 @@
             <!-- INFORMACIÓN DEL TIPO DE CONTRATO -->
             <div class="info-card">
                 <strong>Tipo de contrato:</strong> {{ $docente->tipo_contrato }} &nbsp;|&nbsp;
-                <strong>Grado académico:</strong> {{ $docente->grado_academico }}
+                <strong>Grado académico:</strong> {{ $docente->abreviatura_grado }} ({{ $docente->grado_academico }})
             </div>
 
             <!-- AVISO DE SEGURIDAD -->

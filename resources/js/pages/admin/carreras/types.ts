@@ -5,6 +5,7 @@ export interface Carrera {
     descripcion: string | null;
     duracion_semestres: number;
     estado: boolean;
+    alumnos_count?: number;
     created_at?: string;
     updated_at?: string;
 }

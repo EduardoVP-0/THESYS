@@ -8,12 +8,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Pencil } from 'lucide-react';
 import { Carrera } from './types';
 
-// ─── PROPS DEL COMPONENTE ─────────────────────────────────────────────────────
+// PROPS DEL COMPONENTE
 
 /**
  * Props que recibe este modal desde index.tsx (componente padre):
@@ -28,7 +30,7 @@ interface EditModalProps {
     carrera: Carrera | null;
 }
 
-// ─── COMPONENTE ───────────────────────────────────────────────────────────────
+// COMPONENTE
 
 export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
 
@@ -54,7 +56,7 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
     });
 
     /**
-     * PRECARGA DE DATOS (Paso 3 del flujo)
+     * PRECARGA DE DATOS
      *
      * Se ejecuta cada vez que la prop `carrera` cambia, es decir,
      * cuando el usuario elige editar una carrera diferente en la tabla.
@@ -64,7 +66,7 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
      * carrera seleccionada.
      */
     useEffect(() => {
-        if (carrera) {
+        if (carrera && open) {
             setData({
                 nombre_carrera: carrera.nombre_carrera,
                 descripcion: carrera.descripcion || '',    // null → string vacío
@@ -72,17 +74,16 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
                 estado: Boolean(carrera.estado),           // Cast explícito a boolean
             });
         }
-    }, [carrera]);
+    }, [carrera, open]);
 
     /**
-     * ENVÍO DEL FORMULARIO (Paso 4 del flujo)
+     * ENVÍO DEL FORMULARIO
      *
      * Se ejecuta al presionar "Actualizar Carrera".
-     * - Previene el comportamiento por defecto del formulario HTML (recarga de página).
-     * - Guarda de llamar si no hay carrera seleccionada (seguridad adicional).
+     * - Previene el comportamiento por defecto del formulario HTML (recarga de página)
      * - put() envía los datos a PUT /admin/carreras/{id}, que Laravel enruta
-     *   al método update() de CarreraController.
-     * - onSuccess se ejecuta si Laravel responde con éxito (redirección Inertia).
+     *   al método update() de CarreraController
+     * - onSuccess se ejecuta si Laravel responde con éxito (redirección Inertia)
      */
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -112,13 +113,13 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
         onOpenChange(isOpen);
     };
 
-    // ─── RENDER ───────────────────────────────────────────────────────────────
+    //  RENDER
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
             {/*
              * onPointerDownOutside y onInteractOutside evitan que el modal se cierre
-             * si el usuario hace clic fuera de él accidentalmente mientras edita.
+             * si el usuario hace clic fuera de él accidentalmente mientras edita
              */}
             <DialogContent
                 onPointerDownOutside={(e) => e.preventDefault()}
@@ -129,15 +130,22 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
 
                     {/* Encabezado del Modal */}
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-foreground">
-                            Editar Carrera
-                        </DialogTitle>
-                        <DialogDescription className="text-sm text-muted-foreground">
-                            Actualiza los datos de la carrera seleccionada.
-                        </DialogDescription>
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 rounded-lg bg-amber-500/15 text-amber-500">
+                                <Pencil className="size-5" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-xl font-bold text-foreground">
+                                    Editar Carrera
+                                </DialogTitle>
+                                <DialogDescription className="text-xs text-muted-foreground">
+                                    Actualiza los datos de la carrera seleccionada.
+                                </DialogDescription>
+                            </div>
+                        </div>
                     </DialogHeader>
 
-                    {/* ── CAMPOS DEL FORMULARIO ─────────────────────────────── */}
+                    {/* CAMPOS DEL FORMULARIO */}
                     <div className="grid gap-4 py-4">
 
                         {/* Campo: Nombre de la Carrera (Obligatorio) */}
@@ -207,27 +215,23 @@ export function EditModal({ open, onOpenChange, carrera }: EditModalProps) {
                         </div>
                     </div>
 
-                    {/* ── BOTONES DE ACCIÓN ─────────────────────────────────── */}
+                    {/* BOTONES DE ACCIÓN  */}
                     <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end items-center gap-3 mt-4">
-
-                        {/* Cancelar: limpia el formulario y cierra el modal */}
                         <button
                             type="button"
                             onClick={() => handleClose(false)}
-                            disabled={processing}
                             className="btn btn-sm min-w-[140px] border-2 border-border text-foreground hover:bg-accent/40 hover:border-muted-foreground/50 bg-background font-medium shadow-sm flex items-center justify-center gap-2 transition-colors"
+                            disabled={processing}
                         >
                             Cancelar
                         </button>
 
-                        {/* Actualizar: envía PUT y muestra spinner mientras procesa */}
                         <button
                             type="submit"
                             disabled={processing}
-                            className="btn btn-sm min-w-[140px] border-2 border-[#10B981] text-[#10B981] bg-background hover:bg-accent/40 font-medium shadow-sm flex items-center justify-center gap-2 transition-colors"
+                            className="btn btn-sm border-2 border-amber-500 text-amber-600 dark:text-amber-400 bg-background hover:bg-accent/40 font-semibold shadow-xs flex items-center gap-2"
                         >
-                            {/* Spinner de visible sólo mientras `processing` es true */}
-                            {processing && <span className="loading loading-spinner loading-xs text-[#10B981]"></span>}
+                            {processing && <span className="loading loading-spinner loading-xs text-amber-500"></span>}
                             {processing ? 'Actualizando...' : 'Actualizar Carrera'}
                         </button>
                     </DialogFooter>

@@ -12,17 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tblexamenes_profesionales', function (Blueprint $table) {
-            
+
             $table->id('id_examen');
 
-
-            //SE USA CASCADE POR QUE SI SE BORRA UN PROYECTO NO TIENE SENTIDO CONSERVAR SUS EXAMENES
+            // SE USA CASCADE POR QUE SI SE BORRA UN PROYECTO NO TIENE SENTIDO CONSERVAR SUS EXAMENES
             $table->foreignId('id_proyecto')
-            ->unique()
-            ->constrained('tblproyectos', 'id_proyecto')
-            ->onDelete('cascade');
+                ->unique()
+                ->constrained('tblproyectos', 'id_proyecto')
+                ->onDelete('cascade');
 
-            //DATOS DEL DIA
+            // DATOS DEL DIA
             $table->date('fecha_examen');
             $table->time('hora_examen');
             $table->string('sede', 150);

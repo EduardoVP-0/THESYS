@@ -107,6 +107,7 @@ class DocenteController extends Controller
         // Envio de correo institucional con credenciales
         try {
             Mail::to($validated['email'])->send(new CredencialesDocenteMail($docente, $plainPassword));
+            Log::info("Correo de credenciales enviado exitosamente al docente: {$validated['email']}");
         } catch (\Throwable $e) {
             Log::error("Error al enviar correo de credenciales al docente: {$e->getMessage()}");
         }

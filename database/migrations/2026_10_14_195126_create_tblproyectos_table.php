@@ -16,8 +16,13 @@ return new class extends Migration
 
             $table->string('titulo', 255);
             $table->text('resumen')->nullable();
-            $table->string('estado', 50)->default('Propuesta');
-            
+            $table->string('estado', 50)->default('Borrador'); // Borrador, En revision, Aprobado, Con cambios
+
+            // CAMPOS DE ANTEPROYECTO:
+            $table->timestamp('fecha_envio')->nullable();          // null = "Sin enviar", con fecha = "Enviado"
+            $table->string('ruta_documento', 255)->nullable();     // Archivo PDF del anteproyecto
+            $table->text('observaciones_coordinacion')->nullable(); // Retroalimentacion del panel derecho
+
             $table->timestamps();
         });
     }

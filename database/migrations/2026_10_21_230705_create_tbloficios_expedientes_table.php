@@ -15,12 +15,12 @@ return new class extends Migration
             $table->id('id_oficio');
 
             $table->foreignId('id_usuario')
-            ->constrained('tblalumnos', 'id_usuario')
-            ->onDelete('cascade');
+                ->constrained('tblalumnos', 'id_usuario')
+                ->onDelete('cascade');
 
             $table->string('tipo_oficio', 150);
             $table->string('url_archivo', 255);
-            
+
             $table->timestamps();
         });
     }

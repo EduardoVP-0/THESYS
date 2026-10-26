@@ -14,15 +14,15 @@ return new class extends Migration
         Schema::create('tblasesores_proyectos', function (Blueprint $table) {
             $table->id('id_asesor_proyecto');
 
-            //SI BORRAN AL DOCENTE DEL SISTEMA, SE BORRA SU ASIGNACION
+            // SI BORRAN AL DOCENTE DEL SISTEMA, SE BORRA SU ASIGNACION
             $table->foreignId('id_usuario')
-            ->constrained('users')
-            ->onDelete('cascade');
+                ->constrained('users')
+                ->onDelete('cascade');
 
-            //SI BORRAN UN PROYECTO DEL SISTEMA, SE BORRAN SUS ASESORES ASIGNADOS
+            // SI BORRAN UN PROYECTO DEL SISTEMA, SE BORRAN SUS ASESORES ASIGNADOS
             $table->foreignId('id_proyecto')
-            ->constrained('tblproyectos', 'id_proyecto')
-            ->onDelete('cascade');
+                ->constrained('tblproyectos', 'id_proyecto')
+                ->onDelete('cascade');
 
             $table->string('estado_asignacion', 50)->default('Activo');
 
@@ -30,7 +30,7 @@ return new class extends Migration
 
             /*VALIDACION UNICA COMPUESTA
             ESTO EVITA QUE SE ASOCIE UN MISMO DOCENTE DOS VECES AL MISMO PROYECTO*/
-            $table->unique(['id_usuario','id_proyecto']);
+            $table->unique(['id_usuario', 'id_proyecto']);
         });
     }
 

@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tbloficios_oficiales', function (Blueprint $table) {
-            //LLAVE PRIMARIA
+            // LLAVE PRIMARIA
             $table->id('id_oficio_oficial');
 
-            //LLAVES FORANEAS
+            // LLAVES FORANEAS
             $table->foreignId('id_usuario_registro')
                 ->nullable()
                 ->constrained('users')

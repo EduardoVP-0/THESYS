@@ -15,16 +15,16 @@ return new class extends Migration
             $table->id('id_version');
 
             $table->foreignId('id_proyecto')
-            ->constrained('tblproyectos', 'id_proyecto')
-            ->onDelete('cascade');
+                ->constrained('tblproyectos', 'id_proyecto')
+                ->onDelete('cascade');
 
             $table->string('numero_version', 20);
 
             $table->text('comentario_alumno')->nullable();
 
-            //RUTA DONDE SE GUARDA EL ARCHIVO FISICO
+            // RUTA DONDE SE GUARDA EL ARCHIVO FISICO
             $table->string('ruta_archivo', 255);
-            
+
             $table->timestamps();
         });
     }

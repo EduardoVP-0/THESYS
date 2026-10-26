@@ -197,7 +197,6 @@ export function CreateModal({ open, onOpenChange, carreras }: CreateModalProps) 
                                         <SelectContent className="bg-popover border-border">
                                             <SelectItem value="Masculino">Masculino</SelectItem>
                                             <SelectItem value="Femenino">Femenino</SelectItem>
-                                            <SelectItem value="Otro">Otro</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     {errors.sexo && <p className="text-[11px] text-[#EF4444]">{errors.sexo}</p>}

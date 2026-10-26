@@ -59,7 +59,7 @@ const mainNavItems: NavItem[] = [
 
     {
         title: 'Anteproyectos',
-        href: '/anteproyectos',
+        href: '/admin/anteproyectos',
         icon: FilePenLine,
     },
 
@@ -73,7 +73,7 @@ const mainNavItems: NavItem[] = [
             },
             {
                 title: 'Revisor',
-                href: '/asignaciones/revisiones',
+                href: '/admin/asignaciones/revisores',
             },
             {
                 title: 'Jurado',
@@ -88,7 +88,7 @@ const mainNavItems: NavItem[] = [
 
     {
         title: 'Expedientes',
-        href: '/expedientes',
+        href: '/admin/expedientes',
         icon: FolderClosed,
     },
 
@@ -106,7 +106,7 @@ const mainNavItems: NavItem[] = [
 
     {
         title: 'Pagos',
-        href: '/pagos',
+        href: '/admin/pagos',
         icon: DollarSign,
     },
 ];

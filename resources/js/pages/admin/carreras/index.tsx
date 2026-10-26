@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/select';
 
 import { CreateModal } from './create-modal';
-import { EditModal } from './edit-modal'; 
+import { EditModal } from './edit-modal';
 import { ShowModal } from './show-modal';
 import { ExportModal } from './export-modal';
 import { Carrera, CarreraStats, PaginatedCarreras } from './types';
@@ -60,18 +60,19 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
     const [showAlert, setShowAlert] = useState(false);
 
     /**
-     * useEffect que escucha cambios en flash.success.
-     * Cada vez que Laravel envía un mensaje de éxito, se muestra la alerta
-     * y se configura un setTimeout de 4 segundos para ocultarla automáticamente.
-     * El return limpia el timeout si el componente se desmonta antes.
+     * useEffect que escucha cambios en flash.success y flash.error
+     * Cada vez que Laravel envía un mensaje de éxito o error, se muestra la alerta
+     * y se configura un setTimeout de 4 segundos para ocultarla automáticamente
+     * El return limpia el timeout si el componente se desmonta antes
      */
+
     useEffect(() => {
-        if (flash?.success) {
+        if (flash?.success || flash?.error) {
             setShowAlert(true);
             const timer = setTimeout(() => setShowAlert(false), 4000);
             return () => clearTimeout(timer);
         }
-    }, [flash?.success]);
+    }, [flash?.success, flash?.error]);
 
     // Estados locales para la barra de búsqueda y filtros
     const [search, setSearch] = useState(filters.search || '');
@@ -138,7 +139,14 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
     /**
      * Alterna el estado (Activa / Inactiva - Baja lógica) de una carrera
      */
-    const handleToggleStatus = (id: number, estadoActual: boolean) => {
+    const handleToggleStatus = (id: number, estadoActual: boolean, hasAlumnos: boolean) => {
+        // Si tiene alumnos activos, disparamos directo para mostrar la alerta roja sin preguntar "¿Estás seguro?"
+        if (hasAlumnos) {
+            setShowAlert(false);
+            router.patch(`/admin/carreras/${id}/toggle-status`, {}, { preserveScroll: true });
+            return;
+        }
+
         const accion = estadoActual ? 'dar de baja' : 'activar';
         if (confirm(`¿Estás seguro de que deseas ${accion} esta carrera?`)) {
             router.patch(`/admin/carreras/${id}/toggle-status`, {}, {
@@ -161,11 +169,23 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                 {flash?.success && showAlert && (
                     <div className="alert alert-success alert-soft shadow-xs py-2.5 px-4 text-sm flex items-center justify-between border-l-4 border-l-[#10B981] bg-emerald-50 dark:bg-emerald-950/30 text-foreground animate-in fade-in-50 duration-300">
                         <div className="flex items-center gap-2">
-                            <CheckCircle2 className="size-4 text-[#10B981]" />
+                            <CheckCircle2 className="size-4 text-[#10B981] shrink-0" />
                             <span className="font-medium">{flash.success}</span>
                         </div>
                         {/* Botón para cerrar la alerta manualmente */}
-                        <button onClick={() => setShowAlert(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
+                        <button onClick={() => setShowAlert(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none cursor-pointer">&times;</button>
+                    </div>
+                )}
+
+                {/* Alerta de notificación flash de error/advertencia */}
+                {flash?.error && showAlert && (
+                    <div className="alert alert-error alert-soft shadow-xs py-2.5 px-4 text-sm flex items-center justify-between border-l-4 border-l-[#EF4444] bg-red-50 dark:bg-red-950/30 text-foreground animate-in fade-in-50 duration-300">
+                        <div className="flex items-center gap-2">
+                            <XCircle className="size-4 text-[#EF4444] shrink-0" />
+                            <span className="font-medium">{flash.error}</span>
+                        </div>
+                        {/* Botón para cerrar la alerta manualmente */}
+                        <button onClick={() => setShowAlert(false)} className="text-muted-foreground hover:text-foreground text-lg leading-none cursor-pointer">&times;</button>
                     </div>
                 )}
 
@@ -344,8 +364,8 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                             handleFilter(search, estado, sem);
                                         }}
                                         className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${duracion === sem
-                                                ? 'bg-accent border-accent text-foreground font-bold'
-                                                : 'bg-background border-border text-foreground hover:bg-accent/40'
+                                            ? 'bg-accent border-accent text-foreground font-bold'
+                                            : 'bg-background border-border text-foreground hover:bg-accent/40'
                                             }`}
                                     >
                                         {sem === 'todos' ? 'Todas' : `${sem} Semestres`}
@@ -358,16 +378,16 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
 
                 {/* TABLA DE CARRERAS (Con control estricto de desbordamiento horizontal) */}
                 <div className="rounded-xl border border-border overflow-hidden bg-card shadow-xs">
-                    <Table>
+                    <Table className="table-fixed min-w-[860px]">
                         <TableHeader className="bg-muted/30">
                             <TableRow className="border-b border-border">
-                                <TableHead className="font-semibold text-foreground w-32">Clave</TableHead>
-                                <TableHead className="text-center font-semibold text-foreground min-w-[180px] max-w-[200px]">Nombre de la Carrera</TableHead>
-                                <TableHead className="font-semibold text-foreground min-w-[180px] max-w-[200px]">Descripción</TableHead>
-                                <TableHead className="font-semibold text-foreground w-30 text-center">Semestres</TableHead>
-                                <TableHead className="font-semibold text-foreground w-30 text-center">Alumnos</TableHead>
-                                <TableHead className="font-semibold text-foreground w-28 text-center">Estado</TableHead>
-                                <TableHead className="text-center font-semibold text-foreground w-45">Acciones</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[12%]">Clave</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[26%]">Nombre de la Carrera</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[26%]">Descripción</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[9%] text-center">Semestres</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[8%] text-center">Alumnos</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[8%] text-center">Estado</TableHead>
+                                <TableHead className="text-center font-semibold text-foreground w-[11%]">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
 
@@ -408,7 +428,7 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                         </TableCell>
 
                                         <TableCell className="text-foreground font-medium text-center">
-                                            0
+                                            {carrera.alumnos_count ?? 0}
                                         </TableCell>
 
                                         <TableCell className="text-center">
@@ -440,32 +460,45 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
 
                                                 {/* Editar: borde y texto en amarillo */}
                                                 <div className="tooltip tooltip-top" data-tip="Editar carrera">
-                                                    <button 
-                                                    type="button"
-                                                    onClick={() => handleOpenEdit(carrera)}
-                                                    className="btn btn-xs bg-background border border-[#FFDE21] text-foreground hover:bg-accent/40 btn-square"
-                                                >
-                                                    <Pencil className="size-3.5" />
-                                                </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenEdit(carrera)}
+                                                        className="btn btn-xs bg-background border border-[#FFDE21] text-foreground hover:bg-accent/40 btn-square"
+                                                    >
+                                                        <Pencil className="size-3.5" />
+                                                    </button>
 
                                                 </div>
 
                                                 {/* Baja: borde y texto en rojo o verde */}
-                                                <div
-                                                    className="tooltip tooltip-top"
-                                                    data-tip={carrera.estado ? 'Dar de baja' : 'Activar carrera'}
-                                                >
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleToggleStatus(carrera.id_carrera, carrera.estado)}
-                                                        className={`btn btn-xs bg-background border btn-square hover:bg-accent/40 ${carrera.estado
-                                                                ? 'border-[#EF4444] text-[#EF4444]'
-                                                                : 'border-[#10B981] text-[#10B981]'
-                                                            }`}
-                                                    >
-                                                        <Power className="size-3.5" />
-                                                    </button>
-                                                </div>
+                                                {(() => {
+                                                    const hasAlumnos = Boolean(carrera.estado && (carrera.alumnos_count ?? 0) > 0);
+                                                    const tip = hasAlumnos
+                                                        ? `No disponible: ${carrera.alumnos_count} alumno(s) activo(s)`
+                                                        : carrera.estado
+                                                            ? 'Dar de baja'
+                                                            : 'Activar carrera';
+
+                                                    return (
+                                                        <div
+                                                            className="tooltip tooltip-left"
+                                                            data-tip={tip}
+                                                        >
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleToggleStatus(carrera.id_carrera, carrera.estado, hasAlumnos)}
+                                                                className={`btn btn-xs bg-background border btn-square hover:bg-accent/40 ${carrera.estado
+                                                                        ? hasAlumnos
+                                                                            ? 'border-red-300 dark:border-red-900 text-red-400 opacity-60'
+                                                                            : 'border-[#EF4444] text-[#EF4444]'
+                                                                        : 'border-[#10B981] text-[#10B981]'
+                                                                    }`}
+                                                            >
+                                                                <Power className="size-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -523,8 +556,8 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
                                         key={index}
                                         href={link.url || '#'}
                                         className={`btn btn-xs min-w-7 border ${link.active
-                                                ? 'bg-accent border-accent text-foreground font-bold'
-                                                : 'bg-card border-border text-foreground hover:bg-accent/40'
+                                            ? 'bg-accent border-accent text-foreground font-bold'
+                                            : 'bg-card border-border text-foreground hover:bg-accent/40'
                                             } ${!link.url ? 'btn-disabled opacity-40' : ''}`}
                                         preserveScroll
                                     >
@@ -540,10 +573,10 @@ export default function CarrerasIndex({ carreras, stats, filters }: Props) {
             {/* Modal para Registrar Carrera */}
             <CreateModal open={openCreate} onOpenChange={setOpenCreate} />
             {/* Modal para Editar Carrera */}
-            <EditModal 
-                open={openEdit} 
-                onOpenChange={setOpenEdit} 
-                carrera={carreraToEdit} 
+            <EditModal
+                open={openEdit}
+                onOpenChange={setOpenEdit}
+                carrera={carreraToEdit}
             />
 
             <ShowModal

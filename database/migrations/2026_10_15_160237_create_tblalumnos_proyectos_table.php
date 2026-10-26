@@ -14,18 +14,18 @@ return new class extends Migration
         Schema::create('tblalumnos_proyectos', function (Blueprint $table) {
             $table->id('id_alumno_proyecto');
             $table->foreignId('id_alumno')
-            ->constrained('tblalumnos', 'id_usuario')
-            ->onDelete('cascade');
+                ->constrained('tblalumnos', 'id_usuario')
+                ->onDelete('cascade');
 
             $table->foreignId('id_proyecto')
-            ->constrained('tblproyectos','id_proyecto')
-            ->onDelete('cascade');
-            
+                ->constrained('tblproyectos', 'id_proyecto')
+                ->onDelete('cascade');
+
             $table->timestamps();
-            $table->unique(['id_alumno','id_proyecto']);
+            $table->unique(['id_alumno', 'id_proyecto']);
         });
     }
-    
+
     /**
      * Reverse the migrations.
      */
