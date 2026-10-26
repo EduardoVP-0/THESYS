@@ -5,6 +5,7 @@ import {
     FilePenLine,
     FolderClosed,
     LayoutGrid,
+    MapPin,
     Scale,
     School,
     UserRoundCheck,
@@ -58,6 +59,12 @@ const mainNavItems: NavItem[] = [
     },
 
     {
+        title: 'Sedes',
+        href: '/admin/sedes',
+        icon: MapPin,
+    },
+
+    {
         title: 'Anteproyectos',
         href: '/admin/anteproyectos',
         icon: FilePenLine,
@@ -80,8 +87,8 @@ const mainNavItems: NavItem[] = [
                 href: '/admin/asignaciones/jurados',
             },
             {
-                title: 'Examenes',
-                href: '/asignaciones/examenes',
+                title: 'Exámenes',
+                href: '/admin/asignaciones/examenes',
             },
         ],
     },
@@ -94,7 +101,7 @@ const mainNavItems: NavItem[] = [
 
     {
         title: 'Veredictos',
-        href: '/veredictos',
+        href: '/admin/veredictos',
         icon: Scale,
     },
 

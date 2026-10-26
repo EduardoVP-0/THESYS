@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdministradorController;
 use App\Http\Controllers\Admin\AlumnoController;
 use App\Http\Controllers\Admin\AnteproyectoController;
 use App\Http\Controllers\Admin\AsignacionAsesorController;
+use App\Http\Controllers\Admin\AsignacionExamenController;
 use App\Http\Controllers\Admin\AsignacionJuradoController;
 use App\Http\Controllers\Admin\AsignacionRevisorController;
 use App\Http\Controllers\Admin\CarreraController;
@@ -12,6 +13,8 @@ use App\Http\Controllers\Admin\DocenteController;
 use App\Http\Controllers\Admin\ExpedienteController;
 use App\Http\Controllers\Admin\OficiosOficialesController;
 use App\Http\Controllers\Admin\PagoController;
+use App\Http\Controllers\Admin\SedeController;
+use App\Http\Controllers\Admin\VeredictoController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -54,6 +57,18 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::get('/carreras/export-csv', [CarreraController::class, 'exportCsv'])->name('carreras.export-csv');
         Route::get('/carreras/export-pdf', [CarreraController::class, 'exportPdf'])->name('carreras.export-pdf');
         Route::get('/carreras/export-word', [CarreraController::class, 'exportWord'])->name('carreras.export-word');
+
+        /*
+        MODULO DE SEDES (CATÁLOGO ADMINISTRATIVO)
+        */
+        // Listado de sedes con métricas, filtros y estatus
+        Route::get('/sedes', [SedeController::class, 'index'])->name('sedes.index');
+        // Registrar una nueva sede
+        Route::post('/sedes', [SedeController::class, 'store'])->name('sedes.store');
+        // Actualizar los datos de una sede
+        Route::put('/sedes/{sede}', [SedeController::class, 'update'])->name('sedes.update');
+        // Alternar estado (Activa / Inactiva - Baja lógica)
+        Route::patch('/sedes/{sede}/toggle-status', [SedeController::class, 'toggleStatus'])->name('sedes.toggle-status');
 
         /*
         MODULO DE OFICIOS OFICIALES (CRUD ADMINISTRATIVO)
@@ -129,6 +144,22 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::post('/asignaciones/jurados', [AsignacionJuradoController::class, 'store'])->name('asignaciones.jurados.store');
 
         /*
+        MODULO DE ASIGNACIONES (EXÁMENES PROFESIONALES)
+        */
+        // Programación de examen para proyectos con jurado completo
+        Route::get('/asignaciones/examenes', [AsignacionExamenController::class, 'index'])->name('asignaciones.examenes.index');
+        // Registrar fecha, hora y sede del examen profesional
+        Route::post('/asignaciones/examenes', [AsignacionExamenController::class, 'store'])->name('asignaciones.examenes.store');
+
+        /*
+        MODULO DE VEREDICTOS (DICTÁMENES DEL JURADO)
+        */
+        // Consulta de veredictos por examen con agregado de votos
+        Route::get('/veredictos', [VeredictoController::class, 'index'])->name('veredictos.index');
+        // Registrar o actualizar el voto de un integrante titular del jurado
+        Route::post('/veredictos', [VeredictoController::class, 'store'])->name('veredictos.store');
+
+        /*
         MODULO DE PAGOS (CRUD ADMINISTRATIVO)
         */
 
@@ -188,5 +219,6 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
 Route::redirect('/expedientes', '/admin/expedientes');
 Route::redirect('/asignaciones/revisiones', '/admin/asignaciones/revisores');
 Route::redirect('/asignaciones/revisores', '/admin/asignaciones/revisores');
+Route::redirect('/veredictos', '/admin/veredictos');
 
 require __DIR__.'/settings.php';

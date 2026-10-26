@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * MODELO DE PROYECTO / ANTEPROYECTO
@@ -95,6 +96,14 @@ class Proyecto extends Model
     public function jurados(): HasMany
     {
         return $this->hasMany(JuradoProyecto::class, 'id_proyecto', 'id_proyecto');
+    }
+
+    /**
+     * Examen profesional programado para el proyecto.
+     */
+    public function examen(): HasOne
+    {
+        return $this->hasOne(ExamenProfesional::class, 'id_proyecto', 'id_proyecto');
     }
 
     /**

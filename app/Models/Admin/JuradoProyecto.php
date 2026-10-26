@@ -3,8 +3,11 @@
 namespace App\Models\Admin;
 
 use App\Models\User;
+use Database\Factories\Admin\JuradoProyectoFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * MODELO DE JURADO POR PROYECTO
@@ -12,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class JuradoProyecto extends Model
 {
+    /** @use HasFactory<JuradoProyectoFactory> */
+    use HasFactory;
+
     public const CARGO_PRESIDENTE = 'Presidente';
 
     public const CARGO_SECRETARIO = 'Secretario';
@@ -33,6 +39,17 @@ class JuradoProyecto extends Model
         self::CARGO_VOCAL,
         self::CARGO_SUPLENTE_1,
         self::CARGO_SUPLENTE_2,
+    ];
+
+    /**
+     * Cargos que emiten voto para el veredicto del proyecto.
+     *
+     * @var array<int, string>
+     */
+    public const CARGOS_TITULARES = [
+        self::CARGO_PRESIDENTE,
+        self::CARGO_SECRETARIO,
+        self::CARGO_VOCAL,
     ];
 
     /**
@@ -87,5 +104,21 @@ class JuradoProyecto extends Model
     public function proyecto(): BelongsTo
     {
         return $this->belongsTo(Proyecto::class, 'id_proyecto', 'id_proyecto');
+    }
+
+    /**
+     * Dictamen emitido por este integrante del jurado.
+     */
+    public function dictamen(): HasOne
+    {
+        return $this->hasOne(Dictamen::class, 'id_jurado_proyecto', 'id_jurado_proyecto');
+    }
+
+    /**
+     * Indica si el integrante forma parte del jurado titular.
+     */
+    public function esTitular(): bool
+    {
+        return in_array($this->cargo, self::CARGOS_TITULARES, true);
     }
 }
