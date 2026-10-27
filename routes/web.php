@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\OficiosOficialesController;
 use App\Http\Controllers\Admin\PagoController;
 use App\Http\Controllers\Admin\SedeController;
 use App\Http\Controllers\Admin\VeredictoController;
+use App\Http\Controllers\Alumno\AlumnoTesisAsesorController;
 use App\Http\Controllers\Alumno\DashboardController as AlumnoDashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         (int) $request->user()?->id_rol === 5 ? 'alumno.dashboard' : 'admin.dashboard'
     ))->name('dashboard');
 });
+
+// Rutas de Alumno (Rol 5)
+Route::middleware(['auth', 'verified', 'role:5'])
+    ->prefix('alumno')
+    ->name('alumno.')
+    ->group(function () {
+        Route::get('/dashboard', [AlumnoDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/tesis-asesor', [AlumnoTesisAsesorController::class, 'index'])->name('tesis-asesor.index');
+    });
 
 // Rutas de Administrador (Roles 1, 2 y 3)
 Route::middleware(['auth', 'verified', 'role:1,2,3'])

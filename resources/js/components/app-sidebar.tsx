@@ -53,7 +53,7 @@ const alumnoNavItems: NavItem[] = [
     },
     {
         title: 'Mi Tesis (Director de Tesis)',
-        href: '/alumno/mi-tesis',
+        href: '/alumno/tesis-asesor',
         icon: FilePenLine,
     },
     {
@@ -232,9 +232,8 @@ function resolveNavigation(roleId: number): {
 
 export function AppSidebar() {
     const { auth } = usePage().props as { auth: { user?: { id_rol?: number | string } } };
-    const isAlumno = Number(auth.user?.id_rol) === ALUMNO_ROLE_ID;
-    const navItems = isAlumno ? alumnoNavItems : adminNavItems;
-    const homeHref = isAlumno ? '/alumno/dashboard' : dashboard();
+    const roleId = Number(auth.user?.id_rol ?? 0);
+    const { items: navItems, home: homeHref } = resolveNavigation(roleId);
 
     return (
         <Sidebar collapsible="icon" variant="inset">
