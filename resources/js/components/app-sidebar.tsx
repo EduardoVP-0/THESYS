@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     DollarSign,
     FileBadge,
@@ -9,7 +9,10 @@ import {
     Scale,
     School,
     UserRoundCheck,
+    Calendar,
     UsersRound,
+    BookOpenCheck,
+    BookType,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -26,7 +29,62 @@ import {
 import { dashboard } from '@/routes/admin';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const ALUMNO_ROLE_ID = 5;
+
+const alumnoNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/alumno/dashboard',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Mi Anteproyecto',
+        href: '/alumno/mi-anteproyecto',
+        icon: BookType,
+    },
+    {
+        title: 'Mi Tesis (Director de Tesis)',
+        href: '/alumno/mi-tesis',
+        icon: FilePenLine,
+    },
+    {
+        title: 'Mi Tesis (Revisores)',
+        href: '/alumno/mi-tesis',
+        icon: FilePenLine,
+    },
+    {
+        title: 'Mi Jurado',
+        href: '/alumno/mi-jurado',
+        icon: Scale,
+    },
+    {
+        title: 'Mis Exámenes',
+        href: '/alumno/mis-examenes',
+        icon: BookOpenCheck,
+    },
+    {
+        title: 'Oficios Oficiales',
+        href: '/alumno/oficios-oficiales',
+        icon: FileBadge,
+    },
+    {
+        title: 'Pagos',
+        href: '/alumno/pagos',
+        icon: DollarSign,
+    },
+    {
+        title: 'Mi Expediente',
+        href: '/alumno/mi-expediente',
+        icon: FolderClosed,
+    },
+    {
+        title: 'Calendario Académico',
+        href: '/alumno/calendario-academico',
+        icon: Calendar,
+    },
+];
+
+const adminNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
@@ -119,13 +177,18 @@ const mainNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage().props as { auth: { user?: { id_rol?: number | string } } };
+    const isAlumno = Number(auth.user?.id_rol) === ALUMNO_ROLE_ID;
+    const navItems = isAlumno ? alumnoNavItems : adminNavItems;
+    const homeHref = isAlumno ? '/alumno/dashboard' : dashboard();
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={homeHref} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -134,7 +197,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={navItems} />
             </SidebarContent>
 
             <SidebarFooter>

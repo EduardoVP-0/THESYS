@@ -1,10 +1,16 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import {
     BadgeCheck,
+    BookOpen,
     Briefcase,
     Calendar,
     CheckCircle2,
+    Clock,
+    FileCheck2,
+    GraduationCap,
+    IdCard,
     Mail,
+    MapPin,
     Pencil,
     Phone,
     ShieldCheck,
@@ -36,9 +42,30 @@ type Administrador = {
     usuario_registro?: { id: number; name: string } | null;
 };
 
+/** Registro de la tabla `tblalumnos` */
+type Alumno = {
+    id_usuario: number;
+    nombre: string;
+    apellido_p: string;
+    apellido_m: string;
+    matricula: string;
+    curp: string | null;
+    telefono: string | null;
+    turno: string | null;
+    generacion: string | null;
+    estado_academico: string | null;
+    nombre_completo: string;
+    iniciales: string;
+    fecha_ingreso: string | null;
+    created_at: string | null;
+    carrera?: { id_carrera: number; nombre_carrera: string; clave: string } | null;
+    usuario_registro?: { id: number; name: string } | null;
+};
+
 type PageProps = {
     auth: Auth;
     administrador: Administrador | null;
+    alumno: Alumno | null;
 };
 
 const formatearFecha = (fecha?: string | null): string => {
@@ -67,15 +94,19 @@ function DatoItem({ icon, label, children }: { icon: ReactNode; label: string; c
 }
 
 export default function Profile() {
-    const { auth, administrador } = usePage<PageProps>().props;
+    const { auth, administrador, alumno } = usePage<PageProps>().props;
     const user = auth.user;
 
     const rol = (user.rol as { nombre_rol?: string } | null | undefined)?.nombre_rol ?? 'Sin rol asignado';
     const estaActivo = Boolean(user.estado ?? true);
-    /** Superadmin (id_rol = 1): máxima autoridad, no maneja expediente administrativo */
+    /** Superadmin (id_rol = 1) */
     const esSuperadmin = Number(user.id_rol) === 1;
-    const nombreMostrado = administrador?.nombre_completo || user.name;
+    /** Alumno (id_rol = 5) */
+    const esAlumno = Number(user.id_rol) === 5;
+
+    const nombreMostrado = alumno?.nombre_completo || administrador?.nombre_completo || user.name;
     const iniciales =
+        alumno?.iniciales ||
         administrador?.iniciales ||
         user.name
             .split(' ')
@@ -135,8 +166,72 @@ export default function Profile() {
                     </section>
                 )}
 
-                {/* ─── INFORMACIÓN DEL ADMINISTRADOR (Administrador / Coordinación) ─── */}
-                {!esSuperadmin && (
+                {/* ─── EXPEDIENTE ACADÉMICO DEL ALUMNO (Rol 5) ─── */}
+                {esAlumno && (
+                    <section className="rounded-xl border border-border bg-card shadow-xs">
+                        <div className="border-b border-border px-5 py-3">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Información académica del alumno
+                            </h3>
+                        </div>
+
+                        {!alumno && (
+                            <div className="mx-5 mt-4 rounded-lg border border-amber-300 bg-amber-100 px-3 py-2 text-xs font-medium text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-300">
+                                Esta cuenta no tiene un expediente de alumno registrado en el sistema, por lo que algunos datos
+                                académicos no están disponibles.
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
+                            <div className="sm:col-span-2">
+                                <DatoItem icon={<UserIcon className="size-3.5" />} label="Nombre completo">
+                                    {alumno?.nombre_completo || user.name}
+                                </DatoItem>
+                            </div>
+                            <DatoItem icon={<IdCard className="size-3.5" />} label="Matrícula">
+                                {alumno?.matricula || (
+                                    <span className="font-normal text-muted-foreground">Sin matrícula</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<GraduationCap className="size-3.5" />} label="Carrera">
+                                {alumno?.carrera?.nombre_carrera || (
+                                    <span className="font-normal text-muted-foreground">No asignada</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<FileCheck2 className="size-3.5" />} label="CURP">
+                                {alumno?.curp || (
+                                    <span className="font-normal text-muted-foreground">No registrado</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<Phone className="size-3.5" />} label="Número telefónico">
+                                {alumno?.telefono || (
+                                    <span className="font-normal text-muted-foreground">No registrado</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<BookOpen className="size-3.5" />} label="Generación">
+                                {alumno?.generacion || (
+                                    <span className="font-normal text-muted-foreground">No especificada</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<Clock className="size-3.5" />} label="Turno">
+                                {alumno?.turno || (
+                                    <span className="font-normal text-muted-foreground">No especificado</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<UserPlus className="size-3.5" />} label="Registrado por">
+                                {alumno?.usuario_registro?.name || (
+                                    <span className="font-normal text-muted-foreground">Sistema</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<Calendar className="size-3.5" />} label="Fecha de ingreso">
+                                {formatearFecha(alumno?.fecha_ingreso ?? alumno?.created_at ?? user.created_at)}
+                            </DatoItem>
+                        </div>
+                    </section>
+                )}
+
+                {/* ─── INFORMACIÓN DEL ADMINISTRADOR (Roles 2 y 3) ─── */}
+                {!esSuperadmin && !esAlumno && (
                     <section className="rounded-xl border border-border bg-card shadow-xs">
                         <div className="border-b border-border px-5 py-3">
                             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

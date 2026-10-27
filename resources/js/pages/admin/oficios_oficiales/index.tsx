@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Search, X, FileText, Download, Check, AlertCircle,
     Eye, Pencil,
@@ -88,7 +88,11 @@ export default function OficiosIndex({ oficios, pendientesPorTipo = {}, filters 
     const [query, setQuery] = useState(filters.search || '');
     const [estadoFiltro, setEstadoFiltro] = useState(filters.estado || 'Todos');
 
-    // Función que consulta a Laravel igual que en Carreras
+    // Estado de carga de la tabla (para mostrar skeleton)
+    const [isLoading, setIsLoading] = useState(false);
+    const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Función que consulta a Laravel (recarga parcial: solo la tabla y los filtros)
     const handleFilter = (newTipo = tipoSeleccionado, newSearch = query, newEstado = estadoFiltro) => {
         router.get(
             '/admin/oficios_oficiales',
@@ -97,9 +101,35 @@ export default function OficiosIndex({ oficios, pendientesPorTipo = {}, filters 
                 search: newSearch || undefined,
                 estado: newEstado !== 'Todos' ? newEstado : undefined,
             },
-            { preserveState: true, replace: true }
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                only: ['oficios', 'filters'],
+                onStart: () => setIsLoading(true),
+                onFinish: () => setIsLoading(false),
+            }
         );
     };
+
+    // Búsqueda con debounce para no lanzar una petición por cada tecla
+    const handleSearchChange = (value: string) => {
+        setQuery(value);
+        if (searchTimeout.current) {
+            clearTimeout(searchTimeout.current);
+        }
+        searchTimeout.current = setTimeout(() => {
+            handleFilter(tipoSeleccionado, value, estadoFiltro);
+        }, 350);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (searchTimeout.current) {
+                clearTimeout(searchTimeout.current);
+            }
+        };
+    }, []);
 
     // Obtenemos los mensajes flash de sesión de Laravel
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
@@ -264,10 +294,7 @@ export default function OficiosIndex({ oficios, pendientesPorTipo = {}, filters 
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                         <Input
                                             value={query}
-                                            onChange={(e) => {
-                                                setQuery(e.target.value);
-                                                handleFilter(tipoSeleccionado, e.target.value, estadoFiltro);
-                                            }}
+                                            onChange={(e) => handleSearchChange(e.target.value)}
                                             placeholder="Buscar nombre del oficio..."
                                             className="pl-9 bg-background border-border text-sm"
                                         />
@@ -301,7 +328,17 @@ export default function OficiosIndex({ oficios, pendientesPorTipo = {}, filters 
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {oficios.data.length === 0 ? (
+                                            {isLoading ? (
+                                                Array.from({ length: 6 }).map((_, i) => (
+                                                    <tr key={`skeleton-${i}`} className="border-b border-border">
+                                                        {[0, 1, 2, 3].map((c) => (
+                                                            <td key={c} className="px-4 py-4">
+                                                                <div className="h-4 rounded bg-muted animate-pulse" style={{ width: `${60 + ((i + c) % 3) * 15}%` }} />
+                                                            </td>
+                                                        ))}
+                                                    </tr>
+                                                ))
+                                            ) : oficios.data.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={4} className="text-center py-10 text-muted-foreground">
                                                         No hay oficios registrados con estos filtros.

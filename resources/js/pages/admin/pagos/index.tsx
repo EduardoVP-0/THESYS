@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     GraduationCap,
     FileCheck2,
@@ -154,7 +154,11 @@ export default function PagosIndex({ pagos, pendientesPorConcepto = {}, filters 
         }
     }, [pagos?.data]);
 
-    // Función para consultar a Laravel con filtros y paginación
+    // Estado de carga de la tabla (para mostrar skeleton)
+    const [isLoading, setIsLoading] = useState(false);
+    const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Función para consultar a Laravel con filtros y paginación (recarga parcial)
     const handleFilter = (newConcepto = conceptoSeleccionado, newSearch = query, newEstado = estadoFiltro) => {
         router.get(
             '/admin/pagos',
@@ -163,9 +167,35 @@ export default function PagosIndex({ pagos, pendientesPorConcepto = {}, filters 
                 search: newSearch || undefined,
                 estado: newEstado !== 'Todos' ? newEstado : undefined,
             },
-            { preserveState: true, replace: true }
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                only: ['pagos', 'filters'],
+                onStart: () => setIsLoading(true),
+                onFinish: () => setIsLoading(false),
+            }
         );
     };
+
+    // Búsqueda con debounce para no lanzar una petición por cada tecla
+    const handleSearchChange = (value: string) => {
+        setQuery(value);
+        if (searchTimeout.current) {
+            clearTimeout(searchTimeout.current);
+        }
+        searchTimeout.current = setTimeout(() => {
+            handleFilter(conceptoSeleccionado, value, estadoFiltro);
+        }, 350);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (searchTimeout.current) {
+                clearTimeout(searchTimeout.current);
+            }
+        };
+    }, []);
 
     // Obtener nombre del estudiante
     const getNombreEstudiante = (pago: Pago) => {
@@ -325,10 +355,7 @@ export default function PagosIndex({ pagos, pendientesPorConcepto = {}, filters 
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                             <Input
                                                 value={query}
-                                                onChange={(e) => {
-                                                    setQuery(e.target.value);
-                                                    handleFilter(conceptoSeleccionado, e.target.value, estadoFiltro);
-                                                }}
+                                                onChange={(e) => handleSearchChange(e.target.value)}
                                                 placeholder="Buscar estudiante o matrícula..."
                                                 className="pl-9 bg-background border-border text-sm"
                                             />
@@ -363,7 +390,17 @@ export default function PagosIndex({ pagos, pendientesPorConcepto = {}, filters 
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {pagos.data.length === 0 ? (
+                                                {isLoading ? (
+                                                    Array.from({ length: 6 }).map((_, i) => (
+                                                        <tr key={`skeleton-${i}`} className="border-b border-border">
+                                                            {[0, 1, 2, 3].map((c) => (
+                                                                <td key={c} className="px-4 py-4">
+                                                                    <div className="h-4 rounded bg-muted animate-pulse" style={{ width: `${60 + ((i + c) % 3) * 15}%` }} />
+                                                                </td>
+                                                            ))}
+                                                        </tr>
+                                                    ))
+                                                ) : pagos.data.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={4} className="text-center py-10 text-muted-foreground">
                                                             No hay pagos registrados con estos filtros.

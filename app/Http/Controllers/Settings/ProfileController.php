@@ -26,6 +26,13 @@ class ProfileController extends Controller
                 ->administrador()
                 ->with('usuarioRegistro:id,name')
                 ->first(),
+            'alumno' => $request->user()
+                ->alumno()
+                ->with([
+                    'carrera:id_carrera,nombre_carrera',
+                    'usuarioRegistro:id,name',
+                ])
+                ->first(),
         ]);
     }
 
