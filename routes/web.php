@@ -27,14 +27,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     ))->name('dashboard');
 });
 
-// Rutas de Alumno (Rol 5)
-Route::middleware(['auth', 'verified', 'role:5'])
-    ->prefix('alumno')
-    ->name('alumno.')
-    ->group(function () {
-        Route::get('/dashboard', [AlumnoDashboardController::class, 'index'])->name('dashboard');
-    });
-
 // Rutas de Administrador (Roles 1, 2 y 3)
 Route::middleware(['auth', 'verified', 'role:1,2,3'])
     ->prefix('admin')
@@ -168,8 +160,6 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         */
         // Consulta de veredictos por examen con agregado de votos
         Route::get('/veredictos', [VeredictoController::class, 'index'])->name('veredictos.index');
-        // Registrar o actualizar el voto de un integrante titular del jurado
-        Route::post('/veredictos', [VeredictoController::class, 'store'])->name('veredictos.store');
 
         /*
         MODULO DE PAGOS (CRUD ADMINISTRATIVO)
@@ -228,6 +218,9 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
     });
 
 // Redireccion amigable para la navegacion del sidebar
+Route::redirect('/docente', '/asesor/dashboard');
+Route::redirect('/asesor', '/asesor/dashboard');
+Route::redirect('/alumno', '/alumno/dashboard');
 Route::redirect('/expedientes', '/admin/expedientes');
 Route::redirect('/asignaciones/revisiones', '/admin/asignaciones/revisores');
 Route::redirect('/asignaciones/revisores', '/admin/asignaciones/revisores');

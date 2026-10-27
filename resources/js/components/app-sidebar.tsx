@@ -1,13 +1,22 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    Bell,
+    BookOpen,
+    CalendarDays,
+    ClipboardCheck,
+    ClipboardList,
     DollarSign,
     FileBadge,
     FilePenLine,
+    FileText,
     FolderClosed,
+    GraduationCap,
     LayoutGrid,
     MapPin,
+    MessageSquare,
     Scale,
     School,
+    UserRound,
     UserRoundCheck,
     Calendar,
     UsersRound,
@@ -26,8 +35,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes/admin';
-import type { NavItem } from '@/types';
+import type { Auth, NavItem } from '@/types';
+import { dashboard } from '@/routes';
 
 const ALUMNO_ROLE_ID = 5;
 
@@ -87,94 +96,139 @@ const alumnoNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: '/admin/dashboard',
         icon: LayoutGrid,
     },
-
     {
         title: 'Usuarios',
         icon: UsersRound,
         items: [
-            {
-                title: 'Administradores',
-                href: '/admin/administradores',
-            },
-            {
-                title: 'Docentes',
-                href: '/admin/docentes',
-            },
-            {
-                title: 'Alumnos',
-                href: '/admin/alumnos',
-            },
+            { title: 'Administradores', href: '/admin/administradores' },
+            { title: 'Docentes', href: '/admin/docentes' },
+            { title: 'Alumnos', href: '/admin/alumnos' },
         ],
     },
-
     {
         title: 'Carreras',
         href: '/admin/carreras',
         icon: School,
     },
-
     {
         title: 'Sedes',
         href: '/admin/sedes',
         icon: MapPin,
     },
-
     {
         title: 'Anteproyectos',
         href: '/admin/anteproyectos',
         icon: FilePenLine,
     },
-
     {
         title: 'Asignaciones',
         icon: UserRoundCheck,
         items: [
-            {
-                title: 'Asesor',
-                href: '/admin/asignaciones/asesores',
-            },
-            {
-                title: 'Revisor',
-                href: '/admin/asignaciones/revisores',
-            },
-            {
-                title: 'Jurado',
-                href: '/admin/asignaciones/jurados',
-            },
-            {
-                title: 'Exámenes',
-                href: '/admin/asignaciones/examenes',
-            },
+            { title: 'Asesor', href: '/admin/asignaciones/asesores' },
+            { title: 'Revisor', href: '/admin/asignaciones/revisores' },
+            { title: 'Jurado', href: '/admin/asignaciones/jurados' },
+            { title: 'Exámenes', href: '/admin/asignaciones/examenes' },
         ],
     },
-
     {
         title: 'Expedientes',
         href: '/admin/expedientes',
         icon: FolderClosed,
     },
-
     {
         title: 'Veredictos',
         href: '/admin/veredictos',
         icon: Scale,
     },
-
     {
-        title: 'Oficios Oficiales',
+        title: 'Oficios oficiales',
         href: '/admin/oficios_oficiales',
         icon: FileBadge,
     },
-
     {
         title: 'Pagos',
         href: '/admin/pagos',
         icon: DollarSign,
     },
 ];
+
+const asesorNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/asesor/dashboard',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Mis asesorados',
+        href: '/asesor/asesorados',
+        icon: UsersRound,
+    },
+    {
+        title: 'Revisiones',
+        href: '/asesor/revisiones',
+        icon: ClipboardCheck,
+    },
+    {
+        title: 'Retroalimentación',
+        href: '/asesor/retroalimentacion',
+        icon: MessageSquare,
+    },
+    {
+        title: 'Jurado',
+        icon: Scale,
+        items: [
+            { title: 'Proyectos asignados', href: '/asesor/proyectos-asignados' },
+            { title: 'Emitir voto', href: '/asesor/votos/emitir' },
+            { title: 'Historial de votos', href: '/asesor/votos' },
+        ],
+    },
+    {
+        title: 'Calendario',
+        href: '/asesor/calendario',
+        icon: CalendarDays,
+    },
+    {
+        title: 'Notificaciones',
+        href: '/asesor/notificaciones',
+        icon: Bell,
+    },
+    {
+        title: 'Mi perfil',
+        href: '/asesor/perfil',
+        icon: UserRound,
+    },
+];
+
+function resolveNavigation(roleId: number): {
+    items: NavItem[];
+    home: string;
+    label: string;
+} {
+    if (roleId === 4) {
+        return {
+            items: asesorNavItems,
+            home: '/asesor/dashboard',
+            label: 'Portal docente',
+        };
+    }
+
+    if (roleId === 5) {
+        return {
+            items: alumnoNavItems,
+            home: '/alumno/dashboard',
+            label: 'Mi proceso',
+        };
+    }
+
+    return {
+        items: adminNavItems,
+        home: '/admin/dashboard',
+        label: 'Administración',
+    };
+}
 
 export function AppSidebar() {
     const { auth } = usePage().props as { auth: { user?: { id_rol?: number | string } } };
