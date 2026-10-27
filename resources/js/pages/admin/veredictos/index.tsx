@@ -7,7 +7,6 @@ import {
     ChevronRight,
     Clock3,
     Eye,
-    Plus,
     RotateCcw,
     Scale,
     Search,
@@ -35,16 +34,13 @@ import {
 import { index as examenesIndex } from '@/routes/admin/asignaciones/examenes';
 import { index as veredictosIndex } from '@/routes/admin/veredictos';
 import { DetalleVeredictoModal } from './detalle-veredicto-modal';
-import { RegistrarVeredictoModal } from './registrar-veredicto-modal';
 import { VeredictoBadge } from './status-badge';
 import type { Veredicto, VeredictosIndexProps } from './types';
 
 export default function VeredictosIndex({
     veredictos,
-    proyectos,
     stats,
     filters,
-    votos,
 }: VeredictosIndexProps) {
     const { flash } = usePage<{
         flash?: {
@@ -57,10 +53,7 @@ export default function VeredictosIndex({
     const [search, setSearch] = useState(filters.search ?? '');
     const [estado, setEstado] = useState(filters.estado ?? 'todos');
 
-    const [openRegistrar, setOpenRegistrar] = useState(false);
     const [openDetalle, setOpenDetalle] = useState(false);
-    const [proyectoSeleccionado, setProyectoSeleccionado] =
-        useState<Veredicto | null>(null);
     const [veredictoDetalle, setVeredictoDetalle] =
         useState<Veredicto | null>(null);
 
@@ -103,20 +96,9 @@ export default function VeredictosIndex({
         );
     };
 
-    const abrirRegistrar = (veredicto: Veredicto | null = null) => {
-        setProyectoSeleccionado(veredicto);
-        setOpenRegistrar(true);
-    };
-
     const abrirDetalle = (veredicto: Veredicto) => {
         setVeredictoDetalle(veredicto);
         setOpenDetalle(true);
-    };
-
-    const registrarDesdeDetalle = (veredicto: Veredicto) => {
-        setOpenDetalle(false);
-        setVeredictoDetalle(null);
-        abrirRegistrar(veredicto);
     };
 
     return (
@@ -177,19 +159,6 @@ export default function VeredictosIndex({
                                 <CalendarClock className="size-4" />
                                 Programar examen
                             </Link>
-                        </Button>
-                        <Button
-                            onClick={() => abrirRegistrar()}
-                            disabled={proyectos.length === 0}
-                            title={
-                                proyectos.length === 0
-                                    ? 'Primero programa un examen profesional'
-                                    : undefined
-                            }
-                            className="gap-2 border-2 border-[#10B981] bg-background font-semibold text-[#10B981] shadow-xs hover:bg-[#10B981]/10 hover:text-[#10B981] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            <Plus className="size-4 text-[#10B981]" />
-                            Registrar veredicto
                         </Button>
                     </div>
                 </div>
@@ -370,8 +339,8 @@ export default function VeredictosIndex({
                                                     No se encontraron veredictos
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {proyectos.length === 0
-                                                        ? 'Programa un examen profesional para comenzar a registrar veredictos.'
+                                                    {stats.total === 0
+                                                        ? 'Programa un examen profesional para consultar sus veredictos.'
                                                         : 'Ajusta los filtros de búsqueda para consultar otros resultados.'}
                                                 </p>
                                             </div>
@@ -520,24 +489,6 @@ export default function VeredictosIndex({
                                                     >
                                                         <Eye className="size-3.5" />
                                                     </Button>
-
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="icon"
-                                                        onClick={() =>
-                                                            abrirRegistrar(
-                                                                veredicto,
-                                                            )
-                                                        }
-                                                        disabled={
-                                                            !veredicto.puede_registrar
-                                                        }
-                                                        title="Registrar o actualizar veredicto"
-                                                        className="size-8 border-[#10B981]/70 bg-background text-[#10B981] hover:bg-[#10B981]/10 disabled:cursor-not-allowed disabled:opacity-40"
-                                                    >
-                                                        <Plus className="size-3.5" />
-                                                    </Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -611,24 +562,10 @@ export default function VeredictosIndex({
                 </div>
             </div>
 
-            <RegistrarVeredictoModal
-                open={openRegistrar}
-                onOpenChange={(isOpen) => {
-                    setOpenRegistrar(isOpen);
-
-                    if (!isOpen) {
-                        setProyectoSeleccionado(null);
-                    }
-                }}
-                proyectos={proyectos}
-                votos={votos}
-                proyectoInicial={proyectoSeleccionado}
-            />
             <DetalleVeredictoModal
                 open={openDetalle}
                 onOpenChange={setOpenDetalle}
                 veredicto={veredictoDetalle}
-                onRegistrar={registrarDesdeDetalle}
             />
         </>
     );

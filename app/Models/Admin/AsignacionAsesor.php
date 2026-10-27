@@ -4,6 +4,7 @@ namespace App\Models\Admin;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * MODELO DE ASIGNACIÓN DE ASESOR
@@ -39,5 +40,13 @@ class AsignacionAsesor extends Model
     public function proyecto(): BelongsTo
     {
         return $this->belongsTo(Proyecto::class, 'id_proyecto', 'id_proyecto');
+    }
+
+    /**
+     * Revisiones realizadas dentro de esta asignación de asesoría.
+     */
+    public function revisiones(): HasMany
+    {
+        return $this->hasMany(RevisionAsesor::class, 'id_asesor_proyecto', 'id_asesor_proyecto');
     }
 }

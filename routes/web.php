@@ -15,12 +15,32 @@ use App\Http\Controllers\Admin\OficiosOficialesController;
 use App\Http\Controllers\Admin\PagoController;
 use App\Http\Controllers\Admin\SedeController;
 use App\Http\Controllers\Admin\VeredictoController;
+use App\Http\Controllers\Alumno\AnteproyectoController as AlumnoAnteproyectoController;
+use App\Http\Controllers\Alumno\CalendarioController as AlumnoCalendarioController;
+use App\Http\Controllers\Alumno\DashboardController as AlumnoDashboardController;
+use App\Http\Controllers\Alumno\DocumentoController as AlumnoDocumentoController;
+use App\Http\Controllers\Alumno\ExamenController as AlumnoExamenController;
+use App\Http\Controllers\Alumno\JuradoController as AlumnoJuradoController;
+use App\Http\Controllers\Alumno\NotificacionController as AlumnoNotificacionController;
+use App\Http\Controllers\Alumno\PerfilController as AlumnoPerfilController;
+use App\Http\Controllers\Alumno\TesisController as AlumnoTesisController;
+use App\Http\Controllers\Alumno\TramiteController as AlumnoTramiteController;
+use App\Http\Controllers\Asesor\AsesoradoController;
+use App\Http\Controllers\Asesor\CalendarioController as AsesorCalendarioController;
+use App\Http\Controllers\Asesor\DashboardController as AsesorDashboardController;
+use App\Http\Controllers\Asesor\DocumentoController as AsesorDocumentoController;
+use App\Http\Controllers\Asesor\JuradoController as AsesorJuradoController;
+use App\Http\Controllers\Asesor\NotificacionController as AsesorNotificacionController;
+use App\Http\Controllers\Asesor\PerfilController as AsesorPerfilController;
+use App\Http\Controllers\Asesor\RetroalimentacionController;
+use App\Http\Controllers\Asesor\RevisionController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', fn () => redirect()->route('admin.dashboard'))->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
 });
 
 // Rutas de Administrador (Roles 1, 2 y 3)
@@ -156,8 +176,6 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         */
         // Consulta de veredictos por examen con agregado de votos
         Route::get('/veredictos', [VeredictoController::class, 'index'])->name('veredictos.index');
-        // Registrar o actualizar el voto de un integrante titular del jurado
-        Route::post('/veredictos', [VeredictoController::class, 'store'])->name('veredictos.store');
 
         /*
         MODULO DE PAGOS (CRUD ADMINISTRATIVO)
@@ -215,7 +233,62 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::get('/expedientes/oficio/{oficio}/documento', [ExpedienteController::class, 'verOficioDocumento'])->name('expedientes.oficio.documento');
     });
 
+// Rutas del portal del docente (Asesor / Jurado, rol 4)
+Route::middleware(['auth', 'verified', 'role:4'])
+    ->prefix('asesor')
+    ->name('asesor.')
+    ->group(function () {
+        Route::get('/dashboard', [AsesorDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/asesorados', [AsesoradoController::class, 'index'])->name('asesorados.index');
+
+        Route::get('/revisiones', [RevisionController::class, 'index'])->name('revisiones.index');
+        Route::patch('/revisiones/{revision}', [RevisionController::class, 'update'])->name('revisiones.update');
+
+        Route::get('/retroalimentacion', [RetroalimentacionController::class, 'index'])->name('retroalimentacion.index');
+
+        Route::get('/proyectos-asignados', [AsesorJuradoController::class, 'proyectos'])->name('jurado.proyectos.index');
+        Route::patch('/jurado/{jurado}/aceptacion', [AsesorJuradoController::class, 'actualizarAceptacion'])->name('jurado.aceptacion.update');
+        Route::get('/votos', [AsesorJuradoController::class, 'historial'])->name('votos.index');
+        Route::get('/votos/emitir', [AsesorJuradoController::class, 'emitir'])->name('votos.create');
+        Route::post('/votos', [AsesorJuradoController::class, 'store'])->name('votos.store');
+
+        Route::get('/calendario', [AsesorCalendarioController::class, 'index'])->name('calendario.index');
+        Route::get('/notificaciones', [AsesorNotificacionController::class, 'index'])->name('notificaciones.index');
+        Route::get('/perfil', [AsesorPerfilController::class, 'index'])->name('perfil.index');
+
+        Route::get('/documentos/anteproyecto/{proyecto}', [AsesorDocumentoController::class, 'anteproyecto'])->name('documentos.anteproyecto');
+        Route::get('/documentos/version/{version}', [AsesorDocumentoController::class, 'version'])->name('documentos.version');
+    });
+
+// Rutas del portal del sustentante (rol 5)
+Route::middleware(['auth', 'verified', 'role:5'])
+    ->prefix('alumno')
+    ->name('alumno.')
+    ->group(function () {
+        Route::get('/dashboard', [AlumnoDashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('/anteproyecto', [AlumnoAnteproyectoController::class, 'index'])->name('anteproyecto.index');
+        Route::post('/anteproyecto', [AlumnoAnteproyectoController::class, 'store'])->name('anteproyecto.store');
+
+        Route::get('/tesis', [AlumnoTesisController::class, 'index'])->name('tesis.index');
+        Route::post('/tesis', [AlumnoTesisController::class, 'store'])->name('tesis.store');
+
+        Route::get('/jurado', [AlumnoJuradoController::class, 'index'])->name('jurado.index');
+        Route::get('/examen', [AlumnoExamenController::class, 'index'])->name('examen.index');
+        Route::get('/tramites', [AlumnoTramiteController::class, 'index'])->name('tramites.index');
+        Route::get('/calendario', [AlumnoCalendarioController::class, 'index'])->name('calendario.index');
+        Route::get('/notificaciones', [AlumnoNotificacionController::class, 'index'])->name('notificaciones.index');
+        Route::get('/perfil', [AlumnoPerfilController::class, 'index'])->name('perfil.index');
+
+        Route::get('/documentos/anteproyecto/{proyecto}', [AlumnoDocumentoController::class, 'anteproyecto'])->name('documentos.anteproyecto');
+        Route::get('/documentos/version/{version}', [AlumnoDocumentoController::class, 'version'])->name('documentos.version');
+        Route::get('/documentos/oficio/{oficio}', [AlumnoDocumentoController::class, 'oficio'])->name('documentos.oficio');
+    });
+
 // Redireccion amigable para la navegacion del sidebar
+Route::redirect('/docente', '/asesor/dashboard');
+Route::redirect('/asesor', '/asesor/dashboard');
+Route::redirect('/alumno', '/alumno/dashboard');
 Route::redirect('/expedientes', '/admin/expedientes');
 Route::redirect('/asignaciones/revisiones', '/admin/asignaciones/revisores');
 Route::redirect('/asignaciones/revisores', '/admin/asignaciones/revisores');

@@ -21,7 +21,6 @@ interface DetalleVeredictoModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     veredicto: Veredicto | null;
-    onRegistrar: (veredicto: Veredicto) => void;
 }
 
 const COLOR_VOTO: Record<string, string> = {
@@ -36,7 +35,6 @@ export function DetalleVeredictoModal({
     open,
     onOpenChange,
     veredicto,
-    onRegistrar,
 }: DetalleVeredictoModalProps) {
     if (!veredicto) {
         return null;
@@ -189,7 +187,7 @@ export function DetalleVeredictoModal({
                     </div>
                 </div>
 
-                <DialogFooter className="mt-2 flex flex-col-reverse items-center gap-3 sm:flex-row sm:justify-end">
+                <DialogFooter className="mt-2 flex items-center justify-end">
                     <Button
                         type="button"
                         variant="outline"
@@ -198,16 +196,6 @@ export function DetalleVeredictoModal({
                     >
                         Cerrar
                     </Button>
-                    {veredicto.puede_registrar && (
-                        <Button
-                            type="button"
-                            onClick={() => onRegistrar(veredicto)}
-                            className="min-w-[170px] gap-2 bg-[#10B981] font-semibold text-white shadow-xs hover:bg-[#0FA875]"
-                        >
-                            <Scale className="size-4" />
-                            Registrar / actualizar
-                        </Button>
-                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>
