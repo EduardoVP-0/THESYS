@@ -164,7 +164,7 @@ PS C:\Users\96132\Documents\Noveno Semestre\Documento Proyecto\THESYS>
 
 ----------------------------------------------Utilizar SupaBase Storage-------------------------------------------------------
 - Utilizar la cuenta Wecstep para supa Basse
-- Utilizar ek comando: composer require league/flysystem-aws-s3-v3:^3.0
+- Utilizar el comando: composer require league/flysystem-aws-s3-v3:^3.0
 - Modificar lo siguiente en el .env:
   FILESYSTEM_DISK=s3
   AWS_ACCESS_KEY_ID=47cc68cfccbc260487f1404c7a01ca0d
