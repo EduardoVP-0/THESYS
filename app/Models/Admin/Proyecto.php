@@ -16,9 +16,25 @@ class Proyecto extends Model
 {
     use HasFactory;
 
+    public const ESTADO_BORRADOR = 'Borrador';
+
+    public const ESTADO_EN_REVISION = 'En revisión';
+
+    public const ESTADO_CON_CAMBIOS = 'Con cambios';
+
     public const ESTADO_APROBADO = 'Aprobado';
 
     public const ESTADO_APROBADA = 'Aprobada';
+
+    /**
+     * Estados en los que el sustentante todavía puede editar su anteproyecto.
+     *
+     * @var array<int, string>
+     */
+    public const ESTADOS_EDITABLES = [
+        self::ESTADO_BORRADOR,
+        self::ESTADO_CON_CAMBIOS,
+    ];
 
     /**
      * Estados que indican que el anteproyecto ya fue aprobado.

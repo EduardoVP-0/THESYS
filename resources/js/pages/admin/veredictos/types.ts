@@ -53,7 +53,6 @@ export interface Veredicto {
     votos: VotosVeredicto;
     voto_resumen: string;
     jurados: JuradoVeredicto[];
-    puede_registrar: boolean;
 }
 
 export interface VeredictoStats {
@@ -81,8 +80,6 @@ export interface PaginatedVeredictos {
 
 export interface VeredictosIndexProps {
     veredictos: PaginatedVeredictos;
-    proyectos: Veredicto[];
     stats: VeredictoStats;
     filters: VeredictoFilters;
-    votos: string[];
 }

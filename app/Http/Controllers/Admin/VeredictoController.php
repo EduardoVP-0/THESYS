@@ -3,16 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreVeredictoRequest;
 use App\Models\Admin\Dictamen;
 use App\Models\Admin\ExamenProfesional;
 use App\Models\Admin\JuradoProyecto;
 use Carbon\CarbonImmutable;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,7 +18,7 @@ use Inertia\Response;
  * CONTROLADOR DE VEREDICTOS
  *
  * Agrupa los dictámenes individuales del jurado por examen profesional y
- * permite registrar o corregir el voto de cada integrante titular.
+ * muestra el resumen de votos y resultado.
  */
 class VeredictoController extends Controller
 {
@@ -111,63 +108,12 @@ class VeredictoController extends Controller
 
         return Inertia::render('admin/veredictos/index', [
             'veredictos' => $veredictos,
-            'proyectos' => $todos->values()->all(),
             'stats' => $stats,
             'filters' => [
                 'search' => $busqueda === '' ? null : $busqueda,
                 'estado' => $estado,
             ],
-            'votos' => Dictamen::VOTOS,
         ]);
-    }
-
-    /**
-     * Registra o actualiza el voto de un integrante titular del jurado.
-     */
-    public function store(StoreVeredictoRequest $request): RedirectResponse
-    {
-        $validated = $request->validated();
-
-        $resultado = DB::transaction(function () use ($validated): array {
-            $jurado = JuradoProyecto::query()
-                ->with(['docente', 'user', 'proyecto.examen'])
-                ->lockForUpdate()
-                ->findOrFail($validated['id_jurado_proyecto']);
-
-            $actualizado = Dictamen::query()
-                ->where('id_jurado_proyecto', $jurado->id_jurado_proyecto)
-                ->exists();
-
-            Dictamen::query()->updateOrCreate(
-                ['id_jurado_proyecto' => $jurado->id_jurado_proyecto],
-                [
-                    'voto' => $validated['voto'],
-                    'observaciones' => $validated['observaciones'] ?? null,
-                ],
-            );
-
-            $examen = $jurado->proyecto?->examen;
-
-            if ($examen) {
-                $this->actualizarResultadoExamen($examen);
-            }
-
-            return [
-                'nombre' => $jurado->docente?->nombre_completo
-                    ?? $jurado->user?->name
-                    ?? 'el integrante del jurado',
-                'actualizado' => $actualizado,
-            ];
-        });
-
-        $accion = $resultado['actualizado'] ? 'actualizado' : 'registrado';
-
-        return redirect()
-            ->route('admin.veredictos.index')
-            ->with(
-                'success',
-                "Veredicto {$accion} para {$resultado['nombre']}.",
-            );
     }
 
     /**
@@ -243,8 +189,6 @@ class VeredictoController extends Controller
             ],
             'voto_resumen' => $votoResumen,
             'jurados' => $this->transformarJurados($jurados),
-            'puede_registrar' => $titulares->isNotEmpty()
-                && ! in_array($examen->estado_examen, ['Cancelado', 'Cancelada'], true),
         ];
     }
 
@@ -346,44 +290,5 @@ class VeredictoController extends Controller
         $posicion = array_search($cargo, JuradoProyecto::CARGOS, true);
 
         return $posicion === false ? count(JuradoProyecto::CARGOS) : $posicion;
-    }
-
-    /**
-     * Recalcula el resultado final cuando los tres titulares ya votaron.
-     */
-    private function actualizarResultadoExamen(ExamenProfesional $examen): void
-    {
-        $jurados = JuradoProyecto::query()
-            ->where('id_proyecto', $examen->id_proyecto)
-            ->whereIn('cargo', JuradoProyecto::CARGOS_TITULARES)
-            ->with('dictamen')
-            ->get();
-
-        if (
-            $jurados->count() < count(JuradoProyecto::CARGOS_TITULARES)
-            || $jurados->contains(fn (JuradoProyecto $jurado): bool => $jurado->dictamen === null)
-        ) {
-            return;
-        }
-
-        $favor = $jurados
-            ->filter(fn (JuradoProyecto $jurado): bool => $jurado->dictamen?->voto === Dictamen::VOTO_A_FAVOR)
-            ->count();
-        $contra = $jurados
-            ->filter(fn (JuradoProyecto $jurado): bool => $jurado->dictamen?->voto === Dictamen::VOTO_EN_CONTRA)
-            ->count();
-
-        $resultado = match (true) {
-            $favor > $contra => $favor === $jurados->count()
-                ? ExamenProfesional::RESULTADO_APROBADO
-                : ExamenProfesional::RESULTADO_CON_OBSERVACIONES,
-            $contra > $favor => ExamenProfesional::RESULTADO_RECHAZADO,
-            default => null,
-        };
-
-        $examen->update([
-            'resultado_final' => $resultado,
-            'estado_examen' => ExamenProfesional::ESTADO_REALIZADO,
-        ]);
     }
 }
