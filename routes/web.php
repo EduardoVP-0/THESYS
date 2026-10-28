@@ -16,7 +16,9 @@ use App\Http\Controllers\Admin\PagoController;
 use App\Http\Controllers\Admin\SedeController;
 use App\Http\Controllers\Admin\VeredictoController;
 use App\Http\Controllers\Alumno\AlumnoTesisAsesorController;
+use App\Http\Controllers\Alumno\AnteproyectoController as AlumnoAnteproyectoController;
 use App\Http\Controllers\Alumno\DashboardController as AlumnoDashboardController;
+use App\Http\Controllers\Alumno\JuradoController as AlumnoJuradoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +36,22 @@ Route::middleware(['auth', 'verified', 'role:5'])
     ->name('alumno.')
     ->group(function () {
         Route::get('/dashboard', [AlumnoDashboardController::class, 'index'])->name('dashboard');
+
+        /*
+        MODULO DE MI ANTEPROYECTO (SUSTENTANTE)
+        */
+        Route::get('/mi-anteproyecto', [AlumnoAnteproyectoController::class, 'index'])->name('anteproyecto.index');
+        Route::post('/mi-anteproyecto/borrador', [AlumnoAnteproyectoController::class, 'guardarBorrador'])->name('anteproyecto.borrador');
+        Route::post('/mi-anteproyecto/enviar', [AlumnoAnteproyectoController::class, 'enviarRevision'])->name('anteproyecto.enviar');
+        Route::get('/mi-anteproyecto/documento', [AlumnoAnteproyectoController::class, 'verDocumento'])->name('anteproyecto.documento');
+        Route::redirect('/anteproyecto', '/alumno/mi-anteproyecto');
+
+        /*
+        MODULO DE MI JURADO (SUSTENTANTE)
+        */
+        Route::get('/mi-jurado', [AlumnoJuradoController::class, 'index'])->name('jurado.index');
+        Route::redirect('/jurado', '/alumno/mi-jurado');
+
         Route::get('/tesis-asesor', [AlumnoTesisAsesorController::class, 'index'])->name('tesis-asesor.index');
     });
 
