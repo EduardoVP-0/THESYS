@@ -73,7 +73,7 @@ const alumnoNavItems: NavItem[] = [
     },
     {
         title: 'Oficios Oficiales',
-        href: '/alumno/oficios-oficiales',
+        href: '/alumno/oficios_oficiales',
         icon: FileBadge,
     },
     {

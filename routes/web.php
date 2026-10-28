@@ -19,6 +19,8 @@ use App\Http\Controllers\Alumno\AlumnoTesisAsesorController;
 use App\Http\Controllers\Alumno\AnteproyectoController as AlumnoAnteproyectoController;
 use App\Http\Controllers\Alumno\DashboardController as AlumnoDashboardController;
 use App\Http\Controllers\Alumno\JuradoController as AlumnoJuradoController;
+use App\Http\Controllers\Alumno\OficioOficialController as AlumnoOficioOficialController;
+use App\Http\Controllers\Alumno\PagoController as AlumnoPagoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -52,7 +54,26 @@ Route::middleware(['auth', 'verified', 'role:5'])
         Route::get('/mi-jurado', [AlumnoJuradoController::class, 'index'])->name('jurado.index');
         Route::redirect('/jurado', '/alumno/mi-jurado');
 
+        /*
+        MODULO DE MI TESIS - DIRECTOR DE TESIS (SUSTENTANTE)
+        */
         Route::get('/tesis-asesor', [AlumnoTesisAsesorController::class, 'index'])->name('tesis-asesor.index');
+        Route::post('/tesis-asesor', [AlumnoTesisAsesorController::class, 'store'])->name('tesis-asesor.store');
+        Route::get('/tesis-asesor/{version}/documento', [AlumnoTesisAsesorController::class, 'verDocumento'])->name('tesis-asesor.documento');
+
+        /*
+        MODULO DE PAGOS (SUSTENTANTE)
+        */
+        Route::get('/pagos', [AlumnoPagoController::class, 'index'])->name('pagos.index');
+
+        /*
+        MODULO DE OFICIOS OFICIALES (SUSTENTANTE)
+        */
+        Route::get('/oficios_oficiales', [AlumnoOficioOficialController::class, 'index'])->name('oficios_oficiales.index');
+        Route::get('/oficios_oficiales/{id}/documento/{filename?}', [AlumnoOficioOficialController::class, 'verDocumento'])
+            ->where('filename', '.*')
+            ->name('oficios_oficiales.documento');
+        Route::redirect('/oficios-oficiales', '/alumno/oficios_oficiales');
     });
 
 // Rutas de Administrador (Roles 1, 2 y 3)
