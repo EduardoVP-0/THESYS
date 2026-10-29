@@ -55,7 +55,7 @@ class OficiosOficialesController extends Controller
             ->withQueryString();
 
         $oficios->getCollection()->transform(function ($oficio) {
-            if ($oficio->url_archivo && str_contains($oficio->url_archivo, 'supabase.co')) {
+            if ($oficio->url_archivo && trim($oficio->url_archivo) !== '') {
                 $filename = basename($oficio->url_archivo);
                 $oficio->url_archivo = route('admin.oficios_oficiales.documento', [
                     'id' => $oficio->id_oficio_oficial,
@@ -90,14 +90,13 @@ class OficiosOficialesController extends Controller
         // 1. Guarda el archivo en Supabase Storage (disco S3, bucket anteproyectos en la carpeta oficios)
         $path = $request->file('archivo')->store('oficios', 's3');
 
-        // 2. Genera la URL en Supabase S3
-        $urlCompleta = $this->s3()->url($path);
+        // 2. Guarda únicamente el nombre del archivo en la base de datos (sin la URL larga)
+        $nombreArchivo = basename($path);
 
-        // 3. Guarda la URL de Supabase y los datos en la base de datos
         Oficios_Oficiales::create([
             'nombre_oficio' => $request->nombre_oficio,
             'tipo' => $request->tipo,
-            'url_archivo' => $urlCompleta,
+            'url_archivo' => $nombreArchivo,
             'estado' => $request->estado ?? true,
         ]);
 
@@ -122,17 +121,26 @@ class OficiosOficialesController extends Controller
         ];
 
         if ($request->hasFile('archivo')) {
-            // Eliminar archivo anterior de S3 si existía
-            if ($oficio->url_archivo && str_contains($oficio->url_archivo, 'supabase.co')) {
+            // Eliminar archivo anterior de S3 si existía (soporta tanto URL como nombre de archivo)
+            if ($oficio->url_archivo && trim($oficio->url_archivo) !== '') {
                 $bucket = config('filesystems.disks.s3.bucket', 'anteproyectos');
-                $oldPath = Str::after($oficio->url_archivo, "/{$bucket}/");
-                if ($oldPath && $this->s3()->exists($oldPath)) {
-                    $this->s3()->delete($oldPath);
+                $oldFilename = basename($oficio->url_archivo);
+                $oldCandidates = [
+                    "oficios/{$oldFilename}",
+                    $oficio->url_archivo,
+                    Str::after($oficio->url_archivo, "/{$bucket}/"),
+                ];
+
+                foreach ($oldCandidates as $candidatePath) {
+                    if ($candidatePath && $this->s3()->exists($candidatePath)) {
+                        $this->s3()->delete($candidatePath);
+                        break;
+                    }
                 }
             }
 
             $path = $request->file('archivo')->store('oficios', 's3');
-            $data['url_archivo'] = $this->s3()->url($path);
+            $data['url_archivo'] = basename($path);
         }
 
         $oficio->update($data);
@@ -158,12 +166,21 @@ class OficiosOficialesController extends Controller
     {
         $oficio = Oficios_Oficiales::findOrFail($id);
 
-        // Si el archivo físico está en S3, eliminarlo
-        if ($oficio->url_archivo && str_contains($oficio->url_archivo, 'supabase.co')) {
+        // Si el archivo físico está en S3, eliminarlo (soporta tanto nombre como URL completa previa)
+        if ($oficio->url_archivo && trim($oficio->url_archivo) !== '') {
             $bucket = config('filesystems.disks.s3.bucket', 'anteproyectos');
-            $path = Str::after($oficio->url_archivo, "/{$bucket}/");
-            if ($path && $this->s3()->exists($path)) {
-                $this->s3()->delete($path);
+            $filename = basename($oficio->url_archivo);
+            $candidates = [
+                "oficios/{$filename}",
+                $oficio->url_archivo,
+                Str::after($oficio->url_archivo, "/{$bucket}/"),
+            ];
+
+            foreach ($candidates as $candidatePath) {
+                if ($candidatePath && $this->s3()->exists($candidatePath)) {
+                    $this->s3()->delete($candidatePath);
+                    break;
+                }
             }
         }
 
@@ -179,20 +196,35 @@ class OficiosOficialesController extends Controller
     {
         $oficio = Oficios_Oficiales::findOrFail($id);
 
-        if ($oficio->url_archivo && str_contains($oficio->url_archivo, 'supabase.co')) {
+        if ($oficio->url_archivo && trim($oficio->url_archivo) !== '') {
             $bucket = config('filesystems.disks.s3.bucket', 'anteproyectos');
-            $path = Str::after($oficio->url_archivo, "/{$bucket}/");
             $s3 = $this->s3();
+            $pureFilename = basename($oficio->url_archivo);
+
+            $candidates = [
+                "oficios/{$pureFilename}",
+                $oficio->url_archivo,
+                Str::after($oficio->url_archivo, "/{$bucket}/"),
+                $pureFilename,
+            ];
+
+            $resolvedPath = null;
+            foreach ($candidates as $cand) {
+                if ($cand && $s3->exists($cand)) {
+                    $resolvedPath = $cand;
+                    break;
+                }
+            }
 
             abort_unless(
-                $path && $s3->exists($path),
+                $resolvedPath !== null,
                 404,
                 'El documento físico no fue encontrado en el almacenamiento en la nube de Supabase.'
             );
 
-            $downloadName = $filename ?: basename($path);
+            $downloadName = $filename ?: $pureFilename;
 
-            return $s3->response($path, $downloadName, [
+            return $s3->response($resolvedPath, $downloadName, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline; filename="'.$downloadName.'"',
             ]);

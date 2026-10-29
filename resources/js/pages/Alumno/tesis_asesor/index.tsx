@@ -568,7 +568,7 @@ export default function AlumnoTesisAsesorIndex({
                                                     <FileText className="size-5 shrink-0 text-muted-foreground" />
                                                     <div className="min-w-0">
                                                         <p className="truncate text-sm font-semibold text-foreground">
-                                                            {v.numero_version} · {v.nombre_archivo}
+                                                            {v.numero_version}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
                                                             Subido el {v.fecha_envio || 'recientemente'}

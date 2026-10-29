@@ -323,22 +323,19 @@ class AlumnoTesisAsesorController extends Controller
 
     /**
      * Guarda el archivo PDF de la versión de tesis en Supabase Storage (carpeta versiones_tesis)
-     * y genera la URL completa de Supabase.
+     * y retorna únicamente el nombre del archivo para almacenarlo en la base de datos.
      */
     private function almacenarPdfEnSupabase(UploadedFile $archivo, string $matricula, int $numeroVersion): string
     {
-        /** @var FilesystemAdapter $s3 */
-        $s3 = Storage::disk('s3');
-
         $nombreOriginal = pathinfo($archivo->getClientOriginalName(), PATHINFO_FILENAME);
         $nombreLimpio = Str::slug($nombreOriginal, '_') ?: 'tesis';
         $nombreLimpio = Str::limit($nombreLimpio, 50, '');
         $nombreFinal = "{$matricula}_v{$numeroVersion}_{$nombreLimpio}_".time().'.pdf';
 
-        // 1. Guarda el archivo en Supabase Storage dentro de la carpeta 'versiones_tesis'
-        $path = $archivo->storeAs('versiones_tesis', $nombreFinal, 's3');
+        // Guarda físicamente en la carpeta 'versiones_tesis' en Supabase
+        $archivo->storeAs('versiones_tesis', $nombreFinal, 's3');
 
-        // 2. Genera y retorna la URL completa de Supabase S3
-        return $s3->url($path);
+        // Retorna únicamente el nombre del archivo para guardarlo en la base de datos
+        return $nombreFinal;
     }
 }

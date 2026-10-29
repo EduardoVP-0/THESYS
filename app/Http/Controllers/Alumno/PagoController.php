@@ -15,4 +15,12 @@ class PagoController extends Controller
     {
         return Inertia::render('Alumno/pagos/index');
     }
+
+    /**
+     * Muestra el formulario para realizar / registrar un nuevo pago.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('Alumno/pagos/create-pago');
+    }
 }

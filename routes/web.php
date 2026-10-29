@@ -65,6 +65,7 @@ Route::middleware(['auth', 'verified', 'role:5'])
         MODULO DE PAGOS (SUSTENTANTE)
         */
         Route::get('/pagos', [AlumnoPagoController::class, 'index'])->name('pagos.index');
+        Route::get('/pagos/create', [AlumnoPagoController::class, 'create'])->name('pagos.create');
 
         /*
         MODULO DE OFICIOS OFICIALES (SUSTENTANTE)

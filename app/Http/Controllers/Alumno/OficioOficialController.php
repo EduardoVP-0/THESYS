@@ -54,7 +54,7 @@ class OficioOficialController extends Controller
             ->withQueryString();
 
         $oficios->getCollection()->transform(function ($oficio) {
-            if ($oficio->url_archivo && str_contains($oficio->url_archivo, 'supabase.co')) {
+            if ($oficio->url_archivo && trim($oficio->url_archivo) !== '') {
                 $filename = basename($oficio->url_archivo);
                 $oficio->url_archivo = route('alumno.oficios_oficiales.documento', [
                     'id' => $oficio->id_oficio_oficial,
@@ -78,20 +78,35 @@ class OficioOficialController extends Controller
     {
         $oficio = Oficios_Oficiales::where('estado', true)->findOrFail($id);
 
-        if ($oficio->url_archivo && str_contains($oficio->url_archivo, 'supabase.co')) {
+        if ($oficio->url_archivo && trim($oficio->url_archivo) !== '') {
             $bucket = config('filesystems.disks.s3.bucket', 'anteproyectos');
-            $path = Str::after($oficio->url_archivo, "/{$bucket}/");
             $s3 = $this->s3();
+            $pureFilename = basename($oficio->url_archivo);
+
+            $candidates = [
+                "oficios/{$pureFilename}",
+                $oficio->url_archivo,
+                Str::after($oficio->url_archivo, "/{$bucket}/"),
+                $pureFilename,
+            ];
+
+            $resolvedPath = null;
+            foreach ($candidates as $cand) {
+                if ($cand && $s3->exists($cand)) {
+                    $resolvedPath = $cand;
+                    break;
+                }
+            }
 
             abort_unless(
-                $path && $s3->exists($path),
+                $resolvedPath !== null,
                 404,
                 'El documento físico no fue encontrado en el almacenamiento en la nube de Supabase.'
             );
 
-            $downloadName = $filename ?: basename($path);
+            $downloadName = $filename ?: $pureFilename;
 
-            return $s3->response($path, $downloadName, [
+            return $s3->response($resolvedPath, $downloadName, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline; filename="'.$downloadName.'"',
             ]);

@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Download, FileText, CreditCard, Eye, CreditCard as PayIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -95,11 +95,14 @@ export default function AlumnoPagosIndex() {
                                                 </Button>
                                             ) : (
                                                 <Button 
+                                                    asChild
                                                     size="sm"
                                                     className="gap-2 bg-[#10B981] hover:bg-[#0ea371] text-white"
                                                 >
-                                                    <PayIcon className="size-4" />
-                                                    Pagar 
+                                                    <Link href="/alumno/pagos/create">
+                                                        <PayIcon className="size-4" />
+                                                        Pagar Ahora
+                                                    </Link>
                                                 </Button>
                                             )}
                                         </td>
