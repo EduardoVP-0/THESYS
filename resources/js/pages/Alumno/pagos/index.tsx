@@ -1,20 +1,38 @@
 import { Head, Link } from '@inertiajs/react';
-import { Download, FileText, CreditCard, Eye, CreditCard as PayIcon } from 'lucide-react';
+import { FileText, CreditCard, Eye, CreditCard as PayIcon, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { PaymentDetailsModal, type PagoDetalle } from './show-pagos';
 
-// ─── Datos Mock (Sin base de datos) ───
-const MOCK_PAYMENTS = [
-    { id: 1, concept: 'Examen Profesional', date: 'Oct 09, 2026', amount: '$185.00', status: 'Validado' },
-    { id: 2, concept: 'Emisión de Título', date: 'Oct 08, 2026', amount: '$240.00', status: 'Validado' },
-    { id: 3, concept: 'Autorización de Examen', date: 'Oct 05, 2026', amount: '$115.00', status: 'Pendiente' },
-    { id: 4, concept: 'Duplicado de Título', date: 'Oct 03, 2026', amount: '$75.00', status: 'Rechazado' },
-    { id: 5, concept: 'Constancia de Estudios', date: 'Sep 29, 2026', amount: '$85.00', status: 'Validado' },
-];
+interface Props {
+    pagos?: PagoDetalle[];
+}
 
-export default function AlumnoPagosIndex() {
+export default function AlumnoPagosIndex({ pagos = [] }: Props) {
+    const [pagoSeleccionado, setPagoSeleccionado] = useState<PagoDetalle | null>(null);
+
+    const formatCurrency = (amount: number) =>
+        new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN',
+        }).format(amount);
+
+    const formatDate = (dateString?: string | null) => {
+        if (!dateString) return '—';
+        try {
+            return new Date(dateString).toLocaleDateString('es-MX', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+            });
+        } catch {
+            return dateString;
+        }
+    };
+
     return (
         <>
-            <Head title="Pagos" />
+            <Head title="Mis Pagos" />
 
             <div className="flex flex-1 flex-col gap-6 bg-background p-4 text-foreground md:p-6">
                 {/* ENCABEZADO Y TÍTULO */}
@@ -29,7 +47,7 @@ export default function AlumnoPagosIndex() {
                     </div>
                 </div>
 
-                {/* ACTIVIDAD DE PAGOS (Payment Activity) */}
+                {/* ACTIVIDAD DE PAGOS */}
                 <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                     {/* Header de la tarjeta */}
                     <div className="border-b border-border px-6 py-5 flex items-center justify-between">
@@ -38,12 +56,12 @@ export default function AlumnoPagosIndex() {
                                 Actividad de Pagos
                             </h2>
                             <p className="text-sm text-muted-foreground mt-1">
-                                Historial de transacciones y estado actual.
+                                Aranceles oficiales asignados y estado de validación.
                             </p>
                         </div>
                         <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
                             <CreditCard className="size-4" />
-                            {MOCK_PAYMENTS.length} registros
+                            {pagos.length} trámites asignados
                         </div>
                     </div>
 
@@ -60,59 +78,124 @@ export default function AlumnoPagosIndex() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {MOCK_PAYMENTS.map((payment) => (
-                                    <tr key={payment.id} className="border-b border-border last:border-0 hover:bg-accent/20 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-lg bg-[#B8D4E3]/20 text-[#315c73] dark:bg-[#B8D4E3]/10 dark:text-[#B8D4E3]">
-                                                    <FileText className="size-4" />
-                                                </div>
-                                                <span className="font-semibold text-foreground">{payment.concept}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-muted-foreground">{payment.date}</td>
-                                        <td className="px-6 py-4 font-bold text-foreground">{payment.amount}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-                                                payment.status === 'Validado' 
-                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' 
-                                                : payment.status === 'Pendiente'
-                                                    ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
-                                                : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800'
-                                            }`}>
-                                                {payment.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            {payment.status === 'Validado' ? (
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm"
-                                                    className="gap-2 border-[#B8D4E3] text-[#315c73] hover:bg-[#B8D4E3]/20 dark:border-[#B8D4E3]/50 dark:text-[#B8D4E3] dark:hover:bg-[#B8D4E3]/10"
-                                                >
-                                                    <Eye className="size-4" />
-                                                    Detalles
-                                                </Button>
-                                            ) : (
-                                                <Button 
-                                                    asChild
-                                                    size="sm"
-                                                    className="gap-2 bg-[#10B981] hover:bg-[#0ea371] text-white"
-                                                >
-                                                    <Link href="/alumno/pagos/create">
-                                                        <PayIcon className="size-4" />
-                                                        Pagar Ahora
-                                                    </Link>
-                                                </Button>
-                                            )}
+                                {pagos.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                                            No tienes trámites o aranceles pendientes en este momento.
                                         </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    pagos.map((pago) => {
+                                        const esValidado = pago.estado_validacion === 'Validado';
+                                        const esRechazado = pago.estado_validacion === 'Rechazado';
+                                        const enRevision =
+                                            pago.estado_validacion === 'Pendiente' &&
+                                            Boolean(pago.referencia_bancaria);
+
+                                        return (
+                                            <tr
+                                                key={pago.id_pago}
+                                                className="border-b border-border last:border-0 hover:bg-accent/20 transition-colors"
+                                            >
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-2 rounded-lg bg-[#B8D4E3]/20 text-[#315c73] dark:bg-[#B8D4E3]/10 dark:text-[#B8D4E3] mt-0.5">
+                                                            <FileText className="size-4" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <span className="font-semibold text-foreground block">
+                                                                {pago.concepto}
+                                                            </span>
+                                                            {pago.referencia_bancaria && (
+                                                                <span className="text-[11px] font-mono text-muted-foreground block mt-0.5">
+                                                                    Archivo: {pago.referencia_bancaria}
+                                                                </span>
+                                                            )}
+                                                            {esRechazado && pago.comentarios && (
+                                                                <span className="inline-flex items-center gap-1 text-[11px] text-red-600 dark:text-red-400 font-medium mt-1">
+                                                                    <AlertCircle className="size-3 shrink-0" />
+                                                                    Motivo de rechazo: {pago.comentarios}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">
+                                                    {formatDate(pago.fecha_pago || pago.created_at)}
+                                                </td>
+                                                <td className="px-6 py-4 font-bold text-foreground whitespace-nowrap">
+                                                    {formatCurrency(pago.monto)}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    {esValidado ? (
+                                                        <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800">
+                                                            <CheckCircle2 className="size-3" />
+                                                            Validado
+                                                        </span>
+                                                    ) : esRechazado ? (
+                                                        <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800">
+                                                            <XCircle className="size-3" />
+                                                            Rechazado
+                                                        </span>
+                                                    ) : enRevision ? (
+                                                        <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800">
+                                                            <Clock className="size-3" />
+                                                            En revisión
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800">
+                                                            <Clock className="size-3" />
+                                                            Pendiente
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 text-right whitespace-nowrap">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {/* Si está Validado o En revisión o Rechazado, mostrar botón de Ver Detalles */}
+                                                        {(esValidado || enRevision || esRechazado) && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => setPagoSeleccionado(pago)}
+                                                                className="gap-1.5 border-[#B8D4E3] text-[#315c73] hover:bg-[#B8D4E3]/20 dark:border-[#B8D4E3]/50 dark:text-[#B8D4E3] dark:hover:bg-[#B8D4E3]/10 cursor-pointer"
+                                                            >
+                                                                <Eye className="size-4" />
+                                                                Detalles
+                                                            </Button>
+                                                        )}
+
+                                                        {/* Si está Pendiente (sin pagar) o Rechazado, mostrar botón de Pagar Ahora */}
+                                                        {(!esValidado && !enRevision) && (
+                                                            <Button
+                                                                asChild
+                                                                size="sm"
+                                                                className="gap-1.5 bg-[#10B981] hover:bg-[#0ea371] text-white"
+                                                            >
+                                                                <Link href={`/alumno/pagos/create?id_pago=${pago.id_pago}`}>
+                                                                    <PayIcon className="size-4" />
+                                                                    Pagar Ahora
+                                                                </Link>
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
+
+            {/* Modal de detalles del pago */}
+            <PaymentDetailsModal
+                isOpen={Boolean(pagoSeleccionado)}
+                onClose={() => setPagoSeleccionado(null)}
+                pago={pagoSeleccionado}
+            />
         </>
     );
 }

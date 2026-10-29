@@ -91,6 +91,8 @@ interface Pago {
     concepto: string;
     referencia_bancaria: string | null;
     estado_validacion: 'Pendiente' | 'Validado' | 'Rechazado';
+    comentarios?: string | null;
+    url_comprobante?: string | null;
     created_at: string;
     updated_at: string;
     usuario?: Usuario | null;
@@ -220,22 +222,38 @@ export default function PagosIndex({ pagos, pendientesPorConcepto = {}, filters 
 
     const handleSeleccionarPago = (pago: Pago) => {
         setPagoSeleccionado(pago);
+        setComentarios(pago.comentarios || '');
     };
 
     // Validar o Rechazar un pago directamente contra la base de datos
     const handleUpdateEstado = (nuevoEstado: 'Validado' | 'Rechazado') => {
-        if (!pagoSeleccionado) return;
+        if (
+            !pagoSeleccionado ||
+            !pagoSeleccionado.referencia_bancaria ||
+            pagoSeleccionado.estado_validacion === 'Validado'
+        ) {
+            return;
+        }
         const accion = nuevoEstado === 'Validado' ? 'validar' : 'rechazar';
         if (confirm(`¿Estás seguro de ${accion} este pago?`)) {
             router.patch(
                 `/admin/pagos/${pagoSeleccionado.id_pago}/estado`,
-                { estado_validacion: nuevoEstado },
+                {
+                    estado_validacion: nuevoEstado,
+                    comentarios: comentarios.trim() || null,
+                },
                 {
                     preserveScroll: true,
                     preserveState: true,
                     onSuccess: () => {
                         setPagoSeleccionado((prev) =>
-                            prev ? { ...prev, estado_validacion: nuevoEstado } : null
+                            prev
+                                ? {
+                                      ...prev,
+                                      estado_validacion: nuevoEstado,
+                                      comentarios: comentarios.trim() || prev.comentarios,
+                                  }
+                                : null
                         );
                     },
                 }
@@ -615,38 +633,49 @@ export default function PagosIndex({ pagos, pendientesPorConcepto = {}, filters 
                                             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                                                 Vista del recibo
                                             </h4>
-                                            <a
-                                                href={`/storage/comprobantes/${pagoSeleccionado.referencia_bancaria || 'comprobante'}.pdf`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="block rounded-lg border border-border bg-muted/10 hover:bg-muted/20 transition-colors overflow-hidden group"
-                                                title="Abrir comprobante en nueva ventana"
-                                            >
-                                                {/* Placeholder del PDF */}
-                                                <div className="aspect-[3/4] bg-white dark:bg-card flex flex-col items-center justify-center p-4 border-b border-border">
-                                                    <div className="size-14 rounded-full bg-[#EF4444]/10 flex items-center justify-center mb-3">
-                                                        <FileText className="size-7 text-[#EF4444]" />
-                                                    </div>
-                                                    <p className="text-sm font-semibold text-foreground text-center">
-                                                        Comprobante de pago
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground mt-1 text-center px-4">
-                                                        Haz clic para abrir en nueva ventana
-                                                    </p>
-                                                </div>
-                                                {/* Nombre del archivo */}
-                                                <div className="p-2.5 flex items-center justify-between bg-card">
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="text-xs font-semibold text-foreground truncate">
-                                                            {pagoSeleccionado.referencia_bancaria || 'comprobante'}.pdf
+                                            {pagoSeleccionado.referencia_bancaria ? (
+                                                <a
+                                                    href={pagoSeleccionado.url_comprobante || `/admin/pagos/${pagoSeleccionado.id_pago}/documento`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="block rounded-lg border border-border bg-muted/10 hover:bg-muted/20 transition-colors overflow-hidden group"
+                                                    title="Abrir comprobante en nueva ventana"
+                                                >
+                                                    {/* Placeholder del PDF */}
+                                                    <div className="aspect-[3/4] bg-white dark:bg-card flex flex-col items-center justify-center p-4 border-b border-border">
+                                                        <div className="size-14 rounded-full bg-[#EF4444]/10 flex items-center justify-center mb-3">
+                                                            <FileText className="size-7 text-[#EF4444]" />
+                                                        </div>
+                                                        <p className="text-sm font-semibold text-foreground text-center">
+                                                            Comprobante de pago
                                                         </p>
-                                                        <p className="text-[10px] text-muted-foreground">
-                                                            Documento oficial
+                                                        <p className="text-xs text-muted-foreground mt-1 text-center px-4">
+                                                            Haz clic para abrir en nueva ventana
                                                         </p>
                                                     </div>
-                                                    <Eye className="size-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
+                                                    {/* Nombre del archivo */}
+                                                    <div className="p-2.5 flex items-center justify-between bg-card">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-xs font-semibold text-foreground truncate">
+                                                                {pagoSeleccionado.referencia_bancaria.endsWith('.pdf')
+                                                                    ? pagoSeleccionado.referencia_bancaria
+                                                                    : `${pagoSeleccionado.referencia_bancaria}.pdf`}
+                                                            </p>
+                                                            <p className="text-[10px] text-muted-foreground">
+                                                                Documento oficial · Supabase
+                                                            </p>
+                                                        </div>
+                                                        <Eye className="size-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
+                                                    </div>
+                                                </a>
+                                            ) : (
+                                                <div className="rounded-lg border border-dashed border-border bg-muted/10 p-6 text-center">
+                                                    <FileText className="size-6 text-muted-foreground mx-auto mb-2 opacity-60" />
+                                                    <p className="text-xs font-medium text-muted-foreground">
+                                                        El alumno aún no ha realizado ni subido comprobante para este arancel.
+                                                    </p>
                                                 </div>
-                                            </a>
+                                            )}
                                         </div>
 
                                         {/* Comentarios */}
@@ -657,9 +686,17 @@ export default function PagosIndex({ pagos, pendientesPorConcepto = {}, filters 
                                             <textarea
                                                 value={comentarios}
                                                 onChange={(e) => setComentarios(e.target.value)}
-                                                placeholder="Añade una nota interna sobre este pago..."
+                                                disabled={
+                                                    !pagoSeleccionado.referencia_bancaria ||
+                                                    pagoSeleccionado.estado_validacion === 'Validado'
+                                                }
+                                                placeholder={
+                                                    pagoSeleccionado.referencia_bancaria
+                                                        ? 'Añade una nota o motivo de rechazo sobre este pago...'
+                                                        : 'Se habilitará cuando el alumno registre su pago...'
+                                                }
                                                 rows={3}
-                                                className="w-full text-xs px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 resize-none"
+                                                className="w-full text-xs px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
                                         </div>
                                     </div>
@@ -669,16 +706,35 @@ export default function PagosIndex({ pagos, pendientesPorConcepto = {}, filters 
                                         <Button
                                             variant="outline"
                                             onClick={() => handleUpdateEstado('Rechazado')}
-                                            disabled={pagoSeleccionado.estado_validacion === 'Rechazado'}
-                                            className="flex-1 border-[#EF4444] text-[#EF4444] hover:bg-[#EF4444]/10 gap-1.5 text-xs font-semibold disabled:opacity-50"
+                                            disabled={
+                                                !pagoSeleccionado.referencia_bancaria ||
+                                                pagoSeleccionado.estado_validacion === 'Rechazado' ||
+                                                pagoSeleccionado.estado_validacion === 'Validado'
+                                            }
+                                            title={
+                                                !pagoSeleccionado.referencia_bancaria
+                                                    ? 'El alumno aún no ha realizado este pago'
+                                                    : pagoSeleccionado.estado_validacion === 'Validado'
+                                                    ? 'Este pago ya fue validado'
+                                                    : undefined
+                                            }
+                                            className="flex-1 border-[#EF4444] text-[#EF4444] hover:bg-[#EF4444]/10 gap-1.5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <XCircle className="size-3.5" />
                                             Rechazar Pago
                                         </Button>
                                         <Button
                                             onClick={() => handleUpdateEstado('Validado')}
-                                            disabled={pagoSeleccionado.estado_validacion === 'Validado'}
-                                            className="flex-1 bg-[#10B981] hover:bg-[#0ea371] text-white gap-1.5 text-xs font-semibold disabled:opacity-50"
+                                            disabled={
+                                                !pagoSeleccionado.referencia_bancaria ||
+                                                pagoSeleccionado.estado_validacion === 'Validado'
+                                            }
+                                            title={
+                                                !pagoSeleccionado.referencia_bancaria
+                                                    ? 'El alumno aún no ha realizado este pago'
+                                                    : undefined
+                                            }
+                                            className="flex-1 bg-[#10B981] hover:bg-[#0ea371] text-white gap-1.5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Check className="size-3.5" />
                                             Validar Pago

@@ -67,6 +67,8 @@ Route::middleware(['auth', 'verified', 'role:5'])
         */
         Route::get('/pagos', [AlumnoPagoController::class, 'index'])->name('pagos.index');
         Route::get('/pagos/create', [AlumnoPagoController::class, 'create'])->name('pagos.create');
+        Route::post('/pagos', [AlumnoPagoController::class, 'store'])->name('pagos.store');
+        Route::get('/pagos/{pago}/documento', [AlumnoPagoController::class, 'verDocumento'])->name('pagos.documento');
 
         /*
         MODULO DE OFICIOS OFICIALES (SUSTENTANTE)
@@ -229,6 +231,8 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::get('/pagos', [PagoController::class, 'index'])->name('pagos.index');
         // Actualizar estado de validación (Validar / Rechazar pago)
         Route::patch('/pagos/{id}/estado', [PagoController::class, 'updateEstado'])->name('pagos.update-estado');
+        // Visualizar comprobante PDF del pago desde Supabase Storage
+        Route::get('/pagos/{pago}/documento', [PagoController::class, 'verDocumento'])->name('pagos.documento');
 
         /*
         MODULO DE ADMINISTRADORES (CRUD ADMINISTRATIVO)

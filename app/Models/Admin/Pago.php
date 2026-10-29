@@ -21,10 +21,14 @@ class Pago extends Model
     // Campos que se pueden guardar en la base de datos
     protected $fillable = [
         'id_usuario',
+        'id_concepto',
         'monto',
         'concepto',
         'referencia_bancaria',
+        'metodo_pago',
         'estado_validacion',
+        'comentarios',
+        'fecha_pago',
     ];
 
     // Conversión de tipos para que el monto se pueda trabajar como número decimal
@@ -32,6 +36,7 @@ class Pago extends Model
     {
         return [
             'monto' => 'float',
+            'fecha_pago' => 'datetime',
         ];
     }
 
@@ -56,5 +61,11 @@ class Pago extends Model
             // Llave primaria de alumnos
             'id'
         );
+    }
+
+    // Relación con el concepto original del catálogo
+    public function conceptoPago(): BelongsTo
+    {
+        return $this->belongsTo(ConceptoPago::class, 'id_concepto', 'id_concepto');
     }
 }

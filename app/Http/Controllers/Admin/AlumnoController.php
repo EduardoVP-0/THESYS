@@ -8,6 +8,8 @@ use App\Http\Requests\UpdateAlumnoRequest;
 use App\Mail\CredencialesAlumnoMail;
 use App\Models\Admin\Alumno;
 use App\Models\Admin\Carrera;
+use App\Models\Admin\ConceptoPago;
+use App\Models\Admin\Pago;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -112,7 +114,25 @@ class AlumnoController extends Controller
             $alumnoData['id_usuario_registro'] = Auth::id();   // Auditoría de quién lo dio de alta
             $alumnoData['estado_academico'] = $validated['estado_academico'] ?? 'Activo';
 
-            return Alumno::create($alumnoData);
+            $alumno = Alumno::create($alumnoData);
+
+            // Generar automáticamente los pagos iniciales del catálogo oficial
+            $conceptosActivos = ConceptoPago::where('activo', true)
+                ->orderBy('orden', 'asc')
+                ->get();
+
+            foreach ($conceptosActivos as $concepto) {
+                Pago::create([
+                    'id_usuario' => $user->id,
+                    'id_concepto' => $concepto->id_concepto,
+                    'concepto' => $concepto->nombre,
+                    'monto' => $concepto->monto,
+                    'referencia_bancaria' => null,
+                    'estado_validacion' => 'Pendiente',
+                ]);
+            }
+
+            return $alumno;
         });
 
         // Cargamos relaciones para que la plantilla de correo tenga acceso a la carrera y usuario
