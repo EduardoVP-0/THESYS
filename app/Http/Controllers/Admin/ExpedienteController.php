@@ -86,9 +86,9 @@ class ExpedienteController extends Controller
         // Calculo de metricas institucionales globales
         $totalAlumnos = Alumno::count();
         $conProyecto = Alumno::has('proyectos')->count();
-        $enRevision = Alumno::whereHas('proyectos', fn ($q) => $q->where('estado', 'En revisión'))->count();
-        $aprobados = Alumno::whereHas('proyectos', fn ($q) => $q->where('estado', 'Aprobado'))->count();
-        $conCambios = Alumno::whereHas('proyectos', fn ($q) => $q->where('estado', 'Con cambios'))->count();
+        $enRevision = Alumno::whereHas('proyectos', fn($q) => $q->where('estado', 'En revisión'))->count();
+        $aprobados = Alumno::whereHas('proyectos', fn($q) => $q->where('estado', 'Aprobado'))->count();
+        $conCambios = Alumno::whereHas('proyectos', fn($q) => $q->where('estado', 'Con cambios'))->count();
 
         // Transformacion para la tabla de expedientes
         $alumnos->getCollection()->transform(function ($alumno) {
@@ -297,7 +297,7 @@ class ExpedienteController extends Controller
             'Esta versión de tesis no cuenta con un archivo físico adjunto.'
         );
 
-        return $this->streamFromStorage($version->ruta_archivo, 'tesis');
+        return $this->streamFromStorage($version->ruta_archivo, 'versiones_tesis');
     }
 
     /**
@@ -340,6 +340,10 @@ class ExpedienteController extends Controller
         $candidatePaths = [
             $cleanPath,
             "{$defaultFolder}/{$filename}",
+            "versiones_tesis/{$filename}",
+            "versiones_revisores/{$filename}",
+            "anteproyectos/{$filename}",
+            "oficios/{$filename}",
             $filename,
         ];
 
@@ -362,7 +366,7 @@ class ExpedienteController extends Controller
             $filename,
             [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="'.$filename.'"',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
             ]
         );
     }

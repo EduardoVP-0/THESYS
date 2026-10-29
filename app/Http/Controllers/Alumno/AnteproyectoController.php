@@ -231,21 +231,38 @@ class AnteproyectoController extends Controller
             'Aún no tienes un documento PDF adjunto en tu anteproyecto.'
         );
 
-        $filename = basename($proyecto->ruta_documento);
-
         /** @var FilesystemAdapter $s3 */
         $s3 = Storage::disk('s3');
+        $bucket = config('filesystems.disks.s3.bucket', 'anteproyectos');
 
-        $ruta = $proyecto->ruta_documento;
-        if (! $s3->exists($ruta)) {
-            $rutaConCarpeta = 'anteproyectos/'.ltrim($ruta, '/');
-            if ($s3->exists($rutaConCarpeta)) {
-                $ruta = $rutaConCarpeta;
+        $cleanPath = $proyecto->ruta_documento;
+        if (str_contains($cleanPath, 'http://') || str_contains($cleanPath, 'https://')) {
+            if (str_contains($cleanPath, "/{$bucket}/")) {
+                $cleanPath = Str::after($cleanPath, "/{$bucket}/");
+            } else {
+                $cleanPath = basename($cleanPath);
+            }
+        }
+
+        $cleanPath = ltrim($cleanPath, '/');
+        $filename = basename($cleanPath);
+
+        $candidates = [
+            $cleanPath,
+            "anteproyectos/{$filename}",
+            $filename,
+        ];
+
+        $ruta = null;
+        foreach ($candidates as $candidate) {
+            if ($s3->exists($candidate)) {
+                $ruta = $candidate;
+                break;
             }
         }
 
         abort_unless(
-            $s3->exists($ruta),
+            $ruta !== null,
             404,
             "El archivo físico \"{$filename}\" no fue localizado en el almacenamiento en la nube."
         );
@@ -261,18 +278,27 @@ class AnteproyectoController extends Controller
     }
 
     /**
-     * Sube el PDF del anteproyecto a Supabase Storage y elimina el archivo previo si existía.
+     * Sube el PDF del anteproyecto a Supabase Storage (carpeta anteproyectos) y elimina el archivo previo si existía.
      */
     private function almacenarPdfEnSupabase(UploadedFile $archivo, string $matricula, ?string $rutaPrevia = null): string
     {
         /** @var FilesystemAdapter $s3 */
         $s3 = Storage::disk('s3');
+        $bucket = config('filesystems.disks.s3.bucket', 'anteproyectos');
 
         if ($rutaPrevia && trim($rutaPrevia) !== '') {
-            if ($s3->exists($rutaPrevia)) {
-                $s3->delete($rutaPrevia);
+            $oldPath = $rutaPrevia;
+            if (str_contains($oldPath, 'http://') || str_contains($oldPath, 'https://')) {
+                $oldPath = str_contains($oldPath, "/{$bucket}/")
+                    ? Str::after($oldPath, "/{$bucket}/")
+                    : basename($oldPath);
+            }
+            $oldPath = ltrim($oldPath, '/');
+
+            if ($s3->exists($oldPath)) {
+                $s3->delete($oldPath);
             } else {
-                $rutaConCarpeta = 'anteproyectos/'.ltrim($rutaPrevia, '/');
+                $rutaConCarpeta = 'anteproyectos/'.basename($oldPath);
                 if ($s3->exists($rutaConCarpeta)) {
                     $s3->delete($rutaConCarpeta);
                 }
@@ -284,7 +310,9 @@ class AnteproyectoController extends Controller
         $nombreLimpio = Str::limit($nombreLimpio, 60, '');
         $nombreFinal = "{$matricula}_{$nombreLimpio}_".time().'.pdf';
 
-        return $archivo->storeAs('anteproyectos', $nombreFinal, 's3');
+        $path = $archivo->storeAs('anteproyectos', $nombreFinal, 's3');
+
+        return $s3->url($path);
     }
 }
 

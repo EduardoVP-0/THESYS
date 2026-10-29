@@ -8,6 +8,7 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -132,22 +133,38 @@ class AnteproyectoController extends Controller
             'Este anteproyecto aún no cuenta con un documento PDF adjunto.'
         );
 
-        $filename = basename($proyecto->ruta_documento);
-
         /** @var FilesystemAdapter $s3 */
         $s3 = Storage::disk('s3');
+        $bucket = config('filesystems.disks.s3.bucket', 'anteproyectos');
 
-        // Determinar la ruta real en Supabase (soporta en la raíz o dentro de la carpeta 'anteproyectos/')
-        $ruta = $proyecto->ruta_documento;
-        if (! $s3->exists($ruta)) {
-            $rutaConCarpeta = 'anteproyectos/'.ltrim($ruta, '/');
-            if ($s3->exists($rutaConCarpeta)) {
-                $ruta = $rutaConCarpeta;
+        $cleanPath = $proyecto->ruta_documento;
+        if (str_contains($cleanPath, 'http://') || str_contains($cleanPath, 'https://')) {
+            if (str_contains($cleanPath, "/{$bucket}/")) {
+                $cleanPath = Str::after($cleanPath, "/{$bucket}/");
+            } else {
+                $cleanPath = basename($cleanPath);
+            }
+        }
+
+        $cleanPath = ltrim($cleanPath, '/');
+        $filename = basename($cleanPath);
+
+        $candidates = [
+            $cleanPath,
+            "anteproyectos/{$filename}",
+            $filename,
+        ];
+
+        $ruta = null;
+        foreach ($candidates as $candidate) {
+            if ($s3->exists($candidate)) {
+                $ruta = $candidate;
+                break;
             }
         }
 
         abort_unless(
-            $s3->exists($ruta),
+            $ruta !== null,
             404,
             "El archivo físico \"{$filename}\" no fue encontrado en el almacenamiento en la nube. Contacte al sustentante para que vuelva a adjuntarlo."
         );

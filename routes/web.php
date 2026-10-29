@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\VeredictoController;
 use App\Http\Controllers\Alumno\AlumnoTesisAsesorController;
 use App\Http\Controllers\Alumno\AnteproyectoController as AlumnoAnteproyectoController;
 use App\Http\Controllers\Alumno\DashboardController as AlumnoDashboardController;
+use App\Http\Controllers\Alumno\ExpedienteController as AlumnoExpedienteController;
 use App\Http\Controllers\Alumno\JuradoController as AlumnoJuradoController;
 use App\Http\Controllers\Alumno\OficioOficialController as AlumnoOficioOficialController;
 use App\Http\Controllers\Alumno\PagoController as AlumnoPagoController;
@@ -74,6 +75,15 @@ Route::middleware(['auth', 'verified', 'role:5'])
             ->where('filename', '.*')
             ->name('oficios_oficiales.documento');
         Route::redirect('/oficios-oficiales', '/alumno/oficios_oficiales');
+
+        /*
+        MODULO DE MI EXPEDIENTE DIGITAL (SUSTENTANTE)
+        */
+        Route::get('/mi-expediente', [AlumnoExpedienteController::class, 'index'])->name('expediente.index');
+        Route::get('/mi-expediente/anteproyecto/documento', [AlumnoExpedienteController::class, 'verAnteproyectoDocumento'])->name('expediente.anteproyecto.documento');
+        Route::get('/mi-expediente/version/{version}/documento', [AlumnoExpedienteController::class, 'verVersionDocumento'])->name('expediente.version.documento');
+        Route::get('/mi-expediente/oficio/{oficio}/documento', [AlumnoExpedienteController::class, 'verOficioDocumento'])->name('expediente.oficio.documento');
+        Route::redirect('/expediente', '/alumno/mi-expediente');
     });
 
 // Rutas de Administrador (Roles 1, 2 y 3)
