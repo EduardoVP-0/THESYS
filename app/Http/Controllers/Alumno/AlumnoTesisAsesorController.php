@@ -292,7 +292,6 @@ class AlumnoTesisAsesorController extends Controller
         $candidates = [
             $cleanPath,
             "versiones_tesis/{$filename}",
-            "tesis/{$filename}",
             "anteproyectos/{$filename}",
             $filename,
         ];
