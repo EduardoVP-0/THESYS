@@ -3,6 +3,7 @@ import {
     ArrowUpRight,
     ChevronLeft,
     ChevronRight,
+    RefreshCw,
     RotateCcw,
     Search,
 } from 'lucide-react';
@@ -32,21 +33,24 @@ import {
     obtenerEstadoGeneral,
     obtenerMiembroPorCargo,
 } from '../jury-utils';
-import type { JuryStatusFilter, MiembroJurado, ProyectoJurado } from '../types';
+import type { DocenteJurado, JuryStatusFilter, MiembroJurado, ProyectoJurado } from '../types';
 import { StatusBadge } from './status-badge';
+import { SustituirJuradoModal } from './sustituir-jurado-modal';
 
 const PAGE_SIZE = 8;
 
 interface ConsultaTableProps {
     proyectos: ProyectoJurado[];
+    docentes?: DocenteJurado[];
 }
 
 interface JuryMemberSummaryProps {
     member?: MiembroJurado;
     label?: string;
+    onSustituir?: (member: MiembroJurado) => void;
 }
 
-function JuryMemberSummary({ member, label }: JuryMemberSummaryProps) {
+function JuryMemberSummary({ member, label, onSustituir }: JuryMemberSummaryProps) {
     if (!member) {
         return (
             <span className="text-[11px] text-muted-foreground italic">
@@ -54,6 +58,8 @@ function JuryMemberSummary({ member, label }: JuryMemberSummaryProps) {
             </span>
         );
     }
+
+    const esRechazado = member.estado_aceptacion.toLowerCase().startsWith('rechaz');
 
     return (
         <div className="min-w-0">
@@ -68,15 +74,38 @@ function JuryMemberSummary({ member, label }: JuryMemberSummaryProps) {
                 )}
                 {member.docente.nombre_completo}
             </p>
-            <StatusBadge estado={member.estado_aceptacion} className="mt-1" />
+            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                <StatusBadge estado={member.estado_aceptacion} className="text-[9px] py-0" />
+                {esRechazado && onSustituir && (
+                    <button
+                        type="button"
+                        onClick={() => onSustituir(member)}
+                        className="text-[10px] text-amber-600 dark:text-amber-400 font-bold underline hover:text-amber-700"
+                        title="Sustituir a este docente que rechazó"
+                    >
+                        Sustituir
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
 
-export function ConsultaTable({ proyectos }: ConsultaTableProps) {
+export function ConsultaTable({ proyectos, docentes = [] }: ConsultaTableProps) {
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState<JuryStatusFilter>('todos');
     const [page, setPage] = useState(1);
+
+    // Estado del modal de sustitución
+    const [sustituirOpen, setSustituirOpen] = useState(false);
+    const [proyectoParaSustituir, setProyectoParaSustituir] = useState<ProyectoJurado | null>(null);
+    const [miembroParaSustituir, setMiembroParaSustituir] = useState<MiembroJurado | null>(null);
+
+    const handleAbrirSustitucion = (proyecto: ProyectoJurado, miembro?: MiembroJurado) => {
+        setProyectoParaSustituir(proyecto);
+        setMiembroParaSustituir(miembro ?? null);
+        setSustituirOpen(true);
+    };
 
     const filteredProyectos = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -143,50 +172,54 @@ export function ConsultaTable({ proyectos }: ConsultaTableProps) {
 
     return (
         <section className="flex flex-col gap-3">
-            <div className="rounded-xl border border-border bg-card p-3 shadow-xs">
-                <div className="flex flex-col items-stretch gap-2 md:flex-row md:items-center">
-                    <div className="relative min-w-0 flex-1">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    {/* Buscador reactivo amplio */}
+                    <div className="relative w-full md:w-[460px] lg:w-[520px]">
                         <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             type="text"
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Buscar por tesis, sustentante, asesor o jurado..."
+                            placeholder="Buscar por tesista, tesis, matrícula, asesor o jurado..."
                             className="h-10 rounded-xl border-border bg-background pl-9 text-sm"
                         />
                     </div>
 
-                    <Select
-                        value={status}
-                        onValueChange={(value) =>
-                            setStatus(value as JuryStatusFilter)
-                        }
-                    >
-                        <SelectTrigger className="h-10 w-full rounded-xl border-border bg-background text-sm md:w-56">
-                            <SelectValue placeholder="Estado de aceptación" />
-                        </SelectTrigger>
-                        <SelectContent className="border-border bg-popover">
-                            <SelectItem value="todos">
-                                Todos los estados
-                            </SelectItem>
-                            <SelectItem value="Pendiente">Pendiente</SelectItem>
-                            <SelectItem value="Aceptado">Aceptado</SelectItem>
-                            <SelectItem value="Rechazado">Rechazado</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    {hasFilters && (
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={clearFilters}
-                            className="h-10 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                    {/* Selector de estado y botón limpiar */}
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <Select
+                            value={status}
+                            onValueChange={(value) =>
+                                setStatus(value as JuryStatusFilter)
+                            }
                         >
-                            <RotateCcw className="size-3.5" />
-                            Limpiar
-                        </Button>
-                    )}
+                            <SelectTrigger className="h-10 w-full md:w-56 rounded-xl border-border bg-background text-sm">
+                                <SelectValue placeholder="Estado de aceptación" />
+                            </SelectTrigger>
+                            <SelectContent className="border-border bg-popover">
+                                <SelectItem value="todos">
+                                    Todos los estados
+                                </SelectItem>
+                                <SelectItem value="Pendiente">Pendiente</SelectItem>
+                                <SelectItem value="Aceptado">Aceptado</SelectItem>
+                                <SelectItem value="Rechazado">Rechazado</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        {hasFilters && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={clearFilters}
+                                className="h-10 gap-1.5 text-xs text-muted-foreground hover:text-foreground shrink-0 border-border"
+                            >
+                                <RotateCcw className="size-3.5" />
+                                Limpiar
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -213,10 +246,10 @@ export function ConsultaTable({ proyectos }: ConsultaTableProps) {
                                 <TableHead className="w-[11%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
                                     Vocal
                                 </TableHead>
-                                <TableHead className="w-[12%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                <TableHead className="w-[11%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
                                     Suplentes
                                 </TableHead>
-                                <TableHead className="w-[10%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                <TableHead className="w-[11%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
                                     Estado
                                 </TableHead>
                                 <TableHead className="w-[5%] px-4 text-right text-xs font-bold tracking-wide text-muted-foreground uppercase">
@@ -359,18 +392,21 @@ export function ConsultaTable({ proyectos }: ConsultaTableProps) {
                                             <TableCell className="px-4 py-3">
                                                 <JuryMemberSummary
                                                     member={presidente}
+                                                    onSustituir={(m) => handleAbrirSustitucion(proyecto, m)}
                                                 />
                                             </TableCell>
 
                                             <TableCell className="px-4 py-3">
                                                 <JuryMemberSummary
                                                     member={secretario}
+                                                    onSustituir={(m) => handleAbrirSustitucion(proyecto, m)}
                                                 />
                                             </TableCell>
 
                                             <TableCell className="px-4 py-3">
                                                 <JuryMemberSummary
                                                     member={vocal}
+                                                    onSustituir={(m) => handleAbrirSustitucion(proyecto, m)}
                                                 />
                                             </TableCell>
 
@@ -379,24 +415,40 @@ export function ConsultaTable({ proyectos }: ConsultaTableProps) {
                                                     <JuryMemberSummary
                                                         member={suplente1}
                                                         label="S1"
+                                                        onSustituir={(m) => handleAbrirSustitucion(proyecto, m)}
                                                     />
                                                     <JuryMemberSummary
                                                         member={suplente2}
                                                         label="S2"
+                                                        onSustituir={(m) => handleAbrirSustitucion(proyecto, m)}
                                                     />
                                                 </div>
                                             </TableCell>
 
-                                            <TableCell className="px-4 py-3">
+                                            <TableCell className="px-4 py-3 min-w-[120px]">
                                                 <StatusBadge
                                                     estado={estadoGeneral}
                                                     dot
+                                                    className="whitespace-nowrap"
                                                 />
-                                                <p className="mt-1.5 text-[10px] text-muted-foreground">
+                                                <p className="mt-1.5 text-[10px] text-muted-foreground whitespace-nowrap">
                                                     {aceptados} de{' '}
                                                     {JURY_SLOTS.length}{' '}
                                                     aceptados
                                                 </p>
+                                                {proyecto.jurado.some((m) =>
+                                                    m.estado_aceptacion.toLowerCase().startsWith('rechaz')
+                                                ) && (
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        onClick={() => handleAbrirSustitucion(proyecto)}
+                                                        className="mt-2 h-6 px-2 text-[10px] bg-amber-500 hover:bg-amber-600 text-white font-semibold gap-1 shadow-xs"
+                                                    >
+                                                        <RefreshCw className="size-2.5" />
+                                                        Sustituir
+                                                    </Button>
+                                                )}
                                             </TableCell>
 
                                             <TableCell className="px-4 py-3 text-right">
@@ -471,6 +523,14 @@ export function ConsultaTable({ proyectos }: ConsultaTableProps) {
                     </div>
                 </div>
             </div>
+
+            <SustituirJuradoModal
+                open={sustituirOpen}
+                onOpenChange={setSustituirOpen}
+                proyecto={proyectoParaSustituir}
+                docentes={docentes}
+                miembroInicial={miembroParaSustituir}
+            />
         </section>
     );
 }

@@ -120,19 +120,19 @@ export function DocentesTable({
                     <Table className="min-w-[900px] table-fixed">
                         <TableHeader className="bg-muted/30">
                             <TableRow className="hover:bg-transparent">
-                                <TableHead className="w-[29%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                <TableHead className="w-[26%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
                                     Docente
                                 </TableHead>
-                                <TableHead className="w-[15%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                <TableHead className="w-[14%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
                                     Cédula profesional
                                 </TableHead>
-                                <TableHead className="w-[21%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                <TableHead className="w-[18%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
                                     Correo
                                 </TableHead>
-                                <TableHead className="w-[18%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                <TableHead className="w-[22%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
                                     Especialidad
                                 </TableHead>
-                                <TableHead className="w-[17%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
+                                <TableHead className="w-[20%] px-4 text-xs font-bold tracking-wide text-muted-foreground uppercase">
                                     Selección
                                 </TableHead>
                             </TableRow>
@@ -216,7 +216,7 @@ export function DocentesTable({
                                                 </span>
                                             </TableCell>
 
-                                            <TableCell className="max-w-[200px] px-4 py-3">
+                                            <TableCell className="px-4 py-3">
                                                 <span
                                                     className="block truncate text-xs font-medium text-foreground"
                                                     title={
@@ -231,21 +231,24 @@ export function DocentesTable({
 
                                             <TableCell className="px-4 py-3">
                                                 {cargoSeleccionado ? (
-                                                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#10B981]/20 bg-[#10B981]/10 px-2.5 py-1 text-[10px] font-semibold text-[#0F9F6E] dark:text-[#34D399]">
+                                                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#10B981]/20 bg-[#10B981]/10 px-2.5 py-1 text-[10px] font-semibold text-[#0F9F6E] dark:text-[#34D399] whitespace-nowrap">
                                                         <span className="size-1.5 rounded-full bg-[#10B981]" />
                                                         Seleccionado ·{' '}
                                                         {cargoSeleccionado}
                                                     </span>
                                                 ) : esSustentante ? (
-                                                    <span className="inline-flex w-fit items-center rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[10px] font-semibold text-red-600 dark:text-red-400">
-                                                        No elegible
+                                                    <span className="inline-flex w-fit items-center rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[10px] font-semibold text-red-600 dark:text-red-400 whitespace-nowrap">
+                                                        No elegible (Sustentante)
                                                     </span>
                                                 ) : esAsesor ? (
-                                                    <span className="inline-flex w-fit items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
-                                                        Asesor · no preside
+                                                    <span
+                                                        className="inline-flex w-fit items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap"
+                                                        title="Docente asignado como Director/Asesor de esta tesis. Puede ser Secretario, Vocal o Suplente, pero no puede ser Presidente."
+                                                    >
+                                                        Director de tesis · No Presidente
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex w-fit items-center rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground">
+                                                    <span className="inline-flex w-fit items-center rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground whitespace-nowrap">
                                                         Disponible
                                                     </span>
                                                 )}

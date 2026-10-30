@@ -16,8 +16,11 @@ use App\Http\Controllers\Admin\PagoController;
 use App\Http\Controllers\Admin\SedeController;
 use App\Http\Controllers\Admin\VeredictoController;
 use App\Http\Controllers\Alumno\AlumnoTesisAsesorController;
+use App\Http\Controllers\Alumno\AlumnoTesisRevisoresController;
 use App\Http\Controllers\Alumno\AnteproyectoController as AlumnoAnteproyectoController;
+use App\Http\Controllers\Alumno\CalendarioController as AlumnoCalendarioController;
 use App\Http\Controllers\Alumno\DashboardController as AlumnoDashboardController;
+use App\Http\Controllers\Alumno\ExamenController as AlumnoExamenController;
 use App\Http\Controllers\Alumno\ExpedienteController as AlumnoExpedienteController;
 use App\Http\Controllers\Alumno\JuradoController as AlumnoJuradoController;
 use App\Http\Controllers\Alumno\OficioOficialController as AlumnoOficioOficialController;
@@ -56,11 +59,30 @@ Route::middleware(['auth', 'verified', 'role:5'])
         Route::redirect('/jurado', '/alumno/mi-jurado');
 
         /*
+        MODULO DE MIS EXÁMENES (SUSTENTANTE)
+        */
+        Route::get('/mis-examenes', [AlumnoExamenController::class, 'index'])->name('examenes.index');
+        Route::redirect('/examenes', '/alumno/mis-examenes');
+
+        /*
+        MODULO DE CALENDARIO ACADÉMICO (SUSTENTANTE)
+        */
+        Route::get('/calendario-academico', [AlumnoCalendarioController::class, 'index'])->name('calendario.index');
+        Route::redirect('/calendario', '/alumno/calendario-academico');
+
+        /*
         MODULO DE MI TESIS - DIRECTOR DE TESIS (SUSTENTANTE)
         */
         Route::get('/tesis-asesor', [AlumnoTesisAsesorController::class, 'index'])->name('tesis-asesor.index');
         Route::post('/tesis-asesor', [AlumnoTesisAsesorController::class, 'store'])->name('tesis-asesor.store');
         Route::get('/tesis-asesor/{version}/documento', [AlumnoTesisAsesorController::class, 'verDocumento'])->name('tesis-asesor.documento');
+
+        /*
+        MODULO DE MI TESIS - REVISORES (SUSTENTANTE)
+        */
+        Route::get('/mi-tesis', [AlumnoTesisRevisoresController::class, 'index'])->name('tesis-revisores.index');
+        Route::post('/mi-tesis', [AlumnoTesisRevisoresController::class, 'store'])->name('tesis-revisores.store');
+        Route::get('/mi-tesis/{version}/documento', [AlumnoTesisRevisoresController::class, 'verDocumento'])->name('tesis-revisores.documento');
 
         /*
         MODULO DE PAGOS (SUSTENTANTE)
@@ -208,6 +230,10 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
         Route::get('/asignaciones/jurados', [AsignacionJuradoController::class, 'index'])->name('asignaciones.jurados.index');
         // Registrar la estructura completa del jurado de un proyecto
         Route::post('/asignaciones/jurados', [AsignacionJuradoController::class, 'store'])->name('asignaciones.jurados.store');
+        // Sustituir a un integrante de jurado que rechazó la designación
+        Route::patch('/asignaciones/jurados/{proyecto}/sustituir', [AsignacionJuradoController::class, 'sustituir'])->name('asignaciones.jurados.sustituir');
+        // Actualizar estado de aceptación de un integrante del jurado
+        Route::patch('/asignaciones/jurados/miembros/{jurado}/estado', [AsignacionJuradoController::class, 'actualizarEstadoMiembro'])->name('asignaciones.jurados.actualizar-estado-miembro');
 
         /*
         MODULO DE ASIGNACIONES (EXÁMENES PROFESIONALES)

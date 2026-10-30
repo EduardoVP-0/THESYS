@@ -25,6 +25,7 @@ interface JurySlotCardProps {
     processing: boolean;
     error?: string;
     onChange: (key: JurySlotKey, value: string) => void;
+    onSustituir?: (member: MiembroJurado) => void;
 }
 
 export function JurySlotCard({
@@ -40,6 +41,7 @@ export function JurySlotCard({
     processing,
     error,
     onChange,
+    onSustituir,
 }: JurySlotCardProps) {
     const opciones = [...docentes];
 
@@ -203,6 +205,15 @@ export function JurySlotCard({
                             className="text-[10px] font-semibold text-muted-foreground transition-colors hover:text-red-500"
                         >
                             Quitar
+                        </button>
+                    )}
+                    {readOnly && existingMember && existingMember.estado_aceptacion.toLowerCase().startsWith('rechaz') && onSustituir && (
+                        <button
+                            type="button"
+                            onClick={() => onSustituir(existingMember)}
+                            className="text-[10px] font-bold text-amber-600 dark:text-amber-400 underline hover:text-amber-700"
+                        >
+                            Sustituir
                         </button>
                     )}
                     <span className="text-[10px] text-muted-foreground">

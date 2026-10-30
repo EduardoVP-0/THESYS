@@ -73,4 +73,5 @@ export interface AsignacionJuradoProps {
 
 export interface ConsultaJuradosProps {
     proyectos: ProyectoJurado[];
+    docentes: DocenteJurado[];
 }

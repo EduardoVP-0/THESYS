@@ -366,12 +366,12 @@ export default function DocentesIndex({ docentes, stats, filters }: Props) {
                     <Table className="table-fixed min-w-[900px]">
                         <TableHeader className="bg-muted/30">
                             <TableRow className="border-b border-border">
-                                <TableHead className="font-semibold text-foreground w-[24%]">Docente</TableHead>
-                                <TableHead className="font-semibold text-foreground w-[10%] text-center">Cédula</TableHead>
-                                <TableHead className="font-semibold text-foreground w-[19%]">Especialidad</TableHead>
-                                <TableHead className="font-semibold text-foreground w-[11%] text-center">Grado</TableHead>
-                                <TableHead className="font-semibold text-foreground w-[12%] text-center">Contrato</TableHead>
-                                <TableHead className="font-semibold text-foreground w-[11%] text-center">Acceso</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[23%]">Docente</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[13%] text-center">Cédula</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[20%]">Especialidad</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[10%] text-center">Grado</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[11%] text-center">Contrato</TableHead>
+                                <TableHead className="font-semibold text-foreground w-[10%] text-center">Acceso</TableHead>
                                 <TableHead className="text-center font-semibold text-foreground w-[13%]">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -407,8 +407,13 @@ export default function DocentesIndex({ docentes, stats, filters }: Props) {
                                         </TableCell>
 
                                         {/* Cedula */}
-                                        <TableCell className="text-center font-mono font-semibold text-xs text-foreground">
-                                            {docente.cedula_profesional}
+                                        <TableCell className="text-center font-mono font-semibold text-xs text-foreground px-2">
+                                            <span
+                                                className="block truncate max-w-[125px] mx-auto"
+                                                title={docente.cedula_profesional || 'Sin cédula registrada'}
+                                            >
+                                                {docente.cedula_profesional || '—'}
+                                            </span>
                                         </TableCell>
 
                                         {/* Especialidad */}

@@ -14,6 +14,7 @@ interface JuryStructureProps {
     processing: boolean;
     errors: Partial<Record<JurySlotKey, string>>;
     onChange: (key: JurySlotKey, value: string) => void;
+    onSustituir?: (member: MiembroJurado) => void;
 }
 
 export function JuryStructure({
@@ -27,6 +28,7 @@ export function JuryStructure({
     processing,
     errors,
     onChange,
+    onSustituir,
 }: JuryStructureProps) {
     const selectedValues = Object.values(values).filter(
         (value) => value !== '',
@@ -101,6 +103,7 @@ export function JuryStructure({
                         processing={processing}
                         error={errors[slot.key]}
                         onChange={onChange}
+                        onSustituir={onSustituir}
                     />
                 ))}
             </div>

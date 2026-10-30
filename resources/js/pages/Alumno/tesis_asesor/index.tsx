@@ -61,6 +61,7 @@ interface ControlCarga {
     estado_global: string;
     motivo_bloqueo: string | null;
     tiene_asesor: boolean;
+    reactivado_por_revisores?: boolean;
 }
 
 interface Props {
@@ -518,10 +519,21 @@ export default function AlumnoTesisAsesorIndex({
                                 </p>
                             )}
 
-                            {puedeSubir && controlCarga?.estado_global === 'Con cambios' && !archivoNuevo && (
-                                <p className="mt-4 text-xs font-medium text-[#10B981]">
-                                    Tu asesor solicitó cambios en la versión anterior. Ya puedes subir tu{' '}
-                                    {siguienteVersionTexto} corregida.
+                            {puedeSubir &&
+                                controlCarga?.estado_global === 'Con cambios' &&
+                                !controlCarga?.reactivado_por_revisores &&
+                                !archivoNuevo && (
+                                    <p className="mt-4 text-xs font-medium text-[#10B981]">
+                                        Tu asesor solicitó cambios en la versión anterior. Ya puedes subir tu{' '}
+                                        {siguienteVersionTexto} corregida.
+                                    </p>
+                                )}
+
+                            {puedeSubir && controlCarga?.reactivado_por_revisores && !archivoNuevo && (
+                                <p className="mt-4 text-xs font-medium text-[#d97706] dark:text-yellow-400">
+                                    Tus revisores solicitaron cambios. Sube aquí la versión corregida para
+                                    que tu Director de Tesis la revise y apruebe; después podrás
+                                    reenviarla a los revisores.
                                 </p>
                             )}
                         </div>

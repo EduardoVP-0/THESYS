@@ -7,6 +7,7 @@ use App\Models\Admin\Alumno;
 use App\Models\Admin\AsignacionAsesor;
 use App\Models\Admin\RevisionAsesor;
 use App\Models\Admin\VersionTesis;
+use App\Support\Portal\FlujoRevisionTesis;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,13 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class AlumnoTesisAsesorController extends Controller
 {
+    /**
+     * Carpeta de Supabase Storage que discrimina las versiones del flujo de
+     * revisores (Alumno/mi-tesis) respecto de las del asesor, para que los
+     * historiales y numeraciones de cada flujo no se mezclen.
+     */
+    private const CARPETA_REVISORES = 'versiones_revisores';
+
     /**
      * Muestra la vista de Mi Tesis (Director de Tesis) con el historial de versiones
      * y las revisiones/observaciones de su asesor asignado.
@@ -50,8 +58,11 @@ class AlumnoTesisAsesorController extends Controller
 
         $versionesCollection = collect();
         if ($proyecto) {
+            // Solo las versiones del flujo del asesor (excluye las subidas al
+            // flujo de revisores en la carpeta versiones_revisores).
             $versionesCollection = VersionTesis::with(['revisiones.asignacionAsesor.docente.user'])
                 ->where('id_proyecto', $proyecto->id_proyecto)
+                ->where('ruta_archivo', 'not like', '%'.self::CARPETA_REVISORES.'%')
                 ->orderByDesc('id_version')
                 ->get();
         }
@@ -110,6 +121,7 @@ class AlumnoTesisAsesorController extends Controller
         $estadoGlobal = 'Sin entregas';
         $puedeSubir = false;
         $motivoBloqueo = null;
+        $reactivadoPorRevisores = false;
 
         if (! $proyecto) {
             $motivoBloqueo = 'Primero debes registrar y tener aprobado tu anteproyecto.';
@@ -127,8 +139,18 @@ class AlumnoTesisAsesorController extends Controller
                 $puedeSubir = false;
                 $motivoBloqueo = "Tu {$ultimaVersion['numero_version']} está en revisión por tu director de tesis. Se habilitará de nuevo si solicita cambios.";
             } elseif ($estadoUltima === 'Aprobado') {
-                $puedeSubir = false;
-                $motivoBloqueo = '¡Felicidades! Tu tesis ha sido aprobada por tu director de tesis. Ya no es necesario subir más versiones.';
+                // Ciclo con revisores: si al menos un revisor devolvió el
+                // documento "Con cambios" después de esta aprobación, la
+                // carga se re-activa para corregir con el director.
+                $reactivadoPorRevisores = FlujoRevisionTesis::asesorDesbloqueadoPorRevisores($proyecto->id_proyecto);
+
+                if ($reactivadoPorRevisores) {
+                    $puedeSubir = true;
+                    $estadoGlobal = 'Con cambios';
+                } else {
+                    $puedeSubir = false;
+                    $motivoBloqueo = '¡Felicidades! Tu tesis ha sido aprobada por tu director de tesis. Ya no es necesario subir más versiones.';
+                }
             } elseif ($estadoUltima === 'Con cambios') {
                 $puedeSubir = true;
             }
@@ -155,6 +177,7 @@ class AlumnoTesisAsesorController extends Controller
                 'estado_global' => $estadoGlobal,
                 'motivo_bloqueo' => $motivoBloqueo,
                 'tiene_asesor' => $tieneAsesor,
+                'reactivado_por_revisores' => $reactivadoPorRevisores,
             ],
         ]);
     }
@@ -192,6 +215,7 @@ class AlumnoTesisAsesorController extends Controller
         // Verificar que la última versión no esté ya "En revisión" ni "Aprobada"
         $ultimaVersion = VersionTesis::with('revisiones')
             ->where('id_proyecto', $proyecto->id_proyecto)
+            ->where('ruta_archivo', 'not like', '%'.self::CARPETA_REVISORES.'%')
             ->orderByDesc('id_version')
             ->first();
 
@@ -208,7 +232,12 @@ class AlumnoTesisAsesorController extends Controller
             }
 
             if (in_array($estadoUltima, [RevisionAsesor::ESTADO_APROBADA, 'Aprobado'], true)) {
-                return redirect()->back()->with('error', 'Tu tesis ya fue aprobada por tu director de tesis.');
+                // Si los revisores devolvieron el documento "Con cambios"
+                // después de esta aprobación, se permite subir la corrección
+                // para una nueva revisión del director.
+                if (! FlujoRevisionTesis::asesorDesbloqueadoPorRevisores($proyecto->id_proyecto)) {
+                    return redirect()->back()->with('error', 'Tu tesis ya fue aprobada por tu director de tesis.');
+                }
             }
         }
 
@@ -222,7 +251,9 @@ class AlumnoTesisAsesorController extends Controller
             'comentario_alumno.max' => 'El comentario no puede exceder los 1,000 caracteres.',
         ]);
 
-        $conteoActual = VersionTesis::where('id_proyecto', $proyecto->id_proyecto)->count();
+        $conteoActual = VersionTesis::where('id_proyecto', $proyecto->id_proyecto)
+            ->where('ruta_archivo', 'not like', '%'.self::CARPETA_REVISORES.'%')
+            ->count();
         $numeroSiguiente = $conteoActual + 1;
         $etiquetaVersion = "Versión {$numeroSiguiente}";
 

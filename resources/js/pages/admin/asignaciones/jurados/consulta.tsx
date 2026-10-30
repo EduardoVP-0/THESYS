@@ -18,7 +18,10 @@ import type { ConsultaJuradosProps } from './types';
 /**
  * VISTA DE CONSULTA: JURADOS CONFORMADOS POR PROYECTO DE TESIS
  */
-export default function ConsultaJurados({ proyectos }: ConsultaJuradosProps) {
+export default function ConsultaJurados({
+    proyectos,
+    docentes = [],
+}: ConsultaJuradosProps) {
     const stats = useMemo(() => {
         const miembros = proyectos.flatMap((proyecto) => proyecto.jurado);
         const aceptados = miembros.filter((miembro) =>
@@ -142,7 +145,7 @@ export default function ConsultaJurados({ proyectos }: ConsultaJuradosProps) {
                     </Card>
                 </div>
 
-                <ConsultaTable proyectos={proyectos} />
+                <ConsultaTable proyectos={proyectos} docentes={docentes} />
             </div>
         </>
     );

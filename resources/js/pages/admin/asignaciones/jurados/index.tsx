@@ -5,6 +5,7 @@ import {
     ClipboardCheck,
     Eye,
     Info,
+    RefreshCw,
     ShieldCheck,
     UsersRound,
 } from 'lucide-react';
@@ -16,8 +17,9 @@ import { DocentesTable } from './components/docentes-table';
 import { JuradosTabs } from './components/jurados-tabs';
 import { JuryStructure } from './components/jury-structure';
 import { ProjectSelector } from './components/project-selector';
+import { SustituirJuradoModal } from './components/sustituir-jurado-modal';
 import { EMPTY_JURY_FORM, JURY_SLOTS } from './constants';
-import type { AsignacionJuradoProps, JuryFormData, JurySlotKey } from './types';
+import type { AsignacionJuradoProps, JuryFormData, JurySlotKey, MiembroJurado } from './types';
 
 /**
  * VISTA PRINCIPAL: ASIGNAR JURADO A UN PROYECTO DE TESIS
@@ -43,6 +45,9 @@ export default function AsignacionJuradosIndex({
                 ? String(proyectoSeleccionadoId)
                 : '',
         });
+
+    const [sustituirOpen, setSustituirOpen] = useState(false);
+    const [miembroParaSustituir, setMiembroParaSustituir] = useState<MiembroJurado | null>(null);
 
     useEffect(() => {
         if (flash?.success) {
@@ -222,6 +227,10 @@ export default function AsignacionJuradosIndex({
                                 processing={processing}
                                 errors={errors}
                                 onChange={handleSlotChange}
+                                onSustituir={(miembro) => {
+                                    setMiembroParaSustituir(miembro);
+                                    setSustituirOpen(true);
+                                }}
                             />
 
                             {hasErrors && (
@@ -235,33 +244,63 @@ export default function AsignacionJuradosIndex({
                             )}
 
                             {readOnly ? (
-                                <section className="flex flex-col justify-between gap-3 rounded-xl border border-[#10B981]/25 bg-[#10B981]/5 p-4 shadow-xs sm:flex-row sm:items-center">
-                                    <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                                        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#10B981]" />
-                                        <p>
-                                            Este proyecto ya tiene un jurado
-                                            registrado con{' '}
-                                            <strong className="font-semibold text-foreground">
-                                                {existingJury.length} de 5
-                                            </strong>{' '}
-                                            integrantes. Consulta la
-                                            conformación completa y el estado de
-                                            aceptación en la vista de jurados
-                                            asignados.
-                                        </p>
-                                    </div>
+                                existingJury.some((m) =>
+                                    m.estado_aceptacion.toLowerCase().startsWith('rechaz')
+                                ) ? (
+                                    <section className="flex flex-col justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 shadow-xs sm:flex-row sm:items-center">
+                                        <div className="flex items-start gap-2.5 text-xs">
+                                            <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                                            <div>
+                                                <p className="font-semibold text-foreground">
+                                                    Atención: Integrante(s) han rechazado la designación
+                                                </p>
+                                                <p className="text-muted-foreground mt-0.5">
+                                                    Uno o más docentes rechazaron integrar este jurado. Puedes promover a un suplente y asignar a un nuevo suplente para completar la estructura.
+                                                </p>
+                                            </div>
+                                        </div>
 
-                                    <Button
-                                        asChild
-                                        variant="outline"
-                                        className="gap-2 border-[#10B981]/40 bg-background font-semibold text-[#10B981] hover:bg-[#10B981]/10"
-                                    >
-                                        <Link href={consulta.url()}>
-                                            <Eye className="size-4" />
-                                            Consultar jurado
-                                        </Link>
-                                    </Button>
-                                </section>
+                                        <Button
+                                            type="button"
+                                            onClick={() => {
+                                                setMiembroParaSustituir(null);
+                                                setSustituirOpen(true);
+                                            }}
+                                            className="gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-xs shrink-0"
+                                        >
+                                            <RefreshCw className="size-4" />
+                                            Sustituir integrante
+                                        </Button>
+                                    </section>
+                                ) : (
+                                    <section className="flex flex-col justify-between gap-3 rounded-xl border border-[#10B981]/25 bg-[#10B981]/5 p-4 shadow-xs sm:flex-row sm:items-center">
+                                        <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                                            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#10B981]" />
+                                            <p>
+                                                Este proyecto ya tiene un jurado
+                                                registrado con{' '}
+                                                <strong className="font-semibold text-foreground">
+                                                    {existingJury.length} de 5
+                                                </strong>{' '}
+                                                integrantes. Consulta la
+                                                conformación completa y el estado de
+                                                aceptación en la vista de jurados
+                                                asignados.
+                                            </p>
+                                        </div>
+
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            className="gap-2 border-[#10B981]/40 bg-background font-semibold text-[#10B981] hover:bg-[#10B981]/10"
+                                        >
+                                            <Link href={consulta.url()}>
+                                                <Eye className="size-4" />
+                                                Consultar jurado
+                                            </Link>
+                                        </Button>
+                                    </section>
+                                )
                             ) : (
                                 <section className="flex flex-col justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:items-center">
                                     <div className="flex items-start gap-2 text-xs text-muted-foreground">
@@ -319,6 +358,14 @@ export default function AsignacionJuradosIndex({
                         </section>
                     )}
                 </form>
+
+                <SustituirJuradoModal
+                    open={sustituirOpen}
+                    onOpenChange={setSustituirOpen}
+                    proyecto={proyectoSeleccionado}
+                    docentes={docentes}
+                    miembroInicial={miembroParaSustituir}
+                />
             </div>
         </>
     );

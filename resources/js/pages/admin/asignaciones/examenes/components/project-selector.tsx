@@ -4,9 +4,12 @@ import {
     AlertTriangle,
     FileText,
     GraduationCap,
+    Search,
     ShieldCheck,
     UserRound,
 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -35,6 +38,22 @@ export function ProjectSelector({
     disabled = false,
     error,
 }: ProjectSelectorProps) {
+    const [busquedaTesista, setBusquedaTesista] = useState('');
+
+    const proyectosFiltrados = useMemo(() => {
+        const term = busquedaTesista.trim().toLowerCase();
+        if (!term) return proyectos;
+
+        return proyectos.filter((p) => {
+            const matchSustentante = p.sustentantes.some((s) =>
+                s.nombre_completo.toLowerCase().includes(term) ||
+                s.matricula.toLowerCase().includes(term)
+            );
+            const matchTitulo = p.titulo.toLowerCase().includes(term);
+            return matchSustentante || matchTitulo;
+        });
+    }, [proyectos, busquedaTesista]);
+
     const proyectoSeleccionado =
         proyectos.find((proyecto) => String(proyecto.id_proyecto) === value) ??
         null;
@@ -51,24 +70,38 @@ export function ProjectSelector({
 
     return (
         <section className="rounded-xl border border-border bg-card p-5 shadow-xs">
-            <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-[#10B981]/15 p-2.5 text-[#10B981]">
-                    <FileText className="size-5" />
-                </div>
-                <div>
-                    <div className="flex items-center gap-2">
-                        <span className="flex size-5 items-center justify-center rounded-full bg-[#10B981]/15 text-[10px] font-bold text-[#10B981]">
-                            1
-                        </span>
-                        <h2 className="text-lg font-bold text-foreground">
-                            Proyecto de tesis
-                        </h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-[#10B981]/15 p-2.5 text-[#10B981]">
+                        <UserRound className="size-5" />
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                        Selecciona la tesis para consultar sus datos y la
-                        conformación de su jurado.
-                    </p>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="flex size-5 items-center justify-center rounded-full bg-[#10B981]/15 text-[10px] font-bold text-[#10B981]">
+                                1
+                            </span>
+                            <h2 className="text-lg font-bold text-foreground">
+                                Selección del Tesista (Sustentante)
+                            </h2>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Busca y selecciona al alumno sustentante para consultar su jurado y programar el examen.
+                        </p>
+                    </div>
                 </div>
+
+                {proyectos.length > 3 && (
+                    <div className="relative w-full sm:w-72">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                        <Input
+                            type="text"
+                            value={busquedaTesista}
+                            onChange={(e) => setBusquedaTesista(e.target.value)}
+                            placeholder="Buscar por tesista o matrícula..."
+                            className="h-8 rounded-lg border-border bg-background pl-8 text-xs placeholder:text-muted-foreground"
+                        />
+                    </div>
+                )}
             </div>
 
             <div className="mt-5 grid gap-1.5">
@@ -76,7 +109,7 @@ export function ProjectSelector({
                     htmlFor="proyecto-examen"
                     className="text-xs font-semibold"
                 >
-                    Tesis
+                    Tesista / Sustentante
                 </Label>
                 <Select
                     value={value}
@@ -92,19 +125,42 @@ export function ProjectSelector({
                             placeholder={
                                 proyectos.length === 0
                                     ? 'No hay proyectos con jurado pendientes'
-                                    : 'Selecciona un proyecto de tesis'
+                                    : 'Selecciona un tesista o sustentante'
                             }
                         />
                     </SelectTrigger>
-                    <SelectContent className="border-border bg-popover">
-                        {proyectos.map((proyecto) => (
-                            <SelectItem
-                                key={proyecto.id_proyecto}
-                                value={String(proyecto.id_proyecto)}
-                            >
-                                {proyecto.titulo}
-                            </SelectItem>
-                        ))}
+                    <SelectContent className="border-border bg-popover max-h-72">
+                        {proyectosFiltrados.length === 0 ? (
+                            <div className="p-3 text-center text-xs text-muted-foreground">
+                                No se encontraron tesistas que coincidan con la búsqueda.
+                            </div>
+                        ) : (
+                            proyectosFiltrados.map((proyecto) => {
+                                const nombres =
+                                    proyecto.sustentantes
+                                        .map((s) => s.nombre_completo)
+                                        .join(', ') || 'Sin sustentante';
+                                const matricula = proyecto.sustentantes[0]?.matricula
+                                    ? ` · Matrícula: ${proyecto.sustentantes[0].matricula}`
+                                    : '';
+
+                                return (
+                                    <SelectItem
+                                        key={proyecto.id_proyecto}
+                                        value={String(proyecto.id_proyecto)}
+                                    >
+                                        <div className="flex flex-col text-left py-0.5">
+                                            <span className="font-semibold text-foreground">
+                                                {nombres} {matricula}
+                                            </span>
+                                            <span className="text-[11px] text-muted-foreground line-clamp-1">
+                                                Tesis: {proyecto.titulo}
+                                            </span>
+                                        </div>
+                                    </SelectItem>
+                                );
+                            })
+                        )}
                     </SelectContent>
                 </Select>
 
