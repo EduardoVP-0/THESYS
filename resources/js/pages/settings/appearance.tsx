@@ -182,7 +182,7 @@ export default function Appearance() {
                                 Color de interfaz
                             </h3>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                                Define el color de resaltado en tarjetas, filas y botones secundarios (Modo Claro).
+                                Define el color de resaltado en tarjetas, filas y botones secundarios.
                             </p>
                         </div>
                     </div>

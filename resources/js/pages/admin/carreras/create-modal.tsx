@@ -90,12 +90,12 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                     Nombre de la Carrera <span className="text-[#EF4444]">*</span>
                                 </Label>
                                 <span className="text-[11px] text-muted-foreground">
-                                    {data.nombre_carrera.length}/50
+                                    {data.nombre_carrera.length}/100
                                 </span>
                             </div>
                             <Input
                                 id="nombre_carrera"
-                                maxLength={50}
+                                maxLength={100}
                                 value={data.nombre_carrera}
                                 onChange={(e) => setData('nombre_carrera', e.target.value)}
                                 placeholder="Ej: Ing. en Desarrollo de Software"

@@ -301,8 +301,10 @@ export default function Login({ status, canResetPassword }: Props) {
                     height: 100dvh;
                     width: 100%;
                     overflow: hidden;
-                    /* ⭐ UN SOLO FONDO PARA TODA LA PANTALLA */
-                    background-image: url('/Designer.png');
+                    /* ⭐ UN SOLO FONDO PARA TODA LA PANTALLA (CON CAPA OSCURA) */
+                    background-image: 
+                        linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
+                        url('/storage/login/unnamed.webp');
                     background-size: cover;
                     background-position: center;
                     background-repeat: no-repeat;

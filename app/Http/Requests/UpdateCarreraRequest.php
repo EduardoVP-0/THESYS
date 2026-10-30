@@ -31,7 +31,7 @@ class UpdateCarreraRequest extends FormRequest
             'nombre_carrera' => [
                 'required',
                 'string',
-                'max:50',
+                'max:100',
                 Rule::unique('tblcarreras', 'nombre_carrera')->ignore($carreraId, 'id_carrera'),
             ],
             'descripcion' => ['nullable', 'string'],
@@ -45,7 +45,7 @@ class UpdateCarreraRequest extends FormRequest
         return [
             'nombre_carrera.required' => 'El nombre de la carrera es obligatorio.',
             'nombre_carrera.string' => 'El nombre de la carrera debe ser texto válido.',
-            'nombre_carrera.max' => 'El nombre de la carrera no debe exceder los 50 caracteres.',
+            'nombre_carrera.max' => 'El nombre de la carrera no debe exceder los 100 caracteres.',
             'nombre_carrera.unique' => 'Ya existe otra carrera registrada con este nombre en la institución.',
             'descripcion.string' => 'La descripción debe ser un texto válido.',
             'duracion_semestres.required' => 'Debes especificar la duración en semestres.',

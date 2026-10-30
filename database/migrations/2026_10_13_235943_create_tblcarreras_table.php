@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id('id_carrera');
 
             // Atributos
-            $table->string('nombre_carrera', 50)->unique();
+            $table->string('nombre_carrera', 100)->unique();
             $table->text('descripcion')->nullable();
             $table->tinyInteger('duracion_semestres');
             $table->boolean('estado')->default(true);

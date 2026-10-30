@@ -18,15 +18,16 @@ class AnteproyectoSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Asegurar carrera base
-        $carrera = Carrera::firstOrCreate(
-            ['nombre_carrera' => 'Licenciatura en Tecnologías de Información'],
-            [
-                'descripcion' => 'Programa enfocado en desarrollo de software, redes y transformación digital.',
-                'duracion_semestres' => 8,
-                'estado' => true,
-            ]
-        );
+        // 1. Asegurar carrera base (vinculada al catálogo oficial)
+        $carrera = Carrera::where('nombre_carrera', 'Ingeniería en Desarrollo y Tecnologías de Software')->first()
+            ?? Carrera::firstOrCreate(
+                ['nombre_carrera' => 'Ingeniería en Desarrollo y Tecnologías de Software'],
+                [
+                    'descripcion' => 'Programa enfocado en desarrollo de software, redes y transformación digital.',
+                    'duracion_semestres' => 9,
+                    'estado' => true,
+                ]
+            );
 
         // 2. Asegurar docentes para asesores
         $docenteUser = User::firstOrCreate(

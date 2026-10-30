@@ -13,8 +13,11 @@ class OficiosOficialesSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Sincroniza la secuencia de PostgreSQL al número máximo actual (para evitar error de llave 1)
-        DB::statement("SELECT setval(pg_get_serial_sequence('tbloficios_oficiales', 'id_oficio_oficial'), COALESCE(MAX(id_oficio_oficial), 1)) FROM tbloficios_oficiales;");
+        // 1. Sincroniza la secuencia de PostgreSQL al número máximo actual si existen registros previos
+        $maxId = DB::table('tbloficios_oficiales')->max('id_oficio_oficial');
+        if ($maxId) {
+            DB::statement("SELECT setval(pg_get_serial_sequence('tbloficios_oficiales', 'id_oficio_oficial'), {$maxId})");
+        }
 
         // 2. Insertamos registros de prueba, incluyendo 11 más de Titulación para paginación
         $datos = [
