@@ -250,7 +250,7 @@ export default function EmitirVoto({ dictamenes, filters = {} }: Props) {
                 <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                            EMISIÓN DE VOTO (DICTAMEN DE JURADO)
+                            EMISIÓN DE VOTOS (DICTAMEN DE JURADO)
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Selecciona un examen profesional de la tabla para emitir tu voto deliberativo (A favor o En contra) y registrar tus observaciones.
