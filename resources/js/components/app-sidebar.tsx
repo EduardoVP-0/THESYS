@@ -1,6 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    Bell,
     BookOpen,
     CalendarDays,
     ClipboardCheck,
@@ -13,10 +12,8 @@ import {
     GraduationCap,
     LayoutGrid,
     MapPin,
-    MessageSquare,
     Scale,
     School,
-    UserRound,
     UserRoundCheck,
     Calendar,
     UsersRound,
@@ -155,50 +152,45 @@ const adminNavItems: NavItem[] = [
     },
 ];
 
-const asesorNavItems: NavItem[] = [
+// Sección general del docente (visible para todos: asesor, revisor y jurado)
+const docenteNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: '/asesor/dashboard',
+        href: '/docente/dashboard',
         icon: LayoutGrid,
     },
     {
-        title: 'Mis asesorados',
-        href: '/asesor/asesorados',
+        title: 'Mis Asesorados',
+        href: '/docente/asesorados',
         icon: UsersRound,
     },
     {
         title: 'Revisiones',
-        href: '/asesor/revisiones',
+        href: '/docente/revisiones',
         icon: ClipboardCheck,
     },
+];
+
+// Sección de jurado (solo visible si el docente está asignado en tbljurados_proyectos)
+const docenteJuradoNavItems: NavItem[] = [
     {
-        title: 'Retroalimentación',
-        href: '/asesor/retroalimentacion',
-        icon: MessageSquare,
+        title: 'Proyectos Asignados',
+        href: '/docente/jurado/proyectos-asignados',
+        icon: FolderClosed,
     },
     {
-        title: 'Jurado',
+        title: 'Emitir Voto',
+        href: '/docente/jurado/emitir-voto',
         icon: Scale,
-        items: [
-            { title: 'Proyectos asignados', href: '/asesor/proyectos-asignados' },
-            { title: 'Emitir voto', href: '/asesor/votos/emitir' },
-            { title: 'Historial de votos', href: '/asesor/votos' },
-        ],
     },
+];
+
+// Calendario al final (visible para todos los docentes)
+const docenteFooterNavItems: NavItem[] = [
     {
         title: 'Calendario',
-        href: '/asesor/calendario',
+        href: '/docente/calendario',
         icon: CalendarDays,
-    },
-    {
-        title: 'Notificaciones',
-        href: '/asesor/notificaciones',
-        icon: Bell,
-    },
-    {
-        title: 'Mi perfil',
-        href: '/asesor/perfil',
-        icon: UserRound,
     },
 ];
 
@@ -209,8 +201,8 @@ function resolveNavigation(roleId: number): {
 } {
     if (roleId === 4) {
         return {
-            items: asesorNavItems,
-            home: '/asesor/dashboard',
+            items: docenteNavItems,
+            home: '/docente/dashboard',
             label: 'Portal docente',
         };
     }
@@ -231,9 +223,16 @@ function resolveNavigation(roleId: number): {
 }
 
 export function AppSidebar() {
-    const { auth } = usePage().props as { auth: { user?: { id_rol?: number | string } } };
+    const { auth } = usePage().props as {
+        auth: {
+            user?: { id_rol?: number | string };
+            docente?: { es_asesor: boolean; es_revisor: boolean; es_jurado: boolean } | null;
+        };
+    };
     const roleId = Number(auth.user?.id_rol ?? 0);
     const { items: navItems, home: homeHref } = resolveNavigation(roleId);
+    const isDocente = roleId === 4;
+    const esJurado = Boolean(auth.docente?.es_jurado);
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -251,6 +250,10 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={navItems} />
+                {isDocente && esJurado && (
+                    <NavMain items={docenteJuradoNavItems} label="Jurado de examen" />
+                )}
+                {isDocente && <NavMain items={docenteFooterNavItems} label="" />}
             </SidebarContent>
 
             <SidebarFooter>

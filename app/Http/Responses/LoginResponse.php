@@ -17,7 +17,7 @@ class LoginResponse implements LoginResponseContract
 
         return match ($roleId) {
             1, 2, 3 => redirect()->intended(route('admin.dashboard')), // Superadmin y Admin van a su módulo
-            4 => redirect()->intended(route('asesor.dashboard')),   // Para cuando agregues asesor
+            4 => redirect()->intended(route('docente.dashboard')),  // Todos los docentes (asesor, revisor y jurado) entran al mismo panel
             5 => redirect()->intended(route('alumno.dashboard')),   // Para cuando agregues alumno
             default => redirect()->intended('/dashboard'),
         };

@@ -25,6 +25,7 @@ use App\Http\Controllers\Alumno\ExpedienteController as AlumnoExpedienteControll
 use App\Http\Controllers\Alumno\JuradoController as AlumnoJuradoController;
 use App\Http\Controllers\Alumno\OficioOficialController as AlumnoOficioOficialController;
 use App\Http\Controllers\Alumno\PagoController as AlumnoPagoController;
+use App\Http\Controllers\Docente\JuradoDocenteController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -32,9 +33,35 @@ Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', fn (Request $request) => redirect()->route(
-        (int) $request->user()?->id_rol === 5 ? 'alumno.dashboard' : 'admin.dashboard'
+        match ((int) $request->user()?->id_rol) {
+            4 => 'docente.dashboard',
+            5 => 'alumno.dashboard',
+            default => 'admin.dashboard',
+        }
     ))->name('dashboard');
 });
+
+// Rutas de Docente (Rol 4)
+// Un solo panel para todos los docentes; las secciones (asesor, revisor, jurado)
+// se muestran según sus asignaciones compartidas en HandleInertiaRequests (auth.docente).
+Route::middleware(['auth', 'verified', 'role:4'])
+    ->prefix('docente')
+    ->name('docente.')
+    ->group(function () {
+        Route::inertia('/dashboard', 'docentes/dashboard')->name('dashboard');
+
+        /*
+        SECCIÓN JURADO DE EXAMEN
+        */
+        // Proyectos donde el docente fue asignado como jurado
+        Route::get('/jurado/proyectos-asignados', [JuradoDocenteController::class, 'proyectosAsignados'])->name('jurado.proyectos-asignados');
+        Route::patch('/jurado/proyectos-asignados/{jurado}/aceptacion', [JuradoDocenteController::class, 'actualizarAceptacion'])->name('jurado.actualizar-aceptacion');
+        // Emisión de voto del jurado
+        Route::get('/jurado/emitir-voto', [JuradoDocenteController::class, 'emitirVotoIndex'])->name('jurado.emitir-voto');
+        Route::post('/jurado/emitir-voto/{jurado}', [JuradoDocenteController::class, 'guardarVoto'])->name('jurado.guardar-voto');
+        // Visor de documento PDF de tesis/anteproyecto para el jurado
+        Route::get('/jurado/{jurado}/documento', [JuradoDocenteController::class, 'verDocumento'])->name('jurado.documento');
+    });
 
 // Rutas de Alumno (Rol 5)
 Route::middleware(['auth', 'verified', 'role:5'])
@@ -308,8 +335,8 @@ Route::middleware(['auth', 'verified', 'role:1,2,3'])
     });
 
 // Redireccion amigable para la navegacion del sidebar
-Route::redirect('/docente', '/asesor/dashboard');
-Route::redirect('/asesor', '/asesor/dashboard');
+Route::redirect('/docente', '/docente/dashboard');
+Route::redirect('/asesor', '/docente/dashboard');
 Route::redirect('/alumno', '/alumno/dashboard');
 Route::redirect('/expedientes', '/admin/expedientes');
 Route::redirect('/asignaciones/revisiones', '/admin/asignaciones/revisores');

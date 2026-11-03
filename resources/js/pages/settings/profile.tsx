@@ -62,9 +62,30 @@ type Alumno = {
     usuario_registro?: { id: number; name: string } | null;
 };
 
+/** Registro de la tabla `tbldocentes` */
+type Docente = {
+    id_usuario: number;
+    nombre: string;
+    apellido_p: string;
+    apellido_m: string;
+    telefono: string | null;
+    cedula_profesional: string | null;
+    curp: string | null;
+    especialidad: string | null;
+    grado_academico: string | null;
+    tipo_contrato: string | null;
+    estado: boolean;
+    nombre_completo: string;
+    iniciales: string;
+    abreviatura_grado?: string;
+    created_at: string | null;
+    usuario_registro?: { id: number; name: string } | null;
+};
+
 type PageProps = {
     auth: Auth;
     administrador: Administrador | null;
+    docente: Docente | null;
     alumno: Alumno | null;
 };
 
@@ -94,19 +115,26 @@ function DatoItem({ icon, label, children }: { icon: ReactNode; label: string; c
 }
 
 export default function Profile() {
-    const { auth, administrador, alumno } = usePage<PageProps>().props;
+    const { auth, administrador, docente, alumno } = usePage<PageProps>().props;
     const user = auth.user;
 
     const rol = (user.rol as { nombre_rol?: string } | null | undefined)?.nombre_rol ?? 'Sin rol asignado';
     const estaActivo = Boolean(user.estado ?? true);
     /** Superadmin (id_rol = 1) */
     const esSuperadmin = Number(user.id_rol) === 1;
+    /** Docente (id_rol = 4) */
+    const esDocente = Number(user.id_rol) === 4;
     /** Alumno (id_rol = 5) */
     const esAlumno = Number(user.id_rol) === 5;
 
-    const nombreMostrado = alumno?.nombre_completo || administrador?.nombre_completo || user.name;
+    const nombreMostrado =
+        alumno?.nombre_completo ||
+        docente?.nombre_completo ||
+        administrador?.nombre_completo ||
+        user.name;
     const iniciales =
         alumno?.iniciales ||
+        docente?.iniciales ||
         administrador?.iniciales ||
         user.name
             .split(' ')
@@ -230,8 +258,72 @@ export default function Profile() {
                     </section>
                 )}
 
+                {/* ─── EXPEDIENTE ACADÉMICO Y PROFESIONAL DEL DOCENTE (Rol 4) ─── */}
+                {esDocente && (
+                    <section className="rounded-xl border border-border bg-card shadow-xs">
+                        <div className="border-b border-border px-5 py-3">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Información académica y profesional del docente
+                            </h3>
+                        </div>
+
+                        {!docente && (
+                            <div className="mx-5 mt-4 rounded-lg border border-amber-300 bg-amber-100 px-3 py-2 text-xs font-medium text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-300">
+                                Esta cuenta no tiene un expediente de docente registrado en el sistema, por lo que algunos datos
+                                profesionales no están disponibles.
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
+                            <div className="sm:col-span-2">
+                                <DatoItem icon={<UserIcon className="size-3.5" />} label="Nombre completo">
+                                    {docente?.nombre_completo || user.name}
+                                </DatoItem>
+                            </div>
+                            <DatoItem icon={<GraduationCap className="size-3.5" />} label="Grado académico">
+                                {docente?.grado_academico || (
+                                    <span className="font-normal text-muted-foreground">No especificado</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<BookOpen className="size-3.5" />} label="Especialidad">
+                                {docente?.especialidad || (
+                                    <span className="font-normal text-muted-foreground">No especificada</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<IdCard className="size-3.5" />} label="Cédula profesional">
+                                {docente?.cedula_profesional || (
+                                    <span className="font-normal text-muted-foreground">No registrada</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<FileCheck2 className="size-3.5" />} label="CURP">
+                                {docente?.curp || (
+                                    <span className="font-normal text-muted-foreground">No registrado</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<Phone className="size-3.5" />} label="Número telefónico">
+                                {docente?.telefono || (
+                                    <span className="font-normal text-muted-foreground">No registrado</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<Briefcase className="size-3.5" />} label="Tipo de contrato">
+                                {docente?.tipo_contrato || (
+                                    <span className="font-normal text-muted-foreground">No especificado</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<UserPlus className="size-3.5" />} label="Registrado por">
+                                {docente?.usuario_registro?.name || (
+                                    <span className="font-normal text-muted-foreground">Sistema</span>
+                                )}
+                            </DatoItem>
+                            <DatoItem icon={<Calendar className="size-3.5" />} label="Fecha de alta">
+                                {formatearFecha(docente?.created_at ?? user.created_at)}
+                            </DatoItem>
+                        </div>
+                    </section>
+                )}
+
                 {/* ─── INFORMACIÓN DEL ADMINISTRADOR (Roles 2 y 3) ─── */}
-                {!esSuperadmin && !esAlumno && (
+                {!esSuperadmin && !esDocente && !esAlumno && (
                     <section className="rounded-xl border border-border bg-card shadow-xs">
                         <div className="border-b border-border px-5 py-3">
                             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
