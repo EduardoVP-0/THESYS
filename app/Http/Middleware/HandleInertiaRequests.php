@@ -66,10 +66,10 @@ class HandleInertiaRequests extends Middleware
         }
 
         $roles = DB::selectOne(
-            'SELECT
-                EXISTS (SELECT 1 FROM tblasesores_proyectos WHERE id_usuario = ?) AS es_asesor,
-                EXISTS (SELECT 1 FROM tblrevisores_proyectos WHERE id_usuario = ?) AS es_revisor,
-                EXISTS (SELECT 1 FROM tbljurados_proyectos WHERE id_usuario = ?) AS es_jurado',
+            "SELECT
+                EXISTS (SELECT 1 FROM tblasesores_proyectos WHERE id_usuario = ? AND estado_asignacion = 'Activo') AS es_asesor,
+                EXISTS (SELECT 1 FROM tblrevisores_proyectos WHERE id_usuario = ? AND estado_asignacion = 'Activo') AS es_revisor,
+                EXISTS (SELECT 1 FROM tbljurados_proyectos WHERE id_usuario = ?) AS es_jurado",
             [$user->id, $user->id, $user->id]
         );
 

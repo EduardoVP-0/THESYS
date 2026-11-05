@@ -25,7 +25,9 @@ use App\Http\Controllers\Alumno\ExpedienteController as AlumnoExpedienteControll
 use App\Http\Controllers\Alumno\JuradoController as AlumnoJuradoController;
 use App\Http\Controllers\Alumno\OficioOficialController as AlumnoOficioOficialController;
 use App\Http\Controllers\Alumno\PagoController as AlumnoPagoController;
+use App\Http\Controllers\Docente\AsesoradoController;
 use App\Http\Controllers\Docente\JuradoDocenteController;
+use App\Http\Controllers\Docente\RevisionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -49,6 +51,23 @@ Route::middleware(['auth', 'verified', 'role:4'])
     ->name('docente.')
     ->group(function () {
         Route::inertia('/dashboard', 'docentes/dashboard')->name('dashboard');
+
+        /*
+        MODULO DE MIS ASESORADOS (DIRECTOR DE TESIS)
+        */
+        Route::get('/asesorados', [AsesoradoController::class, 'index'])->name('asesorados.index');
+        Route::get('/asesorados/version/{version}/documento', [AsesoradoController::class, 'verVersionDocumento'])->name('asesorados.version.documento');
+        Route::get('/asesorados/anteproyecto/{proyecto}/documento', [AsesoradoController::class, 'verAnteproyectoDocumento'])->name('asesorados.anteproyecto.documento');
+
+        /*
+        MODULO DE REVISIONES DE TESIS (BANDEJA UNIFICADA: ASESOR Y REVISOR)
+        */
+        Route::get('/revisiones', [RevisionController::class, 'index'])->name('revisiones.index');
+        Route::get('/revisiones/version/{version}/documento', [RevisionController::class, 'verDocumentoVersion'])->name('revisiones.version.documento');
+        Route::patch('/revisiones/asesor/{asignacion}/aprobar', [RevisionController::class, 'aprobarAsesor'])->name('revisiones.asesor.aprobar');
+        Route::patch('/revisiones/asesor/{asignacion}/solicitar-cambios', [RevisionController::class, 'solicitarCambiosAsesor'])->name('revisiones.asesor.solicitar-cambios');
+        Route::patch('/revisiones/revisor/{proyecto}/aprobar', [RevisionController::class, 'aprobarRevisor'])->name('revisiones.revisor.aprobar');
+        Route::patch('/revisiones/revisor/{proyecto}/solicitar-cambios', [RevisionController::class, 'solicitarCambiosRevisor'])->name('revisiones.revisor.solicitar-cambios');
 
         /*
         SECCIÓN JURADO DE EXAMEN

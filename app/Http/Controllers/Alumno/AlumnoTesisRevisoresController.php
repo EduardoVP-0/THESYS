@@ -300,7 +300,7 @@ class AlumnoTesisRevisoresController extends Controller
             $numeroSiguiente
         );
 
-        DB::transaction(function () use ($proyecto, $revisores, $etiquetaVersion, $validated, $rutaArchivo): void {
+        DB::transaction(function () use ($proyecto, $revisores, $ultimaVersion, $etiquetaVersion, $validated, $rutaArchivo): void {
             VersionTesis::create([
                 'id_proyecto' => $proyecto->id_proyecto,
                 'numero_version' => $etiquetaVersion,
@@ -310,8 +310,15 @@ class AlumnoTesisRevisoresController extends Controller
                 'ruta_archivo' => $rutaArchivo,
             ]);
 
-            // Reiniciar el dictamen de los 2 revisores para la nueva versión
+            // Reiniciar únicamente a los revisores que solicitaron cambios (conservando el Aprobado de quien ya aprobó)
             foreach ($revisores as $docente) {
+                $yaAproboEnEntregaPrevia = $ultimaVersion !== null
+                    && $docente->pivot->estado_revision === RevisionesRevisor::ESTADO_APROBADO;
+
+                if ($yaAproboEnEntregaPrevia) {
+                    continue;
+                }
+
                 $proyecto->revisores()->updateExistingPivot(
                     $docente->id_usuario,
                     RevisionesRevisor::valoresPendientes(),

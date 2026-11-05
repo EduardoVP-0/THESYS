@@ -152,24 +152,34 @@ const adminNavItems: NavItem[] = [
     },
 ];
 
-// Sección general del docente (visible para todos: asesor, revisor y jurado)
-const docenteNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/docente/dashboard',
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Mis Asesorados',
-        href: '/docente/asesorados',
-        icon: UsersRound,
-    },
-    {
-        title: 'Revisiones',
-        href: '/docente/revisiones',
-        icon: ClipboardCheck,
-    },
-];
+// Sección general del docente (filtrada dinamicamente según sus asignaciones como asesor y/o revisor)
+function buildDocenteMainNavItems(esAsesor: boolean, esRevisor: boolean): NavItem[] {
+    const items: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: '/docente/dashboard',
+            icon: LayoutGrid,
+        },
+    ];
+
+    if (esAsesor) {
+        items.push({
+            title: 'Mis Asesorados',
+            href: '/docente/asesorados',
+            icon: UsersRound,
+        });
+    }
+
+    if (esAsesor || esRevisor) {
+        items.push({
+            title: 'Revisiones',
+            href: '/docente/revisiones',
+            icon: ClipboardCheck,
+        });
+    }
+
+    return items;
+}
 
 // Sección de jurado (solo visible si el docente está asignado en tbljurados_proyectos)
 const docenteJuradoNavItems: NavItem[] = [
@@ -194,14 +204,18 @@ const docenteFooterNavItems: NavItem[] = [
     },
 ];
 
-function resolveNavigation(roleId: number): {
+function resolveNavigation(
+    roleId: number,
+    esAsesor: boolean,
+    esRevisor: boolean,
+): {
     items: NavItem[];
     home: string;
     label: string;
 } {
     if (roleId === 4) {
         return {
-            items: docenteNavItems,
+            items: buildDocenteMainNavItems(esAsesor, esRevisor),
             home: '/docente/dashboard',
             label: 'Portal docente',
         };
@@ -230,9 +244,15 @@ export function AppSidebar() {
         };
     };
     const roleId = Number(auth.user?.id_rol ?? 0);
-    const { items: navItems, home: homeHref } = resolveNavigation(roleId);
     const isDocente = roleId === 4;
+    const esAsesor = Boolean(auth.docente?.es_asesor);
+    const esRevisor = Boolean(auth.docente?.es_revisor);
     const esJurado = Boolean(auth.docente?.es_jurado);
+    const { items: navItems, home: homeHref } = resolveNavigation(
+        roleId,
+        esAsesor,
+        esRevisor,
+    );
 
     return (
         <Sidebar collapsible="icon" variant="inset">
