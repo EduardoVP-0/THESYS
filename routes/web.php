@@ -26,6 +26,8 @@ use App\Http\Controllers\Alumno\JuradoController as AlumnoJuradoController;
 use App\Http\Controllers\Alumno\OficioOficialController as AlumnoOficioOficialController;
 use App\Http\Controllers\Alumno\PagoController as AlumnoPagoController;
 use App\Http\Controllers\Docente\AsesoradoController;
+use App\Http\Controllers\Docente\CalendarioController as DocenteCalendarioController;
+use App\Http\Controllers\Docente\DashboardController as DocenteDashboardController;
 use App\Http\Controllers\Docente\JuradoDocenteController;
 use App\Http\Controllers\Docente\RevisionController;
 use Illuminate\Http\Request;
@@ -50,7 +52,8 @@ Route::middleware(['auth', 'verified', 'role:4'])
     ->prefix('docente')
     ->name('docente.')
     ->group(function () {
-        Route::inertia('/dashboard', 'docentes/dashboard')->name('dashboard');
+        Route::get('/dashboard', [DocenteDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/calendario', [DocenteCalendarioController::class, 'index'])->name('calendario.index');
 
         /*
         MODULO DE MIS ASESORADOS (DIRECTOR DE TESIS)
