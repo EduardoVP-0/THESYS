@@ -99,7 +99,7 @@ export default function Login({ status, canResetPassword }: Props) {
 
     return (
         <>
-            <Head title="Iniciar Sesión — THESYS" />
+            <Head title="Iniciar Sesión"/>
 
             <div className="tl-wrapper">
 
@@ -115,7 +115,13 @@ export default function Login({ status, canResetPassword }: Props) {
 
                         {/* Logo */}
                         <div className="tl-logo-bar">
-                            <div className="tl-logo-icon">T</div>
+                            <div className="tl-logo-icon">
+                                <img
+                                    src="/images/thesys-icon.png"
+                                    alt="THESYS Logo"
+                                    className="tl-logo-img"
+                                />
+                            </div>
                             <div className="tl-logo-text">
                                 <span className="tl-logo-name">THESYS</span>
                                 <span className="tl-logo-sub">Gestión Académica</span>
@@ -350,18 +356,23 @@ export default function Login({ status, canResetPassword }: Props) {
                 }
 
                 .tl-logo-icon {
-                    width: 44px;
-                    height: 44px;
-                    background: #b8d4e3;
-                    border-radius: 13px;
+                    width: 48px;
+                    height: 48px;
+                    background: #ffffff;
+                    border-radius: 14px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 22px;
-                    font-weight: 800;
-                    color: #1e3a4f;
+                    padding: 5px;
                     flex-shrink: 0;
-                    box-shadow: 0 4px 14px rgba(184,212,227,0.4);
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.15);
+                }
+
+                .tl-logo-img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    display: block;
                 }
 
                 .tl-logo-text {
