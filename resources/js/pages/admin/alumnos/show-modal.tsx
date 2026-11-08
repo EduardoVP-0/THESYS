@@ -53,13 +53,13 @@ export function ShowModal({ open, onOpenChange, alumno }: ShowModalProps) {
                             {alumno.iniciales || 'AL'}
                         </div>
                         <div className="min-w-0 flex-1">
-                            <DialogTitle className="text-lg font-bold text-foreground break-all">
+                            <DialogTitle className="text-lg font-bold text-foreground break-words">
                                 {alumno.nombre_completo || `${alumno.nombre} ${alumno.apellido_p} ${alumno.apellido_m}`}
                             </DialogTitle>
                             <DialogDescription className="text-xs text-muted-foreground flex flex-wrap items-center gap-2 mt-0.5 min-w-0">
                                 <span>Matrícula: <strong className="text-foreground">{alumno.matricula}</strong></span>
                                 <span>•</span>
-                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${getBadgeStatusColor(alumno.estado_academico)}`}>
+                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${getBadgeStatusColor(alumno.estado_academico)}`}>
                                     {alumno.estado_academico}
                                 </span>
                             </DialogDescription>
@@ -80,7 +80,7 @@ export function ShowModal({ open, onOpenChange, alumno }: ShowModalProps) {
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Carrera
                                 </span>
-                                <p className="text-sm font-semibold text-foreground mt-0.5 break-all">
+                                <p className="text-sm font-semibold text-foreground mt-0.5 break-words">
                                     {alumno.carrera?.nombre_carrera || 'No asignada'}
                                 </p>
                             </div>
@@ -154,6 +154,23 @@ export function ShowModal({ open, onOpenChange, alumno }: ShowModalProps) {
                                 </span>
                                 <p className="text-xs font-mono font-semibold text-foreground mt-0.5 break-all">
                                     {alumno.user?.email || 'No registrado'}
+                                </p>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border col-span-2 min-w-0">
+                                <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+                                    Domicilio
+                                </span>
+                                <p className="text-xs font-semibold text-foreground mt-0.5 break-words">
+                                    {alumno.calle || alumno.colonia || alumno.codigo_postal
+                                        ? [
+                                              alumno.calle,
+                                              alumno.colonia ? `Col. ${alumno.colonia}` : null,
+                                              alumno.codigo_postal ? `C.P. ${alumno.codigo_postal}` : null,
+                                          ]
+                                              .filter(Boolean)
+                                              .join(', ')
+                                        : 'Sin domicilio registrado'}
                                 </p>
                             </div>
                         </div>

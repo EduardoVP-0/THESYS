@@ -35,6 +35,7 @@ class UpdateSedeRequest extends FormRequest
                 'required',
                 'string',
                 'max:120',
+                'regex:/^(?=.*[\pL])[\pL\pN\s.,()#-]+$/u',
                 Rule::unique('tblsedes', 'nombre_sede')->ignore($sede?->id_sede, 'id_sede'),
             ],
             'direccion' => ['nullable', 'string', 'max:255'],
@@ -50,6 +51,7 @@ class UpdateSedeRequest extends FormRequest
         return [
             'nombre_sede.required' => 'El nombre de la sede es obligatorio.',
             'nombre_sede.max' => 'El nombre de la sede no debe exceder los 120 caracteres.',
+            'nombre_sede.regex' => 'El nombre de la sede debe contener letras y no puede incluir símbolos inválidos.',
             'nombre_sede.unique' => 'Ya existe una sede registrada con este nombre.',
             'direccion.max' => 'La dirección no debe exceder los 255 caracteres.',
         ];

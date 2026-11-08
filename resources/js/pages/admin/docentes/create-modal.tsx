@@ -47,22 +47,23 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
         tipo_contrato: 'Tiempo completo',
     });
 
+    const sanitizeName = (val: string) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+    const sanitizePhone = (val: string) => val.replace(/\D/g, '').slice(0, 10);
+    const sanitizeCurp = (val: string) => val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 18);
+    const sanitizeCedula = (val: string) => val.replace(/\D/g, '').slice(0, 10);
+
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        let formattedEmail = data.email.trim().toLowerCase();
-        if (formattedEmail && !formattedEmail.endsWith('@unach.mx')) {
-            formattedEmail = `${formattedEmail}@unach.mx`;
-        }
-
         transform((formData) => ({
             ...formData,
-            email: formattedEmail,
+            email: formData.email.trim().toLowerCase(),
             curp: formData.curp.trim().toUpperCase(),
-            cedula_profesional: formData.cedula_profesional.trim().toUpperCase(),
+            cedula_profesional: formData.cedula_profesional.trim(),
             nombre: formData.nombre.trim(),
             apellido_p: formData.apellido_p.trim(),
             apellido_m: formData.apellido_m.trim(),
+            telefono: formData.telefono.trim(),
             especialidad: formData.especialidad.trim(),
         }));
 
@@ -127,7 +128,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                         id="nombre"
                                         maxLength={100}
                                         value={data.nombre}
-                                        onChange={(e) => setData('nombre', e.target.value)}
+                                        onChange={(e) => setData('nombre', sanitizeName(e.target.value))}
                                         placeholder="Ej: Laura Elena"
                                         className={`h-9 text-xs border-border ${errors.nombre ? 'border-[#EF4444]' : ''}`}
                                         autoFocus
@@ -143,7 +144,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                         id="apellido_p"
                                         maxLength={100}
                                         value={data.apellido_p}
-                                        onChange={(e) => setData('apellido_p', e.target.value)}
+                                        onChange={(e) => setData('apellido_p', sanitizeName(e.target.value))}
                                         placeholder="Ej: Morales"
                                         className={`h-9 text-xs border-border ${errors.apellido_p ? 'border-[#EF4444]' : ''}`}
                                     />
@@ -158,7 +159,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                         id="apellido_m"
                                         maxLength={100}
                                         value={data.apellido_m}
-                                        onChange={(e) => setData('apellido_m', e.target.value)}
+                                        onChange={(e) => setData('apellido_m', sanitizeName(e.target.value))}
                                         placeholder="Ej: Sánchez"
                                         className={`h-9 text-xs border-border ${errors.apellido_m ? 'border-[#EF4444]' : ''}`}
                                     />
@@ -175,7 +176,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                         id="curp"
                                         maxLength={18}
                                         value={data.curp}
-                                        onChange={(e) => setData('curp', e.target.value.toUpperCase())}
+                                        onChange={(e) => setData('curp', sanitizeCurp(e.target.value))}
                                         placeholder="MOSL800101MDFRRN01"
                                         className={`h-9 text-xs uppercase font-mono border-border ${errors.curp ? 'border-[#EF4444]' : ''}`}
                                     />
@@ -184,15 +185,16 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
 
                                 <div className="grid gap-1.5">
                                     <Label htmlFor="telefono" className="text-xs font-semibold text-foreground">
-                                        Teléfono de Contacto
+                                        Teléfono de Contacto (10 dígitos)
                                     </Label>
                                     <Input
                                         id="telefono"
-                                        maxLength={20}
+                                        inputMode="numeric"
+                                        maxLength={10}
                                         value={data.telefono}
-                                        onChange={(e) => setData('telefono', e.target.value)}
+                                        onChange={(e) => setData('telefono', sanitizePhone(e.target.value))}
                                         placeholder="Ej: 9611234567"
-                                        className="h-9 text-xs border-border"
+                                        className={`h-9 text-xs border-border ${errors.telefono ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.telefono && <p className="text-[11px] text-[#EF4444]">{errors.telefono}</p>}
                                 </div>
@@ -211,15 +213,16 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-5">
                                 <div className="grid gap-1.5">
                                     <Label htmlFor="cedula_profesional" className="text-xs font-semibold text-foreground">
-                                        Cédula Profesional <span className="text-[#EF4444]">*</span>
+                                        Cédula Profesional (7 a 10 dígitos) <span className="text-[#EF4444]">*</span>
                                     </Label>
                                     <Input
                                         id="cedula_profesional"
-                                        maxLength={20}
+                                        inputMode="numeric"
+                                        maxLength={10}
                                         value={data.cedula_profesional}
-                                        onChange={(e) => setData('cedula_profesional', e.target.value.toUpperCase())}
+                                        onChange={(e) => setData('cedula_profesional', sanitizeCedula(e.target.value))}
                                         placeholder="Ej: 12345678"
-                                        className={`h-9 text-xs uppercase font-mono border-border ${errors.cedula_profesional ? 'border-[#EF4444]' : ''}`}
+                                        className={`h-9 text-xs font-mono border-border ${errors.cedula_profesional ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.cedula_profesional && <p className="text-[11px] text-[#EF4444]">{errors.cedula_profesional}</p>}
                                 </div>

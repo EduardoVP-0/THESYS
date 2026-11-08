@@ -39,7 +39,7 @@ export function ShowModal({ open, onOpenChange, sede }: ShowModalProps) {
                         <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                             Nombre de la sede
                         </span>
-                        <p className="mt-0.5 text-base font-semibold break-all text-foreground">
+                        <p className="mt-0.5 text-base font-semibold break-words text-foreground">
                             {sede.nombre_sede}
                         </p>
                         <p className="mt-1 font-mono text-[11px] text-muted-foreground">
@@ -82,7 +82,7 @@ export function ShowModal({ open, onOpenChange, sede }: ShowModalProps) {
                         <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                             Dirección
                         </span>
-                        <p className="mt-1 text-sm break-all whitespace-pre-line text-muted-foreground">
+                        <p className="mt-1 text-sm break-words whitespace-pre-line text-muted-foreground">
                             {sede.direccion ?? 'Sin dirección registrada.'}
                         </p>
                     </div>

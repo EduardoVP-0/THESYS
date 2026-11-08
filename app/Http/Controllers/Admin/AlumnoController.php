@@ -41,13 +41,13 @@ class AlumnoController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('nombre', 'like', "%{$search}%")
-                    ->orWhere('apellido_p', 'like', "%{$search}%")
-                    ->orWhere('apellido_m', 'like', "%{$search}%")
-                    ->orWhere('matricula', 'like', "%{$search}%")
-                    ->orWhere('curp', 'like', "%{$search}%")
+                $q->where('nombre', 'ilike', "%{$search}%")
+                    ->orWhere('apellido_p', 'ilike', "%{$search}%")
+                    ->orWhere('apellido_m', 'ilike', "%{$search}%")
+                    ->orWhere('matricula', 'ilike', "%{$search}%")
+                    ->orWhere('curp', 'ilike', "%{$search}%")
                     ->orWhereHas('user', function ($qu) use ($search) {
-                        $qu->where('email', 'like', "%{$search}%");
+                        $qu->where('email', 'ilike', "%{$search}%");
                     });
             });
         }
@@ -100,19 +100,21 @@ class AlumnoController extends Controller
         $alumno = DB::transaction(function () use ($validated, $plainPassword) {
             // Nombre completo para la tabla users
             $nombreCompleto = trim("{$validated['nombre']} {$validated['apellido_p']} {$validated['apellido_m']}");
+            $estadoAcademico = $validated['estado_academico'] ?? 'Activo';
+            $esBaja = in_array($estadoAcademico, ['Baja temporal', 'Baja definitiva'], true);
             // Registro en la tabla `users` (credenciales de autenticación)
             $user = User::create([
                 'name' => $nombreCompleto,
                 'email' => strtolower($validated['email']),
                 'password' => $plainPassword, // Encriptado automáticamente por el cast del modelo User
                 'id_rol' => 5,                // Rol 5 = Alumno (Sustentante)
-                'estado' => true,
+                'estado' => ! $esBaja,
             ]);
             // Registro en la tabla `tblalumnos` (expediente escolar)
             $alumnoData = $validated;
             $alumnoData['id_usuario'] = $user->id;             // Llave primaria compartida
             $alumnoData['id_usuario_registro'] = Auth::id();   // Auditoría de quién lo dio de alta
-            $alumnoData['estado_academico'] = $validated['estado_academico'] ?? 'Activo';
+            $alumnoData['estado_academico'] = $estadoAcademico;
 
             $alumno = Alumno::create($alumnoData);
 
@@ -158,12 +160,23 @@ class AlumnoController extends Controller
     {
         $validated = $request->validated();
         DB::transaction(function () use ($validated, $alumno) {
-            // Actualizamos datos de usuario si cambió el nombre o correo
+            // Actualizamos datos de usuario si cambió el nombre, correo o si pasó a baja académica
             $nombreCompleto = trim("{$validated['nombre']} {$validated['apellido_p']} {$validated['apellido_m']}");
-            $alumno->user->update([
+            $esBajaNueva = in_array($validated['estado_academico'], ['Baja temporal', 'Baja definitiva'], true);
+            $eraBajaAnterior = in_array($alumno->estado_academico, ['Baja temporal', 'Baja definitiva'], true);
+
+            $userData = [
                 'name' => $nombreCompleto,
                 'email' => strtolower($validated['email']),
-            ]);
+            ];
+
+            if ($esBajaNueva) {
+                $userData['estado'] = false;
+            } elseif ($eraBajaAnterior && ! $esBajaNueva) {
+                $userData['estado'] = true;
+            }
+
+            $alumno->user->update($userData);
             // Actualizamos el expediente en tblalumnos
             $alumno->update($validated);
         });

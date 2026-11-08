@@ -173,7 +173,7 @@ export default function PagosIndex({ pagos, pendientesPorConcepto = {}, filters 
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
-                only: ['pagos', 'filters'],
+                only: ['pagos', 'pendientesPorConcepto', 'filters'],
                 onStart: () => setIsLoading(true),
                 onFinish: () => setIsLoading(false),
             }
@@ -232,6 +232,10 @@ export default function PagosIndex({ pagos, pendientesPorConcepto = {}, filters 
             !pagoSeleccionado.referencia_bancaria ||
             pagoSeleccionado.estado_validacion === 'Validado'
         ) {
+            return;
+        }
+        if (nuevoEstado === 'Rechazado' && !comentarios.trim()) {
+            alert('Por favor ingresa el motivo del rechazo en el campo de comentarios antes de rechazar el pago.');
             return;
         }
         const accion = nuevoEstado === 'Validado' ? 'validar' : 'rechazar';

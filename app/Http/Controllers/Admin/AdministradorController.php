@@ -36,12 +36,12 @@ class AdministradorController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('nombre', 'like', "%{$search}%")
-                    ->orWhere('apellido_p', 'like', "%{$search}%")
-                    ->orWhere('apellido_m', 'like', "%{$search}%")
-                    ->orWhere('area', 'like', "%{$search}%")
+                $q->where('nombre', 'ilike', "%{$search}%")
+                    ->orWhere('apellido_p', 'ilike', "%{$search}%")
+                    ->orWhere('apellido_m', 'ilike', "%{$search}%")
+                    ->orWhere('area', 'ilike', "%{$search}%")
                     ->orWhereHas('user', function ($qu) use ($search) {
-                        $qu->where('email', 'like', "%{$search}%");
+                        $qu->where('email', 'ilike', "%{$search}%");
                     });
             });
         }
@@ -137,6 +137,11 @@ class AdministradorController extends Controller
      */
     public function update(UpdateAdministradorRequest $request, Administrador $administrador): RedirectResponse
     {
+        if ($administrador->user?->id_rol === 1) {
+            return redirect()->route('admin.administradores.index')
+                ->with('error', 'La cuenta de Superadministrador está protegida y no puede modificarse desde este panel.');
+        }
+
         $validated = $request->validated();
 
         DB::transaction(function () use ($validated, $administrador) {
@@ -167,6 +172,17 @@ class AdministradorController extends Controller
     public function toggleStatus(Administrador $administrador): RedirectResponse
     {
         $user = $administrador->user;
+
+        if ($user->id_rol === 1) {
+            return redirect()->route('admin.administradores.index')
+                ->with('error', 'No se puede suspender la cuenta del Superadministrador.');
+        }
+
+        if ($user->id === Auth::id()) {
+            return redirect()->route('admin.administradores.index')
+                ->with('error', 'No puedes suspender tu propia cuenta con la sesión activa.');
+        }
+
         $nuevoEstado = ! $user->estado;
         $user->update(['estado' => $nuevoEstado]);
         $administrador->update(['estado' => $nuevoEstado]);

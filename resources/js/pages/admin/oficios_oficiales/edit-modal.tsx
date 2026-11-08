@@ -139,7 +139,12 @@ export function EditModal({ open, onOpenChange, oficio }: EditModalProps) {
                                 placeholder="Ej: Formato Solicitud de Titulación..."
                                 maxLength={100}
                                 value={data.nombre_oficio}
-                                onChange={(e) => setData('nombre_oficio', e.target.value)}
+                                onChange={(e) =>
+                                    setData(
+                                        'nombre_oficio',
+                                        e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,()#-]/g, '')
+                                    )
+                                }
                                 className={`bg-background border-border rounded-xl text-sm ${
                                     errors.nombre_oficio ? 'border-[#EF4444]' : ''
                                 }`}
@@ -215,9 +220,9 @@ export function EditModal({ open, onOpenChange, oficio }: EditModalProps) {
                                     }}
                                     className="absolute inset-0 opacity-0 cursor-pointer"
                                 />
-                                <div className="flex flex-col items-center justify-center gap-1">
+                                <div className="flex flex-col items-center justify-center gap-1 min-w-0">
                                     <FileUp className="size-6 text-muted-foreground" />
-                                    <span className="text-xs font-medium text-foreground">
+                                    <span className="text-xs font-medium text-foreground truncate max-w-full px-2">
                                         {nombreArchivoPreview ? (
                                             <span className="text-[#10B981] font-semibold">Nuevo: {nombreArchivoPreview}</span>
                                         ) : (
@@ -225,7 +230,7 @@ export function EditModal({ open, onOpenChange, oficio }: EditModalProps) {
                                         )}
                                     </span>
                                     <span className="text-[10px] text-muted-foreground">
-                                        {nombreArchivoPreview ? 'Se actualizará el documento al guardar' : 'Si no seleccionas un archivo, se mantendrá el actual'}
+                                        {nombreArchivoPreview ? 'Se actualizará el documento al guardar' : 'Si no seleccionas un archivo, se mantendrá el actual (PDF hasta 20MB)'}
                                     </span>
                                 </div>
                             </div>

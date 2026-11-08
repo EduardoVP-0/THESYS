@@ -52,17 +52,17 @@ export function ShowModal({ open, onOpenChange, docente }: ShowModalProps) {
                             {docente.iniciales || 'DC'}
                         </div>
                         <div className="min-w-0 flex-1">
-                            <DialogTitle className="text-lg font-bold text-foreground break-all">
+                            <DialogTitle className="text-lg font-bold text-foreground break-words">
                                 {docente.nombre_completo || `${docente.nombre} ${docente.apellido_p} ${docente.apellido_m}`}
                             </DialogTitle>
                             <DialogDescription className="text-xs text-muted-foreground flex flex-wrap items-center gap-2 mt-1 min-w-0">
                                 <span>Cédula: <strong className="text-foreground font-mono">{docente.cedula_profesional}</strong></span>
                                 <span>•</span>
-                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${getGradoBadgeColor(docente.grado_academico)}`}>
+                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap ${getGradoBadgeColor(docente.grado_academico)}`}>
                                     {docente.grado_academico}
                                 </span>
                                 <span>•</span>
-                                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground">
+                                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground whitespace-nowrap">
                                     {docente.tipo_contrato}
                                 </span>
                             </DialogDescription>
@@ -83,7 +83,7 @@ export function ShowModal({ open, onOpenChange, docente }: ShowModalProps) {
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Especialidad / Área de Conocimiento
                                 </span>
-                                <p className="text-sm font-semibold text-foreground mt-0.5 break-all">
+                                <p className="text-sm font-semibold text-foreground mt-0.5 break-words">
                                     {docente.especialidad}
                                 </p>
                             </div>

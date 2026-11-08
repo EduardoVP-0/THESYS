@@ -42,6 +42,9 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
         sexo: 'Masculino',
         curp: '',
         telefono: '',
+        calle: '',
+        colonia: '',
+        codigo_postal: '',
         matricula: '',
         id_carrera: '',
         turno: 'Matutino',
@@ -49,6 +52,19 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
         generacion: '',
         estado_academico: 'Activo',
     });
+
+    const sanitizeName = (val: string) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+    const sanitizePhone = (val: string) => val.replace(/\D/g, '').slice(0, 10);
+    const sanitizeZipCode = (val: string) => val.replace(/\D/g, '').slice(0, 5);
+    const sanitizeCurp = (val: string) => val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 18);
+    const sanitizeMatricula = (val: string) => val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+    const sanitizeGeneracion = (val: string) => {
+        const digits = val.replace(/\D/g, '').slice(0, 8);
+        if (digits.length <= 4) {
+            return digits;
+        }
+        return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+    };
 
     useEffect(() => {
         if (alumno && open) {
@@ -61,11 +77,14 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
                 sexo: alumno.sexo || 'Masculino',
                 curp: alumno.curp || '',
                 telefono: alumno.telefono || '',
+                calle: alumno.calle || '',
+                colonia: alumno.colonia || '',
+                codigo_postal: alumno.codigo_postal || '',
                 matricula: alumno.matricula || '',
                 id_carrera: String(alumno.id_carrera || ''),
                 turno: alumno.turno || 'Matutino',
                 fecha_ingreso: alumno.fecha_ingreso ? String(alumno.fecha_ingreso).split('T')[0] : '',
-                generacion: alumno.generacion || '',
+                generacion: sanitizeGeneracion(alumno.generacion || ''),
                 estado_academico: alumno.estado_academico || 'Activo',
             });
         }
@@ -75,16 +94,19 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
         e.preventDefault();
         if (!alumno) return;
 
-        let formattedEmail = data.email.trim().toLowerCase();
-        if (formattedEmail && !formattedEmail.endsWith('@unach.mx')) {
-            formattedEmail = `${formattedEmail}@unach.mx`;
-        }
-
         transform((formData) => ({
             ...formData,
-            email: formattedEmail,
+            email: formData.email.trim().toLowerCase(),
+            nombre: formData.nombre.trim(),
+            apellido_p: formData.apellido_p.trim(),
+            apellido_m: formData.apellido_m.trim(),
+            telefono: formData.telefono.trim(),
+            calle: formData.calle.trim(),
+            colonia: formData.colonia.trim(),
+            codigo_postal: formData.codigo_postal.trim(),
             matricula: formData.matricula.trim().toUpperCase(),
             curp: formData.curp.trim().toUpperCase(),
+            generacion: formData.generacion.trim(),
         }));
 
         put(`/admin/alumnos/${alumno.id_usuario}`, {
@@ -147,7 +169,7 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
                                         id="edit_nombre"
                                         maxLength={100}
                                         value={data.nombre}
-                                        onChange={(e) => setData('nombre', e.target.value)}
+                                        onChange={(e) => setData('nombre', sanitizeName(e.target.value))}
                                         className={`h-9 text-xs border-border ${errors.nombre ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.nombre && <p className="text-[11px] text-[#EF4444]">{errors.nombre}</p>}
@@ -161,7 +183,7 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
                                         id="edit_apellido_p"
                                         maxLength={100}
                                         value={data.apellido_p}
-                                        onChange={(e) => setData('apellido_p', e.target.value)}
+                                        onChange={(e) => setData('apellido_p', sanitizeName(e.target.value))}
                                         className={`h-9 text-xs border-border ${errors.apellido_p ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.apellido_p && <p className="text-[11px] text-[#EF4444]">{errors.apellido_p}</p>}
@@ -175,7 +197,7 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
                                         id="edit_apellido_m"
                                         maxLength={100}
                                         value={data.apellido_m}
-                                        onChange={(e) => setData('apellido_m', e.target.value)}
+                                        onChange={(e) => setData('apellido_m', sanitizeName(e.target.value))}
                                         className={`h-9 text-xs border-border ${errors.apellido_m ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.apellido_m && <p className="text-[11px] text-[#EF4444]">{errors.apellido_m}</p>}
@@ -214,15 +236,17 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
 
                                 <div className="grid gap-1">
                                     <Label htmlFor="edit_telefono" className="text-xs font-semibold text-foreground">
-                                        Teléfono de Contacto
+                                        Teléfono de Contacto (10 dígitos)
                                     </Label>
                                     <Input
                                         id="edit_telefono"
-                                        maxLength={20}
+                                        inputMode="numeric"
+                                        maxLength={10}
                                         value={data.telefono}
-                                        onChange={(e) => setData('telefono', e.target.value)}
-                                        className="h-9 text-xs border-border"
+                                        onChange={(e) => setData('telefono', sanitizePhone(e.target.value))}
+                                        className={`h-9 text-xs border-border ${errors.telefono ? 'border-[#EF4444]' : ''}`}
                                     />
+                                    {errors.telefono && <p className="text-[11px] text-[#EF4444]">{errors.telefono}</p>}
                                 </div>
                             </div>
 
@@ -235,10 +259,58 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
                                         id="edit_curp"
                                         maxLength={18}
                                         value={data.curp}
-                                        onChange={(e) => setData('curp', e.target.value.toUpperCase())}
+                                        onChange={(e) => setData('curp', sanitizeCurp(e.target.value))}
                                         className={`h-9 text-xs uppercase font-mono border-border ${errors.curp ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.curp && <p className="text-[11px] text-[#EF4444]">{errors.curp}</p>}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="grid gap-1">
+                                    <Label htmlFor="edit_calle" className="text-xs font-semibold text-foreground">
+                                        Calle y Número
+                                    </Label>
+                                    <Input
+                                        id="edit_calle"
+                                        maxLength={150}
+                                        value={data.calle}
+                                        onChange={(e) => setData('calle', e.target.value)}
+                                        placeholder="Ej: Av. Central Poniente #123"
+                                        className={`h-9 text-xs border-border ${errors.calle ? 'border-[#EF4444]' : ''}`}
+                                    />
+                                    {errors.calle && <p className="text-[11px] text-[#EF4444]">{errors.calle}</p>}
+                                </div>
+
+                                <div className="grid gap-1">
+                                    <Label htmlFor="edit_colonia" className="text-xs font-semibold text-foreground">
+                                        Colonia / Fraccionamiento
+                                    </Label>
+                                    <Input
+                                        id="edit_colonia"
+                                        maxLength={100}
+                                        value={data.colonia}
+                                        onChange={(e) => setData('colonia', e.target.value)}
+                                        placeholder="Ej: Col. Centro"
+                                        className={`h-9 text-xs border-border ${errors.colonia ? 'border-[#EF4444]' : ''}`}
+                                    />
+                                    {errors.colonia && <p className="text-[11px] text-[#EF4444]">{errors.colonia}</p>}
+                                </div>
+
+                                <div className="grid gap-1">
+                                    <Label htmlFor="edit_codigo_postal" className="text-xs font-semibold text-foreground">
+                                        Código Postal (5 dígitos)
+                                    </Label>
+                                    <Input
+                                        id="edit_codigo_postal"
+                                        inputMode="numeric"
+                                        maxLength={5}
+                                        value={data.codigo_postal}
+                                        onChange={(e) => setData('codigo_postal', sanitizeZipCode(e.target.value))}
+                                        placeholder="Ej: 29000"
+                                        className={`h-9 text-xs font-mono border-border ${errors.codigo_postal ? 'border-[#EF4444]' : ''}`}
+                                    />
+                                    {errors.codigo_postal && <p className="text-[11px] text-[#EF4444]">{errors.codigo_postal}</p>}
                                 </div>
                             </div>
                         </div>
@@ -261,13 +333,13 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
                                         id="edit_matricula"
                                         maxLength={10}
                                         value={data.matricula}
-                                        onChange={(e) => setData('matricula', e.target.value.toUpperCase())}
+                                        onChange={(e) => setData('matricula', sanitizeMatricula(e.target.value))}
                                         className={`h-9 text-xs uppercase font-mono font-semibold border-border ${errors.matricula ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.matricula && <p className="text-[11px] text-[#EF4444]">{errors.matricula}</p>}
                                 </div>
 
-                                <div className="grid gap-1">
+                                <div className="grid gap-1 min-w-0">
                                     <Label htmlFor="edit_id_carrera" className="text-xs font-semibold text-foreground">
                                         Carrera / Programa <span className="text-[#EF4444]">*</span>
                                     </Label>
@@ -275,7 +347,7 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
                                         value={String(data.id_carrera)}
                                         onValueChange={(val) => setData('id_carrera', val)}
                                     >
-                                        <SelectTrigger className="h-9 text-xs border-border bg-background">
+                                        <SelectTrigger className="h-9 text-xs border-border bg-background w-full min-w-0 [&>span]:truncate">
                                             <SelectValue placeholder="Selecciona la carrera" />
                                         </SelectTrigger>
                                         <SelectContent className="bg-popover border-border">
@@ -326,10 +398,12 @@ export function EditModal({ open, onOpenChange, alumno, carreras }: EditModalPro
                                     </Label>
                                     <Input
                                         id="edit_generacion"
-                                        maxLength={50}
+                                        inputMode="numeric"
+                                        maxLength={9}
                                         value={data.generacion}
-                                        onChange={(e) => setData('generacion', e.target.value)}
-                                        className={`h-9 text-xs border-border ${errors.generacion ? 'border-[#EF4444]' : ''}`}
+                                        onChange={(e) => setData('generacion', sanitizeGeneracion(e.target.value))}
+                                        placeholder="2022-2026"
+                                        className={`h-9 text-xs font-mono border-border ${errors.generacion ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.generacion && <p className="text-[11px] text-[#EF4444]">{errors.generacion}</p>}
                                 </div>

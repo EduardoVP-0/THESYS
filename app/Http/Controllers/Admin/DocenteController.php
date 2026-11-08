@@ -34,14 +34,14 @@ class DocenteController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('nombre', 'like', "%{$search}%")
-                    ->orWhere('apellido_p', 'like', "%{$search}%")
-                    ->orWhere('apellido_m', 'like', "%{$search}%")
-                    ->orWhere('cedula_profesional', 'like', "%{$search}%")
-                    ->orWhere('curp', 'like', "%{$search}%")
-                    ->orWhere('especialidad', 'like', "%{$search}%")
+                $q->where('nombre', 'ilike', "%{$search}%")
+                    ->orWhere('apellido_p', 'ilike', "%{$search}%")
+                    ->orWhere('apellido_m', 'ilike', "%{$search}%")
+                    ->orWhere('cedula_profesional', 'ilike', "%{$search}%")
+                    ->orWhere('curp', 'ilike', "%{$search}%")
+                    ->orWhere('especialidad', 'ilike', "%{$search}%")
                     ->orWhereHas('user', function ($qu) use ($search) {
-                        $qu->where('email', 'like', "%{$search}%");
+                        $qu->where('email', 'ilike', "%{$search}%");
                     });
             });
         }

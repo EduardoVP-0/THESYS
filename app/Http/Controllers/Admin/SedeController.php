@@ -92,6 +92,12 @@ class SedeController extends Controller
      */
     public function toggleStatus(Sede $sede): RedirectResponse
     {
+        if ($sede->estado && $sede->examenes()->count() > 0) {
+            return redirect()
+                ->route('admin.sedes.index')
+                ->with('error', 'No se puede dar de baja una sede que tiene exámenes profesionales programados.');
+        }
+
         $sede->update([
             'estado' => ! $sede->estado,
         ]);

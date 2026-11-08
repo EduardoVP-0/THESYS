@@ -41,7 +41,7 @@ export function ShowModal({ open, onOpenChange, carrera }: ShowModalProps) {
                         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Nombre de la Carrera
                         </span>
-                        <p className="text-base font-semibold text-foreground mt-0.5 break-all">
+                        <p className="text-base font-semibold text-foreground mt-0.5 break-words">
                             {carrera.nombre_carrera}
                         </p>
                     </div>
@@ -81,7 +81,7 @@ export function ShowModal({ open, onOpenChange, carrera }: ShowModalProps) {
                             Descripción
                         </span>
                         <div className="max-h-48 overflow-y-auto pr-1 mt-1">
-                            <p className="text-sm text-muted-foreground whitespace-pre-line break-all">
+                            <p className="text-sm text-muted-foreground whitespace-pre-line break-words">
                                 {carrera.descripcion ? carrera.descripcion : 'Sin descripción registrada.'}
                             </p>
                         </div>

@@ -44,20 +44,19 @@ export function CreateModal({ open, onOpenChange, roles }: CreateModalProps) {
         area: '',
     });
 
+    const sanitizeName = (val: string) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+    const sanitizePhone = (val: string) => val.replace(/\D/g, '').slice(0, 10);
+
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        let formattedEmail = data.email.trim().toLowerCase();
-        if (formattedEmail && !formattedEmail.endsWith('@unach.mx')) {
-            formattedEmail = `${formattedEmail}@unach.mx`;
-        }
-
         transform((formData) => ({
             ...formData,
-            email: formattedEmail,
+            email: formData.email.trim().toLowerCase(),
             nombre: formData.nombre.trim(),
             apellido_p: formData.apellido_p.trim(),
             apellido_m: formData.apellido_m.trim(),
+            telefono: formData.telefono.trim(),
             area: formData.area.trim(),
             id_rol: Number(formData.id_rol),
         }));
@@ -123,7 +122,7 @@ export function CreateModal({ open, onOpenChange, roles }: CreateModalProps) {
                                         id="adm_nombre"
                                         maxLength={100}
                                         value={data.nombre}
-                                        onChange={(e) => setData('nombre', e.target.value)}
+                                        onChange={(e) => setData('nombre', sanitizeName(e.target.value))}
                                         placeholder="Ej: Carlos Eduardo"
                                         className={`h-9 text-xs border-border ${errors.nombre ? 'border-[#EF4444]' : ''}`}
                                         autoFocus
@@ -139,7 +138,7 @@ export function CreateModal({ open, onOpenChange, roles }: CreateModalProps) {
                                         id="adm_apellido_p"
                                         maxLength={100}
                                         value={data.apellido_p}
-                                        onChange={(e) => setData('apellido_p', e.target.value)}
+                                        onChange={(e) => setData('apellido_p', sanitizeName(e.target.value))}
                                         placeholder="Ej: Méndez"
                                         className={`h-9 text-xs border-border ${errors.apellido_p ? 'border-[#EF4444]' : ''}`}
                                     />
@@ -154,7 +153,7 @@ export function CreateModal({ open, onOpenChange, roles }: CreateModalProps) {
                                         id="adm_apellido_m"
                                         maxLength={100}
                                         value={data.apellido_m}
-                                        onChange={(e) => setData('apellido_m', e.target.value)}
+                                        onChange={(e) => setData('apellido_m', sanitizeName(e.target.value))}
                                         placeholder="Ej: Torres"
                                         className={`h-9 text-xs border-border ${errors.apellido_m ? 'border-[#EF4444]' : ''}`}
                                     />
@@ -165,15 +164,16 @@ export function CreateModal({ open, onOpenChange, roles }: CreateModalProps) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-5">
                                 <div className="grid gap-1.5">
                                     <Label htmlFor="adm_telefono" className="text-xs font-semibold text-foreground">
-                                        Teléfono de Contacto
+                                        Teléfono de Contacto (10 dígitos)
                                     </Label>
                                     <Input
                                         id="adm_telefono"
-                                        maxLength={20}
+                                        inputMode="numeric"
+                                        maxLength={10}
                                         value={data.telefono}
-                                        onChange={(e) => setData('telefono', e.target.value)}
+                                        onChange={(e) => setData('telefono', sanitizePhone(e.target.value))}
                                         placeholder="Ej: 9611234567"
-                                        className="h-9 text-xs border-border"
+                                        className={`h-9 text-xs border-border ${errors.telefono ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.telefono && <p className="text-[11px] text-[#EF4444]">{errors.telefono}</p>}
                                 </div>

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
@@ -18,6 +19,16 @@ class CheckRole
     {
         if (! $request->user()) {
             return redirect()->route('login');
+        }
+
+        if (! $request->user()->estado) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Tu cuenta ha sido suspendida. Contacta al administrador del sistema.',
+            ]);
         }
 
         $userRolID = (string) $request->user()->id_rol;

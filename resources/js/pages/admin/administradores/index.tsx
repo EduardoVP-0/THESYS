@@ -60,13 +60,19 @@ interface Props {
  * VISTA PRINCIPAL: GESTION DE ADMINISTRADORES
  */
 export default function AdministradoresIndex({ administradores, stats, filters, roles }: Props) {
-    const { flash } = usePage<{
+    const { flash, auth } = usePage<{
         flash?: {
             success?: string;
             error?: string;
         };
+        auth?: {
+            user?: {
+                id: number;
+            };
+        };
     }>().props;
 
+    const currentUserId = auth?.user?.id;
     const [showAlert, setShowAlert] = useState(false);
 
     // Modales
@@ -85,12 +91,12 @@ export default function AdministradoresIndex({ administradores, stats, filters, 
     const [showFiltersPanel, setShowFiltersPanel] = useState(false);
 
     useEffect(() => {
-        if (flash?.success) {
+        if (flash?.success || flash?.error) {
             setShowAlert(true);
             const timer = setTimeout(() => setShowAlert(false), 4000);
             return () => clearTimeout(timer);
         }
-    }, [flash?.success]);
+    }, [flash?.success, flash?.error]);
 
     const handleFilter = (
         newSearch = search,
@@ -133,11 +139,17 @@ export default function AdministradoresIndex({ administradores, stats, filters, 
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 bg-background text-foreground min-h-screen">
                 {/* ALERTA FLASH */}
-                {flash?.success && showAlert && (
-                    <div className="alert alert-success alert-soft shadow-xs py-2.5 px-4 text-sm flex items-center justify-between border-l-4 border-l-[#10B981] bg-emerald-50 dark:bg-emerald-950/30 text-foreground animate-in fade-in-50 duration-300">
+                {(flash?.success || flash?.error) && showAlert && (
+                    <div
+                        className={`alert alert-soft shadow-xs py-2.5 px-4 text-sm flex items-center justify-between border-l-4 text-foreground animate-in fade-in-50 duration-300 ${
+                            flash?.error
+                                ? 'border-l-[#EF4444] bg-red-50 dark:bg-red-950/30'
+                                : 'border-l-[#10B981] bg-emerald-50 dark:bg-emerald-950/30'
+                        }`}
+                    >
                         <div className="flex items-center gap-2">
-                            <CheckCircle2 className="size-4 text-[#10B981]" />
-                            <span className="font-medium">{flash.success}</span>
+                            <CheckCircle2 className={`size-4 ${flash?.error ? 'text-[#EF4444]' : 'text-[#10B981]'}`} />
+                            <span className="font-medium">{flash.error || flash.success}</span>
                         </div>
                         <button
                             onClick={() => setShowAlert(false)}
@@ -389,14 +401,14 @@ export default function AdministradoresIndex({ administradores, stats, filters, 
 
                                             {/* Rol */}
                                             <TableCell className="text-center">
-                                                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${rolInfo.color}`}>
+                                                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border whitespace-nowrap inline-block ${rolInfo.color}`}>
                                                     {rolInfo.label}
                                                 </span>
                                             </TableCell>
 
                                             {/* Teléfono */}
                                             <TableCell className="text-center text-xs text-muted-foreground">
-                                                <span className="px-2 py-0.5 rounded bg-muted/60 font-medium">
+                                                <span className="px-2 py-0.5 rounded bg-muted/60 font-medium whitespace-nowrap inline-block max-w-[130px] truncate" title={admin.telefono || 'Sin teléfono'}>
                                                     {admin.telefono || '—'}
                                                 </span>
                                             </TableCell>
@@ -404,11 +416,11 @@ export default function AdministradoresIndex({ administradores, stats, filters, 
                                             {/* Acceso */}
                                             <TableCell className="text-center">
                                                 {admin.user?.estado ? (
-                                                    <span className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 font-semibold text-[11px] px-2 py-0.5 rounded">
+                                                    <span className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 font-semibold text-[11px] px-2 py-0.5 rounded whitespace-nowrap inline-block">
                                                         Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 font-semibold text-[11px] px-2 py-0.5 rounded">
+                                                    <span className="bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 font-semibold text-[11px] px-2 py-0.5 rounded whitespace-nowrap inline-block">
                                                         Suspendido
                                                     </span>
                                                 )}
@@ -431,36 +443,40 @@ export default function AdministradoresIndex({ administradores, stats, filters, 
                                                         </button>
                                                     </div>
 
-                                                    {/* Editar */}
-                                                    <div className="tooltip tooltip-top" data-tip="Editar administrador">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setAdminToEdit(admin);
-                                                                setOpenEdit(true);
-                                                            }}
-                                                            className="btn btn-xs bg-background border border-[#FFDE21] text-foreground hover:bg-accent/40 btn-square"
-                                                        >
-                                                            <Pencil className="size-3.5" />
-                                                        </button>
-                                                    </div>
+                                                    {/* Editar (Protegido para Superadmin id_rol === 1) */}
+                                                    {idRol !== 1 && (
+                                                        <div className="tooltip tooltip-top" data-tip="Editar administrador">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setAdminToEdit(admin);
+                                                                    setOpenEdit(true);
+                                                                }}
+                                                                className="btn btn-xs bg-background border border-[#FFDE21] text-foreground hover:bg-accent/40 btn-square"
+                                                            >
+                                                                <Pencil className="size-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    )}
 
-                                                    {/* Alternar Acceso */}
-                                                    <div
-                                                        className="tooltip tooltip-left"
-                                                        data-tip={admin.user?.estado ? 'Suspender acceso' : 'Activar acceso'}
-                                                    >
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleToggleStatus(admin.id_usuario, admin.user?.estado)}
-                                                            className={`btn btn-xs bg-background border btn-square hover:bg-accent/40 ${admin.user?.estado
-                                                                    ? 'border-[#EF4444] text-[#EF4444]'
-                                                                    : 'border-[#10B981] text-[#10B981]'
-                                                                }`}
+                                                    {/* Alternar Acceso (Protegido para Superadmin y usuario actual) */}
+                                                    {idRol !== 1 && admin.id_usuario !== currentUserId && (
+                                                        <div
+                                                            className="tooltip tooltip-left"
+                                                            data-tip={admin.user?.estado ? 'Suspender acceso' : 'Activar acceso'}
                                                         >
-                                                            <Power className="size-3.5" />
-                                                        </button>
-                                                    </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleToggleStatus(admin.id_usuario, admin.user?.estado)}
+                                                                className={`btn btn-xs bg-background border btn-square hover:bg-accent/40 ${admin.user?.estado
+                                                                        ? 'border-[#EF4444] text-[#EF4444]'
+                                                                        : 'border-[#10B981] text-[#10B981]'
+                                                                    }`}
+                                                            >
+                                                                <Power className="size-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>

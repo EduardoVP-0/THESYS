@@ -421,21 +421,21 @@ export default function DocentesIndex({ docentes, stats, filters }: Props) {
                                             <span className="truncate block text-xs font-medium text-foreground" title={docente.especialidad}>
                                                 {docente.especialidad}
                                             </span>
-                                            <span className="text-[11px] text-muted-foreground font-mono">
+                                            <span className="truncate block text-[11px] text-muted-foreground font-mono" title={docente.curp}>
                                                 CURP: {docente.curp}
                                             </span>
                                         </TableCell>
 
                                         {/* Grado Academico */}
                                         <TableCell className="text-center">
-                                            <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${getBadgeGrado(docente.grado_academico)}`}>
+                                            <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap inline-block ${getBadgeGrado(docente.grado_academico)}`}>
                                                 {docente.grado_academico}
                                             </span>
                                         </TableCell>
 
                                         {/* Tipo de Contrato */}
                                         <TableCell className="text-center text-xs text-muted-foreground">
-                                            <span className="px-2 py-0.5 rounded bg-muted/60 font-medium">
+                                            <span className="px-2 py-0.5 rounded bg-muted/60 font-medium whitespace-nowrap inline-block">
                                                 {docente.tipo_contrato}
                                             </span>
                                         </TableCell>
@@ -443,11 +443,11 @@ export default function DocentesIndex({ docentes, stats, filters }: Props) {
                                         {/* Acceso */}
                                         <TableCell className="text-center">
                                             {docente.user?.estado ? (
-                                                <span className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 font-semibold text-[11px] px-2 py-0.5 rounded">
+                                                <span className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 font-semibold text-[11px] px-2 py-0.5 rounded whitespace-nowrap inline-block">
                                                     Activo
                                                 </span>
                                             ) : (
-                                                <span className="bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 font-semibold text-[11px] px-2 py-0.5 rounded">
+                                                <span className="bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 font-semibold text-[11px] px-2 py-0.5 rounded whitespace-nowrap inline-block">
                                                     Suspendido
                                                 </span>
                                             )}

@@ -42,11 +42,11 @@ export function ShowModal({ open, onOpenChange, administrador }: ShowModalProps)
                             {administrador.iniciales || 'AD'}
                         </div>
                         <div className="min-w-0 flex-1">
-                            <DialogTitle className="text-lg font-bold text-foreground break-all">
+                            <DialogTitle className="text-lg font-bold text-foreground break-words">
                                 {administrador.nombre_completo || `${administrador.nombre} ${administrador.apellido_p} ${administrador.apellido_m}`}
                             </DialogTitle>
                             <DialogDescription className="text-xs text-muted-foreground flex flex-wrap items-center gap-2 mt-1 min-w-0">
-                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${rolInfo.color}`}>
+                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap ${rolInfo.color}`}>
                                     {rolInfo.label}
                                 </span>
                                 <span>•</span>
@@ -69,7 +69,7 @@ export function ShowModal({ open, onOpenChange, administrador }: ShowModalProps)
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Área de Adscripción
                                 </span>
-                                <p className="text-sm font-semibold text-foreground mt-0.5 break-all">
+                                <p className="text-sm font-semibold text-foreground mt-0.5 break-words">
                                     {administrador.area}
                                 </p>
                             </div>
@@ -87,7 +87,7 @@ export function ShowModal({ open, onOpenChange, administrador }: ShowModalProps)
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Teléfono Móvil
                                 </span>
-                                <p className="text-xs font-semibold text-foreground mt-0.5 break-all">
+                                <p className="text-xs font-semibold text-foreground mt-0.5 break-words">
                                     {administrador.telefono || 'Sin registrar'}
                                 </p>
                             </div>

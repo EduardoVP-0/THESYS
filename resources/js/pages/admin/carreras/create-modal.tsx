@@ -30,12 +30,24 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
      * errors: contiene los mensajes de error enviados por StoreCarreraRequest si algo falla
      * reset: limpia todos los campos a su estado original
      */
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm<{
+        nombre_carrera: string;
+        descripcion: string;
+        duracion_semestres: number | string;
+        estado: boolean;
+    }>({
         nombre_carrera: '',
         descripcion: '',
         duracion_semestres: 6,
         estado: true,
     });
+
+    const sanitizeCarreraName = (val: string) =>
+        val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s.,()-]/g, '');
+    const sanitizeSemestres = (val: string) => {
+        const digits = val.replace(/\D/g, '').slice(0, 1);
+        return digits === '' ? '' : Number(digits);
+    };
 
     //Se ejecuta al presionar "Guardar Carrera"
     const handleSubmit: FormEventHandler = (e) => {
@@ -97,7 +109,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                 id="nombre_carrera"
                                 maxLength={100}
                                 value={data.nombre_carrera}
-                                onChange={(e) => setData('nombre_carrera', e.target.value)}
+                                onChange={(e) => setData('nombre_carrera', sanitizeCarreraName(e.target.value))}
                                 placeholder="Ej: Ing. en Desarrollo de Software"
                                 className={`border-border focus-visible:ring-ring ${errors.nombre_carrera ? 'border-[#EF4444]' : ''
                                     }`}
@@ -112,15 +124,16 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                         {/* Campo: Duración en Semestres */}
                         <div className="grid gap-1.5">
                             <Label htmlFor="duracion_semestres" className="text-sm font-semibold text-foreground">
-                                Duración (Semestres) <span className="text-[#EF4444]">*</span>
+                                Duración (Semestres, 1 a 9) <span className="text-[#EF4444]">*</span>
                             </Label>
                             <Input
                                 id="duracion_semestres"
                                 type="number"
+                                inputMode="numeric"
                                 min={1}
                                 max={9}
                                 value={data.duracion_semestres}
-                                onChange={(e) => setData('duracion_semestres', parseInt(e.target.value) || 0)}
+                                onChange={(e) => setData('duracion_semestres', sanitizeSemestres(e.target.value))}
                                 className={`border-border focus-visible:ring-ring ${errors.duracion_semestres ? 'border-[#EF4444]' : ''
                                     }`}
                             />
@@ -131,12 +144,18 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
 
                         {/* Campo: Descripción */}
                         <div className="grid gap-1.5">
-                            <Label htmlFor="descripcion" className="text-sm font-semibold text-foreground">
-                                Descripción de la carrera
-                            </Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="descripcion" className="text-sm font-semibold text-foreground">
+                                    Descripción de la carrera
+                                </Label>
+                                <span className="text-[11px] text-muted-foreground">
+                                    {data.descripcion.length}/500
+                                </span>
+                            </div>
                             <Textarea
                                 id="descripcion"
                                 rows={3}
+                                maxLength={500}
                                 value={data.descripcion}
                                 onChange={(e) => setData('descripcion', e.target.value)}
                                 placeholder="Breve descripción del perfil o enfoque de la carrera..."

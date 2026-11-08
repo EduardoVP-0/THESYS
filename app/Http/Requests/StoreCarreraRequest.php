@@ -24,9 +24,15 @@ class StoreCarreraRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // El nombre es obligatorio, máximo 100 caracteres y no puede repetirse en tblcarreras
-            'nombre_carrera' => ['required', 'string', 'max:100', 'unique:tblcarreras,nombre_carrera'],
-            'descripcion' => ['nullable', 'string'],
+            // El nombre es obligatorio, máximo 100 caracteres, solo letras/puntuación básica y único en tblcarreras
+            'nombre_carrera' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[\pL\s.,()-]+$/u',
+                'unique:tblcarreras,nombre_carrera',
+            ],
+            'descripcion' => ['nullable', 'string', 'max:500'],
             // La duración debe ser un número entero válido (entre 1 y 9 semestres)
             'duracion_semestres' => ['required', 'integer', 'min:1', 'max:9'],
             'estado' => ['boolean'],
@@ -40,8 +46,10 @@ class StoreCarreraRequest extends FormRequest
             'nombre_carrera.required' => 'El nombre de la carrera es obligatorio.',
             'nombre_carrera.string' => 'El nombre de la carrera debe ser texto válido.',
             'nombre_carrera.max' => 'El nombre de la carrera no debe exceder los 100 caracteres.',
+            'nombre_carrera.regex' => 'El nombre de la carrera solo puede contener letras, espacios y signos de puntuación básicos.',
             'nombre_carrera.unique' => 'Ya existe una carrera registrada con este nombre en la institución.',
             'descripcion.string' => 'La descripción debe ser un texto válido.',
+            'descripcion.max' => 'La descripción no debe exceder los 500 caracteres.',
             'duracion_semestres.required' => 'Debes especificar la duración en semestres.',
             'duracion_semestres.integer' => 'La duración en semestres debe ser un número entero.',
             'duracion_semestres.min' => 'La carrera debe durar al menos 1 semestre.',

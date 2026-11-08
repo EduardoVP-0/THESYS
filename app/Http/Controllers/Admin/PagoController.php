@@ -42,13 +42,14 @@ class PagoController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('referencia_bancaria', 'like', "%{$search}%")
+                $q->where('referencia_bancaria', 'ilike', "%{$search}%")
                     ->orWhereHas('usuario', function ($uq) use ($search) {
-                        $uq->where('name', 'like', "%{$search}%")
+                        $uq->where('name', 'ilike', "%{$search}%")
                             ->orWhereHas('alumno', function ($aq) use ($search) {
-                                $aq->where('matricula', 'like', "%{$search}%")
-                                    ->orWhere('nombre', 'like', "%{$search}%")
-                                    ->orWhere('apellido_p', 'like', "%{$search}%");
+                                $aq->where('matricula', 'ilike', "%{$search}%")
+                                    ->orWhere('nombre', 'ilike', "%{$search}%")
+                                    ->orWhere('apellido_p', 'ilike', "%{$search}%")
+                                    ->orWhere('apellido_m', 'ilike', "%{$search}%");
                             });
                     });
             });
@@ -74,8 +75,9 @@ class PagoController extends Controller
             return $pago;
         });
 
-        // Conteo de pagos pendientes por concepto para alertar en las tarjetas superiores
+        // Conteo de pagos con comprobante subido pendientes de validación por concepto para alertar en las tarjetas superiores
         $pendientesPorConcepto = Pago::where('estado_validacion', 'Pendiente')
+            ->whereNotNull('referencia_bancaria')
             ->selectRaw('concepto, COUNT(*) as total')
             ->groupBy('concepto')
             ->pluck('total', 'concepto')
@@ -93,7 +95,12 @@ class PagoController extends Controller
     {
         $request->validate([
             'estado_validacion' => 'required|in:Pendiente,Validado,Rechazado',
-            'comentarios' => 'nullable|string|max:1500',
+            'comentarios' => $request->input('estado_validacion') === 'Rechazado'
+                ? 'required|string|max:1500'
+                : 'nullable|string|max:1500',
+        ], [
+            'comentarios.required' => 'Debes indicar el motivo del rechazo en los comentarios.',
+            'comentarios.max' => 'Los comentarios no pueden exceder los 1500 caracteres.',
         ]);
 
         $pago = Pago::findOrFail($id);

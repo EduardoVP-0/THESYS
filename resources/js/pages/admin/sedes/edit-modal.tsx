@@ -107,7 +107,13 @@ export function EditModal({ open, onOpenChange, sede }: EditModalProps) {
                                 maxLength={120}
                                 value={data.nombre_sede}
                                 onChange={(event) =>
-                                    setData('nombre_sede', event.target.value)
+                                    setData(
+                                        'nombre_sede',
+                                        event.target.value.replace(
+                                            /[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,()#-]/g,
+                                            '',
+                                        ),
+                                    )
                                 }
                                 placeholder="Ej. Sala de titulación"
                                 className={`border-border focus-visible:ring-ring ${
@@ -123,12 +129,17 @@ export function EditModal({ open, onOpenChange, sede }: EditModalProps) {
                         </div>
 
                         <div className="grid gap-1.5">
-                            <Label
-                                htmlFor="edit_direccion"
-                                className="text-sm font-semibold text-foreground"
-                            >
-                                Dirección
-                            </Label>
+                            <div className="flex items-center justify-between">
+                                <Label
+                                    htmlFor="edit_direccion"
+                                    className="text-sm font-semibold text-foreground"
+                                >
+                                    Dirección
+                                </Label>
+                                <span className="text-[11px] text-muted-foreground">
+                                    {data.direccion.length}/255
+                                </span>
+                            </div>
                             <Textarea
                                 id="edit_direccion"
                                 rows={3}

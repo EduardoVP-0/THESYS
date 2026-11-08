@@ -42,10 +42,10 @@ class StoreAdministradorRequest extends FormRequest
                 'in:2,3', // 2=Administrador, 3=Coordinacion (1=Superadmin restringido)
             ],
             // DATOS PERSONALES (tbladministradores)
-            'nombre' => ['required', 'string', 'max:100'],
-            'apellido_p' => ['required', 'string', 'max:100'],
-            'apellido_m' => ['required', 'string', 'max:100'],
-            'telefono' => ['nullable', 'string', 'max:20'],
+            'nombre' => ['required', 'string', 'max:100', 'regex:/^[\pL\s]+$/u'],
+            'apellido_p' => ['required', 'string', 'max:100', 'regex:/^[\pL\s]+$/u'],
+            'apellido_m' => ['required', 'string', 'max:100', 'regex:/^[\pL\s]+$/u'],
+            'telefono' => ['nullable', 'string', 'digits:10'],
             'area' => ['required', 'string', 'max:150'],
         ];
     }
@@ -62,8 +62,12 @@ class StoreAdministradorRequest extends FormRequest
             'id_rol.in' => 'El rol seleccionado no es válido para administradores.',
             // Personales
             'nombre.required' => 'El nombre del administrador es obligatorio.',
+            'nombre.regex' => 'El nombre solo puede contener letras y espacios.',
             'apellido_p.required' => 'El apellido paterno es obligatorio.',
+            'apellido_p.regex' => 'El apellido paterno solo puede contener letras y espacios.',
             'apellido_m.required' => 'El apellido materno es obligatorio.',
+            'apellido_m.regex' => 'El apellido materno solo puede contener letras y espacios.',
+            'telefono.digits' => 'El teléfono debe contener exactamente 10 dígitos numéricos.',
             'area.required' => 'El área de adscripción es obligatoria.',
         ];
     }

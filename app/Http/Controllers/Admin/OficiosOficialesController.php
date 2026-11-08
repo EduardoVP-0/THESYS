@@ -32,17 +32,14 @@ class OficiosOficialesController extends Controller
 
         if ($request->filled('tipo')) {
             $tipo = $request->input('tipo');
-            $query->where(function ($q) use ($tipo) {
-                $q->where('tipo', 'like', "%{$tipo}%")
-                    ->orWhereRaw('LOWER(tipo) LIKE LOWER(?)', ["%{$tipo}%"]);
-            });
+            $query->where('tipo', 'ilike', "%{$tipo}%");
         }
 
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('nombre_oficio', 'like', "%{$search}%")
-                    ->orWhere('tipo', 'like', "%{$search}%");
+                $q->where('nombre_oficio', 'ilike', "%{$search}%")
+                    ->orWhere('tipo', 'ilike', "%{$search}%");
             });
         }
 
@@ -82,9 +79,17 @@ class OficiosOficialesController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'nombre_oficio' => 'required|string|max:100',
-            'tipo' => 'required|string',
-            'archivo' => 'required|file|mimes:pdf|max:20480',
+            'nombre_oficio' => ['required', 'string', 'max:100', 'regex:/^(?=.*[\pL])[\pL\pN\s.,()#-]+$/u'],
+            'tipo' => ['required', 'string'],
+            'archivo' => ['required', 'file', 'mimes:pdf', 'max:20480'],
+        ], [
+            'nombre_oficio.required' => 'El nombre del oficio es obligatorio.',
+            'nombre_oficio.max' => 'El nombre del oficio no debe exceder los 100 caracteres.',
+            'nombre_oficio.regex' => 'El nombre del oficio debe contener letras y no incluir símbolos inválidos.',
+            'tipo.required' => 'Debes seleccionar el trámite o tipo de oficio.',
+            'archivo.required' => 'Debes adjuntar el documento PDF del oficio.',
+            'archivo.mimes' => 'El archivo del oficio debe estar en formato PDF.',
+            'archivo.max' => 'El archivo PDF no debe superar los 20 MB.',
         ]);
 
         // 1. Guarda el archivo en Supabase Storage (disco S3, bucket anteproyectos en la carpeta oficios)
@@ -108,10 +113,17 @@ class OficiosOficialesController extends Controller
         $oficio = Oficios_Oficiales::findOrFail($id);
 
         $request->validate([
-            'nombre_oficio' => 'required|string|max:100',
-            'tipo' => 'required|string',
-            'archivo' => 'nullable|file|mimes:pdf|max:20480',
-            'estado' => 'nullable',
+            'nombre_oficio' => ['required', 'string', 'max:100', 'regex:/^(?=.*[\pL])[\pL\pN\s.,()#-]+$/u'],
+            'tipo' => ['required', 'string'],
+            'archivo' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'estado' => ['nullable'],
+        ], [
+            'nombre_oficio.required' => 'El nombre del oficio es obligatorio.',
+            'nombre_oficio.max' => 'El nombre del oficio no debe exceder los 100 caracteres.',
+            'nombre_oficio.regex' => 'El nombre del oficio debe contener letras y no incluir símbolos inválidos.',
+            'tipo.required' => 'Debes seleccionar el trámite o tipo de oficio.',
+            'archivo.mimes' => 'El archivo del oficio debe estar en formato PDF.',
+            'archivo.max' => 'El archivo PDF no debe superar los 20 MB.',
         ]);
 
         $data = [

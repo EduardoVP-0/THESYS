@@ -112,7 +112,12 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                 placeholder="Ej: Formato Solicitud de Titulación..."
                                 maxLength={100}
                                 value={data.nombre_oficio}
-                                onChange={(e) => setData('nombre_oficio', e.target.value)}
+                                onChange={(e) =>
+                                    setData(
+                                        'nombre_oficio',
+                                        e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,()#-]/g, '')
+                                    )
+                                }
                                 className={`bg-background border-border rounded-xl text-sm ${
                                     errors.nombre_oficio ? 'border-[#EF4444]' : ''
                                 }`}
@@ -173,12 +178,12 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                                     }}
                                     className="absolute inset-0 opacity-0 cursor-pointer"
                                 />
-                                <div className="flex flex-col items-center justify-center gap-1">
+                                <div className="flex flex-col items-center justify-center gap-1 min-w-0">
                                     <FileUp className="size-6 text-muted-foreground" />
-                                    <span className="text-xs font-medium text-foreground">
+                                    <span className="text-xs font-medium text-foreground truncate max-w-full px-2">
                                         {nombreArchivoPreview ? nombreArchivoPreview : 'Haz clic o arrastra un archivo PDF aquí'}
                                     </span>
-                                    <span className="text-[10px] text-muted-foreground">PDF hasta 5MB</span>
+                                    <span className="text-[10px] text-muted-foreground">PDF hasta 20MB</span>
                                 </div>
                             </div>
                             {errors.archivo && (

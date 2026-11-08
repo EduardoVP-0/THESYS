@@ -17,7 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { UserPlus, User, GraduationCap, Mail, Info, MapPin } from 'lucide-react';
+import { UserPlus, User, GraduationCap, Mail, Info } from 'lucide-react';
 import { CarreraItem } from './types';
 
 interface CreateModalProps {
@@ -52,23 +52,39 @@ export function CreateModal({ open, onOpenChange, carreras }: CreateModalProps) 
         id_carrera: carreras.length > 0 ? String(carreras[0].id_carrera) : '',
         turno: 'Matutino',
         fecha_ingreso: new Date().toISOString().split('T')[0],
-        generacion: `${new Date().getFullYear() - 4} - ${new Date().getFullYear()}`,
+        generacion: `${new Date().getFullYear() - 4}-${new Date().getFullYear()}`,
         estado_academico: 'Activo',
     });
+
+    const sanitizeName = (val: string) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+    const sanitizePhone = (val: string) => val.replace(/\D/g, '').slice(0, 10);
+    const sanitizeZipCode = (val: string) => val.replace(/\D/g, '').slice(0, 5);
+    const sanitizeCurp = (val: string) => val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 18);
+    const sanitizeMatricula = (val: string) => val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+    const sanitizeGeneracion = (val: string) => {
+        const digits = val.replace(/\D/g, '').slice(0, 8);
+        if (digits.length <= 4) {
+            return digits;
+        }
+        return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+    };
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        let formattedEmail = data.email.trim().toLowerCase();
-        if (formattedEmail && !formattedEmail.endsWith('@unach.mx')) {
-            formattedEmail = `${formattedEmail}@unach.mx`;
-        }
-
         transform((formData) => ({
             ...formData,
-            email: formattedEmail,
+            email: formData.email.trim().toLowerCase(),
+            nombre: formData.nombre.trim(),
+            apellido_p: formData.apellido_p.trim(),
+            apellido_m: formData.apellido_m.trim(),
+            telefono: formData.telefono.trim(),
+            calle: formData.calle.trim(),
+            colonia: formData.colonia.trim(),
+            codigo_postal: formData.codigo_postal.trim(),
             matricula: formData.matricula.trim().toUpperCase(),
             curp: formData.curp.trim().toUpperCase(),
+            generacion: formData.generacion.trim(),
         }));
 
         post('/admin/alumnos', {
@@ -132,7 +148,7 @@ export function CreateModal({ open, onOpenChange, carreras }: CreateModalProps) 
                                         id="nombre"
                                         maxLength={100}
                                         value={data.nombre}
-                                        onChange={(e) => setData('nombre', e.target.value)}
+                                        onChange={(e) => setData('nombre', sanitizeName(e.target.value))}
                                         placeholder="Ej: Carlos Eduardo"
                                         className={`h-9 text-xs border-border ${errors.nombre ? 'border-[#EF4444]' : ''}`}
                                         autoFocus
@@ -148,7 +164,7 @@ export function CreateModal({ open, onOpenChange, carreras }: CreateModalProps) 
                                         id="apellido_p"
                                         maxLength={100}
                                         value={data.apellido_p}
-                                        onChange={(e) => setData('apellido_p', e.target.value)}
+                                        onChange={(e) => setData('apellido_p', sanitizeName(e.target.value))}
                                         placeholder="Ej: Gómez"
                                         className={`h-9 text-xs border-border ${errors.apellido_p ? 'border-[#EF4444]' : ''}`}
                                     />
@@ -163,7 +179,7 @@ export function CreateModal({ open, onOpenChange, carreras }: CreateModalProps) 
                                         id="apellido_m"
                                         maxLength={100}
                                         value={data.apellido_m}
-                                        onChange={(e) => setData('apellido_m', e.target.value)}
+                                        onChange={(e) => setData('apellido_m', sanitizeName(e.target.value))}
                                         placeholder="Ej: Pérez"
                                         className={`h-9 text-xs border-border ${errors.apellido_m ? 'border-[#EF4444]' : ''}`}
                                     />
@@ -204,15 +220,16 @@ export function CreateModal({ open, onOpenChange, carreras }: CreateModalProps) 
 
                                 <div className="grid gap-1.5">
                                     <Label htmlFor="telefono" className="text-xs font-semibold text-foreground">
-                                        Teléfono de Contacto
+                                        Teléfono de Contacto (10 dígitos)
                                     </Label>
                                     <Input
                                         id="telefono"
-                                        maxLength={20}
+                                        inputMode="numeric"
+                                        maxLength={10}
                                         value={data.telefono}
-                                        onChange={(e) => setData('telefono', e.target.value)}
+                                        onChange={(e) => setData('telefono', sanitizePhone(e.target.value))}
                                         placeholder="Ej: 9611234567"
-                                        className="h-9 text-xs border-border"
+                                        className={`h-9 text-xs border-border ${errors.telefono ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.telefono && <p className="text-[11px] text-[#EF4444]">{errors.telefono}</p>}
                                 </div>
@@ -227,11 +244,59 @@ export function CreateModal({ open, onOpenChange, carreras }: CreateModalProps) 
                                         id="curp"
                                         maxLength={18}
                                         value={data.curp}
-                                        onChange={(e) => setData('curp', e.target.value.toUpperCase())}
+                                        onChange={(e) => setData('curp', sanitizeCurp(e.target.value))}
                                         placeholder="ABCD010203HDFRRN09"
                                         className={`h-9 text-xs uppercase font-mono border-border ${errors.curp ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.curp && <p className="text-[11px] text-[#EF4444]">{errors.curp}</p>}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-5">
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="calle" className="text-xs font-semibold text-foreground">
+                                        Calle y Número
+                                    </Label>
+                                    <Input
+                                        id="calle"
+                                        maxLength={150}
+                                        value={data.calle}
+                                        onChange={(e) => setData('calle', e.target.value)}
+                                        placeholder="Ej: Av. Central Poniente #123"
+                                        className={`h-9 text-xs border-border ${errors.calle ? 'border-[#EF4444]' : ''}`}
+                                    />
+                                    {errors.calle && <p className="text-[11px] text-[#EF4444]">{errors.calle}</p>}
+                                </div>
+
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="colonia" className="text-xs font-semibold text-foreground">
+                                        Colonia / Fraccionamiento
+                                    </Label>
+                                    <Input
+                                        id="colonia"
+                                        maxLength={100}
+                                        value={data.colonia}
+                                        onChange={(e) => setData('colonia', e.target.value)}
+                                        placeholder="Ej: Col. Centro"
+                                        className={`h-9 text-xs border-border ${errors.colonia ? 'border-[#EF4444]' : ''}`}
+                                    />
+                                    {errors.colonia && <p className="text-[11px] text-[#EF4444]">{errors.colonia}</p>}
+                                </div>
+
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="codigo_postal" className="text-xs font-semibold text-foreground">
+                                        Código Postal (5 dígitos)
+                                    </Label>
+                                    <Input
+                                        id="codigo_postal"
+                                        inputMode="numeric"
+                                        maxLength={5}
+                                        value={data.codigo_postal}
+                                        onChange={(e) => setData('codigo_postal', sanitizeZipCode(e.target.value))}
+                                        placeholder="Ej: 29000"
+                                        className={`h-9 text-xs font-mono border-border ${errors.codigo_postal ? 'border-[#EF4444]' : ''}`}
+                                    />
+                                    {errors.codigo_postal && <p className="text-[11px] text-[#EF4444]">{errors.codigo_postal}</p>}
                                 </div>
                             </div>
                         </div>
@@ -254,14 +319,14 @@ export function CreateModal({ open, onOpenChange, carreras }: CreateModalProps) 
                                         id="matricula"
                                         maxLength={10}
                                         value={data.matricula}
-                                        onChange={(e) => setData('matricula', e.target.value.toUpperCase())}
+                                        onChange={(e) => setData('matricula', sanitizeMatricula(e.target.value))}
                                         placeholder="Ej: A190012"
                                         className={`h-9 text-xs uppercase font-mono font-semibold border-border ${errors.matricula ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.matricula && <p className="text-[11px] text-[#EF4444]">{errors.matricula}</p>}
                                 </div>
 
-                                <div className="grid gap-1.5">
+                                <div className="grid gap-1.5 min-w-0">
                                     <Label htmlFor="id_carrera" className="text-xs font-semibold text-foreground">
                                         Carrera / Programa <span className="text-[#EF4444]">*</span>
                                     </Label>
@@ -269,7 +334,7 @@ export function CreateModal({ open, onOpenChange, carreras }: CreateModalProps) 
                                         value={String(data.id_carrera)}
                                         onValueChange={(val) => setData('id_carrera', val)}
                                     >
-                                        <SelectTrigger className="h-9 text-xs border-border bg-background">
+                                        <SelectTrigger className="h-9 text-xs border-border bg-background w-full min-w-0 [&>span]:truncate">
                                             <SelectValue placeholder="Selecciona la carrera" />
                                         </SelectTrigger>
                                         <SelectContent className="bg-popover border-border">
@@ -322,11 +387,12 @@ export function CreateModal({ open, onOpenChange, carreras }: CreateModalProps) 
                                     </Label>
                                     <Input
                                         id="generacion"
-                                        maxLength={50}
+                                        inputMode="numeric"
+                                        maxLength={9}
                                         value={data.generacion}
-                                        onChange={(e) => setData('generacion', e.target.value)}
-                                        placeholder="2020 - 2024"
-                                        className={`h-9 text-xs border-border ${errors.generacion ? 'border-[#EF4444]' : ''}`}
+                                        onChange={(e) => setData('generacion', sanitizeGeneracion(e.target.value))}
+                                        placeholder="2022-2026"
+                                        className={`h-9 text-xs font-mono border-border ${errors.generacion ? 'border-[#EF4444]' : ''}`}
                                     />
                                     {errors.generacion && <p className="text-[11px] text-[#EF4444]">{errors.generacion}</p>}
                                 </div>

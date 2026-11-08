@@ -438,7 +438,7 @@ export default function AlumnosIndex({ alumnos, stats, carreras, filters }: Prop
                                         </TableCell>
 
                                         {/* Matrícula */}
-                                        <TableCell className="text-center font-mono font-semibold text-xs text-foreground">
+                                        <TableCell className="text-center font-mono font-semibold text-xs text-foreground whitespace-nowrap">
                                             {alumno.matricula}
                                         </TableCell>
 
@@ -453,16 +453,18 @@ export default function AlumnosIndex({ alumnos, stats, carreras, filters }: Prop
                                         </TableCell>
 
                                         {/* Turno y Generación */}
-                                        <TableCell className="text-center text-xs">
-                                            <span className="font-semibold text-foreground">{alumno.turno}</span>
+                                        <TableCell className="text-center text-xs max-w-[130px]">
+                                            <span className="font-semibold text-foreground whitespace-nowrap block">{alumno.turno}</span>
                                             {alumno.generacion && (
-                                                <span className="text-[11px] text-muted-foreground block">{alumno.generacion}</span>
+                                                <span className="text-[11px] text-muted-foreground truncate block mx-auto" title={alumno.generacion}>
+                                                    {alumno.generacion}
+                                                </span>
                                             )}
                                         </TableCell>
 
                                         {/* Estado Académico */}
                                         <TableCell className="text-center">
-                                            <span className={`badge badge-soft text-[11px] font-semibold px-2.5 py-1 rounded-full ${getBadgeEstadoAcademico(alumno.estado_academico)}`}>
+                                            <span className={`badge badge-soft text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap inline-block ${getBadgeEstadoAcademico(alumno.estado_academico)}`}>
                                                 {alumno.estado_academico}
                                             </span>
                                         </TableCell>
