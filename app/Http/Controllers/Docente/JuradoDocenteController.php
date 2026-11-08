@@ -142,12 +142,26 @@ class JuradoDocenteController extends Controller
             ],
         ]);
 
-        $jurado->loadMissing('proyecto.examen');
+        $jurado->loadMissing(['proyecto.examen', 'dictamen']);
         $hoyIso = CarbonImmutable::today()->toDateString();
         $fechaExamenIso = $jurado->proyecto?->examen?->fecha_examen
             ? CarbonImmutable::parse($jurado->proyecto->examen->fecha_examen)->toDateString()
             : null;
         $yaLlegoExamen = $fechaExamenIso !== null && $fechaExamenIso <= $hoyIso;
+
+        if ($jurado->dictamen !== null) {
+            return back()->with(
+                'error',
+                'Ya emitiste tu voto deliberativo en este proyecto y no es posible modificar la aceptación del cargo.'
+            );
+        }
+
+        if ($jurado->proyecto?->examen?->estado_examen === ExamenProfesional::ESTADO_REALIZADO) {
+            return back()->with(
+                'error',
+                'El examen profesional ya fue realizado y las designaciones están cerradas.'
+            );
+        }
 
         // Regla 1: Si ya llegó la fecha del examen y estaba Pendiente -> Rechazo automático
         if ($yaLlegoExamen && $jurado->estado_aceptacion === JuradoProyecto::ESTADO_PENDIENTE) {
@@ -279,9 +293,20 @@ class JuradoDocenteController extends Controller
             return back()->with('error', 'No se puede emitir voto hasta que el examen profesional tenga fecha y sede programadas.');
         }
 
+        if ($examen->estado_examen === ExamenProfesional::ESTADO_REALIZADO) {
+            return back()->with('error', 'El examen profesional ya fue cerrado y no admite modificaciones en el acta.');
+        }
+
         if ($jurado->dictamen()->exists()) {
             return back()->with('error', 'Ya emitiste tu voto definitivo para este examen profesional.');
         }
+
+        $obsLimpia = preg_replace('/\s+/u', ' ', trim((string) $request->input('observaciones', '')));
+        $request->merge([
+            'observaciones' => $obsLimpia !== '' ? $obsLimpia : null,
+        ]);
+
+        $esEnContra = $request->input('voto') === Dictamen::VOTO_EN_CONTRA;
 
         $validated = $request->validate([
             'voto' => [
@@ -289,14 +314,18 @@ class JuradoDocenteController extends Controller
                 'string',
                 Rule::in([Dictamen::VOTO_A_FAVOR, Dictamen::VOTO_EN_CONTRA]),
             ],
-            'observaciones' => [
-                Rule::requiredIf($request->input('voto') === Dictamen::VOTO_EN_CONTRA),
-                'nullable',
+            'observaciones' => array_values(array_filter([
+                $esEnContra ? 'required' : 'nullable',
                 'string',
+                $esEnContra ? 'min:10' : null,
                 'max:2000',
-            ],
+                'regex:/^(?=.*[\pL])[\pL\pN\s.,;:()"\'¿?¡!\-\/]+$/su',
+            ])),
         ], [
             'observaciones.required' => 'Por favor, redacta en observaciones el motivo del voto en contra.',
+            'observaciones.min' => 'Fundamenta el motivo del voto en contra con al menos 10 caracteres.',
+            'observaciones.max' => 'Las observaciones no pueden exceder los 2,000 caracteres.',
+            'observaciones.regex' => 'Las observaciones deben contener texto válido con letras (no solo números o símbolos).',
         ]);
 
         // Asegurar que la secuencia de PostgreSQL para id_dictamen esté sincronizada
@@ -324,6 +353,7 @@ class JuradoDocenteController extends Controller
         $titulares = JuradoProyecto::query()
             ->where('id_proyecto', $jurado->id_proyecto)
             ->whereIn('cargo', JuradoProyecto::CARGOS_TITULARES)
+            ->where('estado_aceptacion', '<>', JuradoProyecto::ESTADO_RECHAZADO)
             ->with('dictamen')
             ->get();
 
@@ -430,7 +460,9 @@ class JuradoDocenteController extends Controller
         /** @var Proyecto|null $proyecto */
         $proyecto = $jurado->proyecto;
         $alumno = $proyecto?->alumnos->first();
-        $asesor = $proyecto?->asesores->first();
+        $asesor = $proyecto?->asesores
+            ->first(fn ($docente): bool => in_array($docente->pivot?->estado_asignacion, ['Activo', 'Finalizado'], true))
+            ?? $proyecto?->asesores->first();
         $examen = $proyecto?->examen;
         /** @var VersionTesis|null $ultimaVersion */
         $ultimaVersion = $proyecto?->versiones->first();
@@ -444,6 +476,8 @@ class JuradoDocenteController extends Controller
 
         $yaLlegoExamen = $fechaExamenRaw !== null && $fechaExamenRaw <= $hoyIso;
         $expiradoPorFecha = $yaLlegoExamen && $jurado->estado_aceptacion === JuradoProyecto::ESTADO_RECHAZADO;
+        $tieneVoto = $jurado->dictamen !== null;
+        $examenRealizado = $examen?->estado_examen === ExamenProfesional::ESTADO_REALIZADO;
 
         $documentoRuta = $ultimaVersion?->ruta_archivo ?: $proyecto?->ruta_documento;
         $documentoNombre = $documentoRuta ? basename($documentoRuta) : null;
@@ -478,6 +512,9 @@ class JuradoDocenteController extends Controller
                 ? route('docente.jurado.documento', ['jurado' => $jurado->id_jurado_proyecto])
                 : null,
             'expirado_por_fecha' => $expiradoPorFecha,
+            'ya_llego_examen' => $yaLlegoExamen,
+            'tiene_voto' => $tieneVoto,
+            'examen_realizado' => $examenRealizado,
         ];
     }
 
@@ -522,6 +559,7 @@ class JuradoDocenteController extends Controller
             'hora_examen' => $horaExamen,
             'sede_examen' => $examen?->sede ?? 'Sede por programar',
             'tiene_examen' => $examen !== null,
+            'examen_realizado' => $examen?->estado_examen === ExamenProfesional::ESTADO_REALIZADO,
             'voto' => $dictamen?->voto ?? 'Pendiente',
             'observaciones' => $dictamen?->observaciones,
             'fecha_emision' => $dictamen?->created_at

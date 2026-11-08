@@ -65,29 +65,29 @@ function EventoDetalle({ evento }: { evento: EventoCalendario }) {
                         )}
                     </div>
 
-                    <p className="mt-0.5 text-xs font-bold text-foreground">
+                    <p className="mt-0.5 text-xs font-bold text-foreground break-words">
                         {evento.titulo}
                     </p>
 
-                    <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground break-words">
                         {evento.proyecto}
                     </p>
 
                     {evento.sustentante && (
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground break-words">
                             {evento.sustentante}
                         </p>
                     )}
 
                     {evento.lugar && (
-                        <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
-                            <MapPin className="size-3" />
-                            {evento.lugar}
+                        <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground break-words">
+                            <MapPin className="size-3 shrink-0" />
+                            <span>{evento.lugar}</span>
                         </p>
                     )}
 
                     {evento.descripcion && (
-                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground break-words">
                             {evento.descripcion}
                         </p>
                     )}

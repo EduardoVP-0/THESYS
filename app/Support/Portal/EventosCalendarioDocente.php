@@ -112,7 +112,7 @@ class EventosCalendarioDocente
     {
         $asignaciones = AsignacionAsesor::query()
             ->where('id_usuario', $userId)
-            ->where('estado_asignacion', AsignacionAsesor::ESTADO_ACTIVO)
+            ->whereIn('estado_asignacion', AsignacionAsesor::ESTADOS_VISIBLES_DOCENTE)
             ->with(['proyecto.alumnos'])
             ->get();
 
@@ -188,7 +188,7 @@ class EventosCalendarioDocente
         $revisiones = RevisionAsesor::query()
             ->whereHas('asignacionAsesor', function ($query) use ($userId): void {
                 $query->where('id_usuario', $userId)
-                    ->where('estado_asignacion', AsignacionAsesor::ESTADO_ACTIVO);
+                    ->whereIn('estado_asignacion', AsignacionAsesor::ESTADOS_VISIBLES_DOCENTE);
             })
             ->whereIn('estado_revision', RevisionAsesor::ESTADOS_FINALES)
             ->with(['version.proyecto.alumnos'])
@@ -238,7 +238,7 @@ class EventosCalendarioDocente
     {
         $asignaciones = DB::table('tblrevisores_proyectos')
             ->where('id_usuario', $userId)
-            ->where('estado_asignacion', 'Activo')
+            ->whereIn('estado_asignacion', ['Activo', 'Finalizado'])
             ->orderBy('id_revisor_proyecto')
             ->get();
 

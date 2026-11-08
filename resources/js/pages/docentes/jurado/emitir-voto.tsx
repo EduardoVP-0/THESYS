@@ -46,6 +46,7 @@ interface DictamenJuradoItem {
     hora_examen: string;
     sede_examen: string;
     tiene_examen: boolean;
+    examen_realizado?: boolean;
     voto: 'A favor' | 'En contra' | 'Pendiente' | string;
     observaciones: string | null;
     fecha_emision: string | null;
@@ -92,6 +93,7 @@ export default function EmitirVoto({ dictamenes, filters = {} }: Props) {
     const [query, setQuery] = useState(filters.search || '');
     const [votoFiltro, setVotoFiltro] = useState(filters.voto || 'Todos');
     const [observaciones, setObservaciones] = useState('');
+    const [localError, setLocalError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isProcessingVoto, setIsProcessingVoto] = useState(false);
     const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -157,16 +159,68 @@ export default function EmitirVoto({ dictamenes, filters = {} }: Props) {
     const handleSeleccionarRegistro = (item: DictamenJuradoItem) => {
         setRegistroSeleccionado(item);
         setObservaciones(item.observaciones || '');
+        setLocalError(null);
     };
+
+    const puedeVotar = Boolean(
+        registroSeleccionado &&
+            registroSeleccionado.voto === 'Pendiente' &&
+            registroSeleccionado.es_titular &&
+            registroSeleccionado.tiene_examen &&
+            !registroSeleccionado.examen_realizado,
+    );
+
+    const motivoBloqueoVoto = (() => {
+        if (!registroSeleccionado) return null;
+        if (registroSeleccionado.voto !== 'Pendiente') {
+            return 'Ya emitiste tu voto definitivo para este examen profesional.';
+        }
+        if (!registroSeleccionado.es_titular) {
+            return 'Eres integrante suplente; solo los titulares (Presidente, Secretario y Vocal) emiten voto deliberativo.';
+        }
+        if (!registroSeleccionado.tiene_examen) {
+            return 'No se puede emitir voto hasta que el examen profesional tenga fecha y sede programadas.';
+        }
+        if (registroSeleccionado.examen_realizado) {
+            return 'El examen profesional ya fue cerrado y el veredicto ha sido registrado.';
+        }
+        return null;
+    })();
 
     // Guardar el voto en tbldictamenes
     const handleEmitirVoto = (nuevoVoto: 'A favor' | 'En contra') => {
-        if (!registroSeleccionado || registroSeleccionado.voto !== 'Pendiente' || isProcessingVoto) {
+        if (!registroSeleccionado || !puedeVotar || isProcessingVoto) {
             return;
         }
 
-        if (nuevoVoto === 'En contra' && !observaciones.trim()) {
-            alert('Por favor, redacta en observaciones el motivo del voto en contra.');
+        const textoLimpio = observaciones.trim();
+
+        if (nuevoVoto === 'En contra') {
+            if (textoLimpio.length < 10) {
+                setLocalError(
+                    'Por favor, fundamenta en observaciones el motivo del voto en contra (mínimo 10 caracteres).',
+                );
+                return;
+            }
+            if (
+                !/^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:()"'¿?¡!\-/]+$/.test(
+                    textoLimpio,
+                )
+            ) {
+                setLocalError(
+                    'Las observaciones deben contener texto válido con letras (no solo números o símbolos).',
+                );
+                return;
+            }
+        } else if (
+            textoLimpio.length > 0 &&
+            !/^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:()"'¿?¡!\-/]+$/.test(
+                textoLimpio,
+            )
+        ) {
+            setLocalError(
+                'Las observaciones deben contener texto válido con letras (no solo números o símbolos).',
+            );
             return;
         }
 
@@ -174,12 +228,13 @@ export default function EmitirVoto({ dictamenes, filters = {} }: Props) {
             return;
         }
 
+        setLocalError(null);
         setIsProcessingVoto(true);
         router.post(
             `/docente/jurado/emitir-voto/${registroSeleccionado.id_jurado_proyecto}`,
             {
                 voto: nuevoVoto,
-                observaciones: observaciones.trim() || null,
+                observaciones: textoLimpio || null,
             },
             {
                 preserveScroll: true,
@@ -273,6 +328,7 @@ export default function EmitirVoto({ dictamenes, filters = {} }: Props) {
                                     <div className="relative flex-1">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                         <Input
+                                            maxLength={100}
                                             value={query}
                                             onChange={(e) => handleSearchChange(e.target.value)}
                                             placeholder="Buscar sustentante, matrícula, proyecto o cargo..."
@@ -532,7 +588,7 @@ export default function EmitirVoto({ dictamenes, filters = {} }: Props) {
                                                 <FileText className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
                                                 <div className="min-w-0 flex-1">
                                                     <p className="text-[10px] uppercase text-muted-foreground">Proyecto de tesis</p>
-                                                    <p className="text-xs font-semibold text-foreground leading-snug">
+                                                    <p className="text-xs font-semibold text-foreground leading-snug break-words">
                                                         {registroSeleccionado.titulo_proyecto}
                                                     </p>
                                                 </div>
@@ -542,7 +598,7 @@ export default function EmitirVoto({ dictamenes, filters = {} }: Props) {
                                                 <GraduationCap className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
                                                 <div className="min-w-0 flex-1">
                                                     <p className="text-[10px] uppercase text-muted-foreground">Carrera</p>
-                                                    <p className="text-xs font-semibold text-foreground">
+                                                    <p className="text-xs font-semibold text-foreground break-words">
                                                         {registroSeleccionado.carrera}
                                                     </p>
                                                 </div>
@@ -574,7 +630,7 @@ export default function EmitirVoto({ dictamenes, filters = {} }: Props) {
                                                 <MapPin className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
                                                 <div className="min-w-0 flex-1">
                                                     <p className="text-[10px] uppercase text-muted-foreground">Sede asignada</p>
-                                                    <p className="text-xs font-semibold text-foreground">
+                                                    <p className="text-xs font-semibold text-foreground break-words">
                                                         {registroSeleccionado.sede_examen}
                                                     </p>
                                                 </div>
@@ -633,25 +689,38 @@ export default function EmitirVoto({ dictamenes, filters = {} }: Props) {
                                     </div>
 
                                     <div>
-                                        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                                            Observaciones del dictamen
-                                        </h4>
+                                        <div className="flex items-center justify-between gap-2 mb-2">
+                                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Observaciones del dictamen
+                                            </h4>
+                                            {puedeVotar && (
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    {observaciones.length} / 2000 caracteres
+                                                </span>
+                                            )}
+                                        </div>
                                         <textarea
+                                            maxLength={2000}
                                             value={observaciones}
-                                            onChange={(e) => setObservaciones(e.target.value)}
-                                            disabled={registroSeleccionado.voto !== 'Pendiente' || isProcessingVoto}
+                                            onChange={(e) => {
+                                                setObservaciones(e.target.value);
+                                                if (localError) {
+                                                    setLocalError(null);
+                                                }
+                                            }}
+                                            disabled={!puedeVotar || isProcessingVoto}
                                             placeholder="Escribe aquí las observaciones, recomendaciones o fundamentación de tu voto para el acta de examen..."
                                             rows={3}
                                             className="w-full text-xs px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                         />
-                                        {errors?.observaciones && (
+                                        {(localError || errors?.observaciones) && (
                                             <p className="text-[11px] text-[#EF4444] font-medium mt-1">
-                                                {errors.observaciones}
+                                                {localError || errors?.observaciones}
                                             </p>
                                         )}
-                                        {registroSeleccionado.voto !== 'Pendiente' && (
+                                        {motivoBloqueoVoto && (
                                             <p className="text-[11px] text-muted-foreground mt-1">
-                                                Ya emitiste tu voto definitivo para este examen profesional.
+                                                {motivoBloqueoVoto}
                                             </p>
                                         )}
                                     </div>
@@ -661,12 +730,8 @@ export default function EmitirVoto({ dictamenes, filters = {} }: Props) {
                                     <Button
                                         variant="outline"
                                         onClick={() => handleEmitirVoto('En contra')}
-                                        disabled={registroSeleccionado.voto !== 'Pendiente' || isProcessingVoto}
-                                        title={
-                                            registroSeleccionado.voto !== 'Pendiente'
-                                                ? 'Ya emitiste tu voto para este proyecto'
-                                                : undefined
-                                        }
+                                        disabled={!puedeVotar || isProcessingVoto}
+                                        title={motivoBloqueoVoto || undefined}
                                         className="flex-1 border-[#EF4444] text-[#EF4444] hover:bg-[#EF4444]/10 gap-1.5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <ThumbsDown className="size-3.5" />
@@ -674,12 +739,8 @@ export default function EmitirVoto({ dictamenes, filters = {} }: Props) {
                                     </Button>
                                     <Button
                                         onClick={() => handleEmitirVoto('A favor')}
-                                        disabled={registroSeleccionado.voto !== 'Pendiente' || isProcessingVoto}
-                                        title={
-                                            registroSeleccionado.voto !== 'Pendiente'
-                                                ? 'Ya emitiste tu voto para este proyecto'
-                                                : undefined
-                                        }
+                                        disabled={!puedeVotar || isProcessingVoto}
+                                        title={motivoBloqueoVoto || undefined}
                                         className="flex-1 bg-[#10B981] hover:bg-[#0ea371] text-white gap-1.5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <ThumbsUp className="size-3.5" />

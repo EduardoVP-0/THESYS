@@ -262,6 +262,7 @@ export default function MisAsesoradosIndex({
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                 <Input
                                     type="text"
+                                    maxLength={100}
                                     placeholder="Buscar por estudiante, matrícula o título de tesis..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}

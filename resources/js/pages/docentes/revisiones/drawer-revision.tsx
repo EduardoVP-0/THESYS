@@ -53,13 +53,26 @@ export function DrawerRevision({ open, onClose, revision }: DrawerRevisionProps)
             return;
         }
 
+        const textoLimpio = observaciones.trim();
+        if (
+            textoLimpio.length > 0 &&
+            !/^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:()"'¿?¡!\-/]+$/.test(
+                textoLimpio,
+            )
+        ) {
+            setErrorMessage(
+                'Las observaciones deben contener texto válido con letras (no solo números o símbolos).',
+            );
+            return;
+        }
+
         setProcessing(true);
         setErrorMessage(null);
 
         router.patch(
             revision.url_aprobar,
             {
-                observaciones: observaciones.trim(),
+                observaciones: textoLimpio,
             },
             {
                 preserveScroll: true,
@@ -82,9 +95,21 @@ export function DrawerRevision({ open, onClose, revision }: DrawerRevisionProps)
             return;
         }
 
-        if (observaciones.trim().length < 5) {
+        const textoLimpio = observaciones.trim();
+        if (textoLimpio.length < 5) {
             setErrorMessage(
                 'Debes redactar las observaciones (mínimo 5 caracteres) para solicitar cambios al sustentante.',
+            );
+            return;
+        }
+
+        if (
+            !/^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:()"'¿?¡!\-/]+$/.test(
+                textoLimpio,
+            )
+        ) {
+            setErrorMessage(
+                'Las observaciones deben contener texto válido con letras (no solo números o símbolos).',
             );
             return;
         }
@@ -95,7 +120,7 @@ export function DrawerRevision({ open, onClose, revision }: DrawerRevisionProps)
         router.patch(
             revision.url_solicitar_cambios,
             {
-                observaciones: observaciones.trim(),
+                observaciones: textoLimpio,
             },
             {
                 preserveScroll: true,
@@ -219,7 +244,7 @@ export function DrawerRevision({ open, onClose, revision }: DrawerRevisionProps)
                     <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                         Título
                     </label>
-                    <p className="text-sm font-semibold text-foreground leading-snug">
+                    <p className="text-sm font-semibold text-foreground leading-snug break-words">
                         {revision.titulo}
                     </p>
                 </div>
@@ -229,7 +254,7 @@ export function DrawerRevision({ open, onClose, revision }: DrawerRevisionProps)
                     <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                         Resumen
                     </label>
-                    <p className="text-xs text-muted-foreground leading-relaxed bg-muted/30 p-3 rounded-lg border border-border max-h-32 overflow-y-auto">
+                    <p className="text-xs text-muted-foreground leading-relaxed bg-muted/30 p-3 rounded-lg border border-border max-h-32 overflow-y-auto break-words">
                         {revision.resumen}
                     </p>
                 </div>
@@ -239,14 +264,14 @@ export function DrawerRevision({ open, onClose, revision }: DrawerRevisionProps)
                     <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                         Sustentante
                     </label>
-                    <p className="text-xs font-medium text-foreground flex flex-wrap items-center gap-1.5">
-                        <span className="font-bold">{sustentante.nombre_completo}</span>
+                    <p className="text-xs font-medium text-foreground flex flex-wrap items-center gap-1.5 break-words">
+                        <span className="font-bold break-words">{sustentante.nombre_completo}</span>
                         <span className="text-muted-foreground">&middot;</span>
                         <span className="text-muted-foreground font-mono">
                             {sustentante.matricula}
                         </span>
                         <span className="text-muted-foreground">&middot;</span>
-                        <span className="text-muted-foreground">{sustentante.email}</span>
+                        <span className="text-muted-foreground break-all">{sustentante.email}</span>
                     </p>
                     <p
                         className="text-[11px] text-muted-foreground truncate"
@@ -309,7 +334,7 @@ export function DrawerRevision({ open, onClose, revision }: DrawerRevisionProps)
                             </div>
 
                             {ultima_version.comentario_alumno && (
-                                <div className="text-[11px] text-muted-foreground italic border-t border-border/60 pt-2">
+                                <div className="text-[11px] text-muted-foreground italic border-t border-border/60 pt-2 break-words">
                                     <span className="not-italic font-semibold text-foreground">
                                         Nota del sustentante:{' '}
                                     </span>
@@ -403,7 +428,7 @@ export function DrawerRevision({ open, onClose, revision }: DrawerRevisionProps)
                                                 )}
 
                                                 {versionAnt.comentario_alumno && (
-                                                    <div className="text-[10px] text-muted-foreground italic pt-0.5">
+                                                    <div className="text-[10px] text-muted-foreground italic pt-0.5 break-words">
                                                         <span className="not-italic font-semibold text-foreground">
                                                             Nota del sustentante:{' '}
                                                         </span>
@@ -417,7 +442,7 @@ export function DrawerRevision({ open, onClose, revision }: DrawerRevisionProps)
                                                             <MessageSquareText className="size-2.5 shrink-0" />
                                                             Observaciones emitidas:
                                                         </span>
-                                                        <p className="text-foreground/90 leading-relaxed">
+                                                        <p className="text-foreground/90 leading-relaxed break-words">
                                                             {versionAnt.observaciones}
                                                         </p>
                                                     </div>
@@ -440,17 +465,25 @@ export function DrawerRevision({ open, onClose, revision }: DrawerRevisionProps)
 
                 {/* OBSERVACIONES DE REVISION */}
                 <div className="space-y-1.5">
-                    <label
-                        htmlFor="obs_revision_tesis"
-                        className="text-xs font-semibold text-foreground block"
-                    >
-                        {revision.rol_docente === 'Asesor'
-                            ? 'Observaciones del Director de Tesis'
-                            : 'Observaciones del Revisor'}
-                    </label>
+                    <div className="flex items-center justify-between gap-2">
+                        <label
+                            htmlFor="obs_revision_tesis"
+                            className="text-xs font-semibold text-foreground block"
+                        >
+                            {revision.rol_docente === 'Asesor'
+                                ? 'Observaciones del Director de Tesis'
+                                : 'Observaciones del Revisor'}
+                        </label>
+                        {puede_dictaminar && (
+                            <span className="text-[10px] text-muted-foreground">
+                                {observaciones.length} / 2000 caracteres
+                            </span>
+                        )}
+                    </div>
                     <textarea
                         id="obs_revision_tesis"
                         rows={4}
+                        maxLength={2000}
                         value={observaciones}
                         disabled={!puede_dictaminar || processing}
                         onChange={(e) => {

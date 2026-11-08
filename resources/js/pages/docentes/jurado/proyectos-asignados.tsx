@@ -61,6 +61,9 @@ interface ProyectoJuradoItem {
     documento_pdf: string | null;
     url_documento: string | null;
     expirado_por_fecha: boolean;
+    ya_llego_examen?: boolean;
+    tiene_voto?: boolean;
+    examen_realizado?: boolean;
 }
 
 interface PaginationLink {
@@ -113,7 +116,6 @@ export default function ProyectosAsignados({
     const [proyectoSeleccionado, setProyectoSeleccionado] = useState<ProyectoJuradoItem | null>(null);
     const [search, setSearch] = useState(filters.search || '');
     const [estadoFilter, setEstadoFilter] = useState(filters.estado || 'todos');
-    const [comentarios, setComentarios] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isProcessingAction, setIsProcessingAction] = useState(false);
     const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -183,13 +185,16 @@ export default function ProyectosAsignados({
 
     const handleSeleccionarProyecto = (proyecto: ProyectoJuradoItem) => {
         setProyectoSeleccionado(proyecto);
-        setComentarios('');
     };
 
     // Determina si la fecha del examen ya se cumplió (o ya pasó)
     const esExamenVencido = (proyecto: ProyectoJuradoItem | null): boolean => {
-        if (!proyecto || !proyecto.fecha_examen_raw) return false;
-        const hoyStr = new Date().toISOString().split('T')[0];
+        if (!proyecto) return false;
+        if (typeof proyecto.ya_llego_examen === 'boolean') {
+            return proyecto.ya_llego_examen;
+        }
+        if (!proyecto.fecha_examen_raw) return false;
+        const hoyStr = new Date().toLocaleDateString('en-CA');
         return proyecto.fecha_examen_raw <= hoyStr;
     };
 
@@ -213,6 +218,24 @@ export default function ProyectosAsignados({
                 bloquearRechazar: true,
                 mostrarAlertaAutoRechazo: true,
                 motivoBloqueo: 'Este proyecto fue rechazado automáticamente al alcanzar la fecha del examen profesional.',
+            };
+        }
+
+        if (proyecto.tiene_voto) {
+            return {
+                bloquearAceptar: true,
+                bloquearRechazar: true,
+                mostrarAlertaAutoRechazo: false,
+                motivoBloqueo: 'Ya emitiste tu voto deliberativo para este proyecto y la designación no puede modificarse.',
+            };
+        }
+
+        if (proyecto.examen_realizado) {
+            return {
+                bloquearAceptar: true,
+                bloquearRechazar: true,
+                mostrarAlertaAutoRechazo: false,
+                motivoBloqueo: 'El examen profesional ya fue realizado y las designaciones están cerradas.',
             };
         }
 
@@ -473,6 +496,7 @@ export default function ProyectosAsignados({
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                             <Input
                                                 type="text"
+                                                maxLength={100}
                                                 placeholder="Título, sustentante, matrícula o cargo..."
                                                 value={search}
                                                 onChange={(e) => handleSearchChange(e.target.value)}
@@ -714,7 +738,7 @@ export default function ProyectosAsignados({
                                             <BookOpen className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-[10px] uppercase text-muted-foreground">Título de tesis</p>
-                                                <p className="text-xs font-semibold text-foreground leading-snug">
+                                                <p className="text-xs font-semibold text-foreground leading-snug break-words">
                                                     {proyectoSeleccionado.titulo}
                                                 </p>
                                             </div>
@@ -724,7 +748,7 @@ export default function ProyectosAsignados({
                                             <GraduationCap className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-[10px] uppercase text-muted-foreground">Licenciatura / Ingeniería</p>
-                                                <p className="text-xs font-medium text-foreground">
+                                                <p className="text-xs font-medium text-foreground break-words">
                                                     {proyectoSeleccionado.carrera}
                                                 </p>
                                             </div>
@@ -734,7 +758,7 @@ export default function ProyectosAsignados({
                                             <UserCheck className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-[10px] uppercase text-muted-foreground">Director de tesis (Asesor)</p>
-                                                <p className="text-xs font-medium text-foreground">
+                                                <p className="text-xs font-medium text-foreground break-words">
                                                     {proyectoSeleccionado.asesor}
                                                 </p>
                                             </div>
@@ -772,7 +796,7 @@ export default function ProyectosAsignados({
                                                     <p className="text-xs font-semibold text-foreground">
                                                         {proyectoSeleccionado.fecha_examen}
                                                     </p>
-                                                    <p className="text-[11px] text-muted-foreground">
+                                                    <p className="text-[11px] text-muted-foreground break-words">
                                                         {proyectoSeleccionado.sede_examen}
                                                     </p>
                                                 </div>
@@ -785,7 +809,7 @@ export default function ProyectosAsignados({
                                     <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                                         Resumen
                                     </h4>
-                                    <p className="text-xs text-muted-foreground leading-relaxed bg-muted/20 p-3 rounded-lg border border-border">
+                                    <p className="text-xs text-muted-foreground leading-relaxed bg-muted/20 p-3 rounded-lg border border-border break-words">
                                         {proyectoSeleccionado.resumen}
                                     </p>
                                 </div>
@@ -829,23 +853,6 @@ export default function ProyectosAsignados({
                                             </p>
                                         </div>
                                     )}
-                                </div>
-
-                                <div>
-                                    <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                                        Observaciones o motivo de rechazo
-                                    </h4>
-                                    <textarea
-                                        value={comentarios}
-                                        onChange={(e) => setComentarios(e.target.value)}
-                                        disabled={
-                                            obtenerEstadoBotones(proyectoSeleccionado).bloquearAceptar &&
-                                            obtenerEstadoBotones(proyectoSeleccionado).bloquearRechazar
-                                        }
-                                        placeholder="Añade una nota opcional o indica el motivo en caso de no poder participar como sinodal..."
-                                        rows={3}
-                                        className="w-full text-xs px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                                    />
                                 </div>
 
                                 {/* ALERTA INSTITUCIONAL SI FUE RECHAZADO EN AUTOMÁTICO POR FECHA LÍMITE */}

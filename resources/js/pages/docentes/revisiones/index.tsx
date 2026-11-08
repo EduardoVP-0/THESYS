@@ -342,6 +342,7 @@ export default function RevisionesDocenteIndex({
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                 <Input
                                     type="text"
+                                    maxLength={100}
                                     placeholder="Buscar por título, sustentante, matrícula o correo..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}

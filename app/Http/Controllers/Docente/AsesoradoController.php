@@ -41,7 +41,7 @@ class AsesoradoController extends Controller
 
         $asignaciones = AsignacionAsesor::query()
             ->where('id_usuario', $userId)
-            ->where('estado_asignacion', AsignacionAsesor::ESTADO_ACTIVO)
+            ->whereIn('estado_asignacion', AsignacionAsesor::ESTADOS_VISIBLES_DOCENTE)
             ->with([
                 'proyecto.alumnos.user:id,email',
                 'proyecto.alumnos.carrera:id_carrera,nombre_carrera',

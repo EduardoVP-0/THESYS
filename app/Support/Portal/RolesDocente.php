@@ -26,7 +26,7 @@ class RolesDocente
 
         if (AsignacionAsesor::query()
             ->where('id_usuario', $userId)
-            ->where('estado_asignacion', AsignacionAsesor::ESTADO_ACTIVO)
+            ->whereIn('estado_asignacion', AsignacionAsesor::ESTADOS_VISIBLES_DOCENTE)
             ->exists()) {
             $roles[] = [
                 'clave' => 'asesor',
@@ -37,7 +37,7 @@ class RolesDocente
 
         if (DB::table('tblrevisores_proyectos')
             ->where('id_usuario', $userId)
-            ->where('estado_asignacion', 'Activo')
+            ->whereIn('estado_asignacion', ['Activo', 'Finalizado'])
             ->exists()) {
             $roles[] = [
                 'clave' => 'revisor',

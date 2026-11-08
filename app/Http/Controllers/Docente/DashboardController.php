@@ -108,7 +108,7 @@ class DashboardController extends Controller
     {
         $asignaciones = AsignacionAsesor::query()
             ->where('id_usuario', $userId)
-            ->where('estado_asignacion', AsignacionAsesor::ESTADO_ACTIVO)
+            ->whereIn('estado_asignacion', AsignacionAsesor::ESTADOS_VISIBLES_DOCENTE)
             ->with([
                 'proyecto.alumnos',
                 'proyecto.versiones' => function ($query): void {
@@ -256,7 +256,7 @@ class DashboardController extends Controller
     {
         $asignaciones = DB::table('tblrevisores_proyectos')
             ->where('id_usuario', $userId)
-            ->where('estado_asignacion', 'Activo')
+            ->whereIn('estado_asignacion', ['Activo', 'Finalizado'])
             ->orderByDesc('id_revisor_proyecto')
             ->get();
 
@@ -403,6 +403,19 @@ class DashboardController extends Controller
      */
     private function dashboardJurado(int $userId): array
     {
+        $hoyIso = CarbonImmutable::today()->toDateString();
+
+        JuradoProyecto::query()
+            ->where('id_usuario', $userId)
+            ->where('estado_aceptacion', JuradoProyecto::ESTADO_PENDIENTE)
+            ->whereHas('proyecto.examen', function ($q) use ($hoyIso): void {
+                $q->whereDate('fecha_examen', '<=', $hoyIso);
+            })
+            ->update([
+                'estado_aceptacion' => JuradoProyecto::ESTADO_RECHAZADO,
+                'updated_at' => now(),
+            ]);
+
         $asignaciones = JuradoProyecto::query()
             ->where('id_usuario', $userId)
             ->with([

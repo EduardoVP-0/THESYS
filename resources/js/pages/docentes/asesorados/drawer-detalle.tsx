@@ -90,7 +90,7 @@ export function DrawerDetalle({ open, onClose, asesorado }: DrawerDetalleProps) 
                         {sustentante.iniciales}
                     </div>
 
-                    <h2 className="text-base font-bold text-foreground leading-snug px-6">
+                    <h2 className="text-base font-bold text-foreground leading-snug px-6 break-words max-w-full">
                         {sustentante.nombre_completo}
                     </h2>
 
@@ -146,7 +146,7 @@ export function DrawerDetalle({ open, onClose, asesorado }: DrawerDetalleProps) 
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                                     Título del proyecto
                                 </span>
-                                <h3 className="text-sm font-bold text-foreground mt-0.5 leading-snug">
+                                <h3 className="text-sm font-bold text-foreground mt-0.5 leading-snug break-words">
                                     {asesorado.titulo}
                                 </h3>
                             </div>
@@ -155,7 +155,7 @@ export function DrawerDetalle({ open, onClose, asesorado }: DrawerDetalleProps) 
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                                     Resumen registrado
                                 </span>
-                                <p className="text-xs text-muted-foreground mt-1 leading-relaxed max-h-36 overflow-y-auto pr-1">
+                                <p className="text-xs text-muted-foreground mt-1 leading-relaxed max-h-36 overflow-y-auto pr-1 break-words">
                                     {asesorado.resumen}
                                 </p>
                             </div>
@@ -262,7 +262,7 @@ export function DrawerDetalle({ open, onClose, asesorado }: DrawerDetalleProps) 
                                     </div>
 
                                     {ultima_version.comentario_alumno && (
-                                        <p className="text-[11px] text-muted-foreground italic border-t border-border/60 pt-2">
+                                        <p className="text-[11px] text-muted-foreground italic border-t border-border/60 pt-2 break-words">
                                             &ldquo;{ultima_version.comentario_alumno}&rdquo;
                                         </p>
                                     )}
@@ -344,7 +344,7 @@ export function DrawerDetalle({ open, onClose, asesorado }: DrawerDetalleProps) 
                                             )}
 
                                             {v.comentario_alumno && (
-                                                <div className="text-[11px] text-muted-foreground pt-1">
+                                                <div className="text-[11px] text-muted-foreground pt-1 break-words">
                                                     <span className="font-semibold text-foreground block">
                                                         Nota del alumno:
                                                     </span>
@@ -355,10 +355,10 @@ export function DrawerDetalle({ open, onClose, asesorado }: DrawerDetalleProps) 
                                             {v.observaciones_asesor && (
                                                 <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] space-y-0.5">
                                                     <span className="font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-1">
-                                                        <MessageSquareText className="size-3" />
+                                                        <MessageSquareText className="size-3 shrink-0" />
                                                         Observaciones registradas:
                                                     </span>
-                                                    <p className="text-foreground/90 leading-relaxed">
+                                                    <p className="text-foreground/90 leading-relaxed break-words">
                                                         {v.observaciones_asesor}
                                                     </p>
                                                 </div>

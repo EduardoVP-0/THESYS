@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Docente;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin\AsignacionAsesor;
+use App\Models\Admin\ExamenProfesional;
 use App\Models\Admin\Proyecto;
 use App\Models\Admin\RevisionAsesor;
 use App\Models\Admin\VersionTesis;
@@ -43,10 +44,10 @@ class RevisionController extends Controller
         $rolFiltro = (string) $request->input('rol', 'todos');
         $estadoFiltro = (string) $request->input('estado', 'todos');
 
-        // 1. Proyectos donde el docente es Director de Tesis (Asesor activo)
+        // 1. Proyectos donde el docente es Director de Tesis (Asesor activo o finalizado)
         $asignacionesAsesor = AsignacionAsesor::query()
             ->where('id_usuario', $userId)
-            ->where('estado_asignacion', AsignacionAsesor::ESTADO_ACTIVO)
+            ->whereIn('estado_asignacion', AsignacionAsesor::ESTADOS_VISIBLES_DOCENTE)
             ->with([
                 'proyecto.alumnos.user:id,email',
                 'proyecto.alumnos.carrera:id_carrera,nombre_carrera',
@@ -63,10 +64,10 @@ class RevisionController extends Controller
             ->filter(fn (AsignacionAsesor $asignacion): bool => $asignacion->proyecto !== null)
             ->map(fn (AsignacionAsesor $asignacion): array => $this->transformarItemAsesor($asignacion));
 
-        // 2. Proyectos donde el docente es Revisor activo
+        // 2. Proyectos donde el docente es Revisor activo o finalizado
         $filasRevisor = DB::table('tblrevisores_proyectos')
             ->where('id_usuario', $userId)
-            ->where('estado_asignacion', 'Activo')
+            ->whereIn('estado_asignacion', ['Activo', 'Finalizado'])
             ->orderByDesc('id_revisor_proyecto')
             ->get();
 
@@ -91,7 +92,7 @@ class RevisionController extends Controller
             // Obtener el orden de revisores por proyecto para etiquetar Revisor 1 / Revisor 2
             $ordenRevisoresPorProyecto = DB::table('tblrevisores_proyectos')
                 ->whereIn('id_proyecto', $idsProyectosRevisor)
-                ->where('estado_asignacion', 'Activo')
+                ->whereIn('estado_asignacion', ['Activo', 'Finalizado'])
                 ->orderBy('id_revisor_proyecto')
                 ->get(['id_proyecto', 'id_usuario'])
                 ->groupBy('id_proyecto');
@@ -207,10 +208,31 @@ class RevisionController extends Controller
             'No tienes autorización activa como Director de Tesis para este proyecto.'
         );
 
+        $examenRealizado = ExamenProfesional::query()
+            ->where('id_proyecto', $asignacion->id_proyecto)
+            ->where('estado_examen', ExamenProfesional::ESTADO_REALIZADO)
+            ->exists();
+
+        if ($examenRealizado || FlujoRevisionTesis::tesisLiberadaPorComite($asignacion->id_proyecto)) {
+            return back()->with('error', 'La etapa de revisión del Director de Tesis ya fue cerrada para este proyecto.');
+        }
+
+        if ($request->filled('observaciones')) {
+            $request->merge([
+                'observaciones' => preg_replace('/\s+/u', ' ', trim((string) $request->input('observaciones'))),
+            ]);
+        }
+
         $validated = $request->validate([
-            'observaciones' => ['nullable', 'string', 'max:2000'],
+            'observaciones' => [
+                'nullable',
+                'string',
+                'max:2000',
+                'regex:/^(?=.*[\pL])[\pL\pN\s.,;:()"\'¿?¡!\-\/]+$/su',
+            ],
         ], [
             'observaciones.max' => 'Las observaciones no pueden exceder los 2,000 caracteres.',
+            'observaciones.regex' => 'Las observaciones deben contener texto válido con letras (no solo números o símbolos).',
         ]);
 
         $ultimaVersion = VersionTesis::query()
@@ -267,12 +289,32 @@ class RevisionController extends Controller
             'No tienes autorización activa como Director de Tesis para este proyecto.'
         );
 
+        $examenRealizado = ExamenProfesional::query()
+            ->where('id_proyecto', $asignacion->id_proyecto)
+            ->where('estado_examen', ExamenProfesional::ESTADO_REALIZADO)
+            ->exists();
+
+        if ($examenRealizado || FlujoRevisionTesis::tesisLiberadaPorComite($asignacion->id_proyecto)) {
+            return back()->with('error', 'La etapa de revisión del Director de Tesis ya fue cerrada para este proyecto.');
+        }
+
+        $request->merge([
+            'observaciones' => preg_replace('/\s+/u', ' ', trim((string) $request->input('observaciones', ''))),
+        ]);
+
         $validated = $request->validate([
-            'observaciones' => ['required', 'string', 'min:5', 'max:2000'],
+            'observaciones' => [
+                'required',
+                'string',
+                'min:5',
+                'max:2000',
+                'regex:/^(?=.*[\pL])[\pL\pN\s.,;:()"\'¿?¡!\-\/]+$/su',
+            ],
         ], [
             'observaciones.required' => 'Debes redactar las observaciones para solicitar cambios al sustentante.',
             'observaciones.min' => 'Detalla las observaciones con al menos 5 caracteres.',
             'observaciones.max' => 'Las observaciones no pueden exceder los 2,000 caracteres.',
+            'observaciones.regex' => 'Las observaciones deben contener texto válido con letras (no solo números o símbolos).',
         ]);
 
         $ultimaVersion = VersionTesis::query()
@@ -327,10 +369,31 @@ class RevisionController extends Controller
 
         abort_unless($filaRevisor !== null, 403, 'No tienes autorización activa como Revisor para este proyecto.');
 
+        $examenRealizado = ExamenProfesional::query()
+            ->where('id_proyecto', $proyecto->id_proyecto)
+            ->where('estado_examen', ExamenProfesional::ESTADO_REALIZADO)
+            ->exists();
+
+        if ($examenRealizado) {
+            return back()->with('error', 'El examen profesional de este proyecto ya fue realizado y la revisión está cerrada.');
+        }
+
+        if ($request->filled('observaciones')) {
+            $request->merge([
+                'observaciones' => preg_replace('/\s+/u', ' ', trim((string) $request->input('observaciones'))),
+            ]);
+        }
+
         $validated = $request->validate([
-            'observaciones' => ['nullable', 'string', 'max:2000'],
+            'observaciones' => [
+                'nullable',
+                'string',
+                'max:2000',
+                'regex:/^(?=.*[\pL])[\pL\pN\s.,;:()"\'¿?¡!\-\/]+$/su',
+            ],
         ], [
             'observaciones.max' => 'Las observaciones no pueden exceder los 2,000 caracteres.',
+            'observaciones.regex' => 'Las observaciones deben contener texto válido con letras (no solo números o símbolos).',
         ]);
 
         $ultimaVersion = VersionTesis::query()
@@ -383,12 +446,32 @@ class RevisionController extends Controller
 
         abort_unless($filaRevisor !== null, 403, 'No tienes autorización activa como Revisor para este proyecto.');
 
+        $examenRealizado = ExamenProfesional::query()
+            ->where('id_proyecto', $proyecto->id_proyecto)
+            ->where('estado_examen', ExamenProfesional::ESTADO_REALIZADO)
+            ->exists();
+
+        if ($examenRealizado) {
+            return back()->with('error', 'El examen profesional de este proyecto ya fue realizado y la revisión está cerrada.');
+        }
+
+        $request->merge([
+            'observaciones' => preg_replace('/\s+/u', ' ', trim((string) $request->input('observaciones', ''))),
+        ]);
+
         $validated = $request->validate([
-            'observaciones' => ['required', 'string', 'min:5', 'max:2000'],
+            'observaciones' => [
+                'required',
+                'string',
+                'min:5',
+                'max:2000',
+                'regex:/^(?=.*[\pL])[\pL\pN\s.,;:()"\'¿?¡!\-\/]+$/su',
+            ],
         ], [
             'observaciones.required' => 'Debes redactar las observaciones para solicitar cambios al sustentante.',
             'observaciones.min' => 'Detalla las observaciones con al menos 5 caracteres.',
             'observaciones.max' => 'Las observaciones no pueden exceder los 2,000 caracteres.',
+            'observaciones.regex' => 'Las observaciones deben contener texto válido con letras (no solo números o símbolos).',
         ]);
 
         $ultimaVersion = VersionTesis::query()
@@ -501,7 +584,9 @@ class RevisionController extends Controller
 
         $ultimaVersion = $versiones->first();
         $estadoActual = $ultimaVersion ? $ultimaVersion['estado_revision'] : 'Sin entregas';
-        $puedeDictaminar = $ultimaVersion !== null && $estadoActual === 'En revisión';
+        $puedeDictaminar = $asignacion->estado_asignacion === AsignacionAsesor::ESTADO_ACTIVO
+            && $ultimaVersion !== null
+            && $estadoActual === 'En revisión';
 
         $avisoFlujo = null;
         if (! $ultimaVersion) {
@@ -588,7 +673,9 @@ class RevisionController extends Controller
 
         $ultimaVersion = $versiones->first();
         $estadoActual = $ultimaVersion ? $estadoIndividualLabel : 'Sin entregas';
-        $puedeDictaminar = $ultimaVersion !== null && $estadoActual === 'En revisión';
+        $puedeDictaminar = ($filaRevisor->estado_asignacion ?? 'Activo') === 'Activo'
+            && $ultimaVersion !== null
+            && $estadoActual === 'En revisión';
 
         $avisoFlujo = null;
         if (! $ultimaVersion) {

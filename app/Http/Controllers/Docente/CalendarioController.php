@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Docente;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin\JuradoProyecto;
 use App\Support\Portal\EventosCalendarioDocente;
 use App\Support\Portal\RolesDocente;
 use Carbon\CarbonImmutable;
@@ -25,12 +26,25 @@ class CalendarioController extends Controller
     public function index(Request $request): Response
     {
         $userId = (int) $request->user()->id;
+        $hoyIso = CarbonImmutable::today()->toDateString();
+
+        JuradoProyecto::query()
+            ->where('id_usuario', $userId)
+            ->where('estado_aceptacion', JuradoProyecto::ESTADO_PENDIENTE)
+            ->whereHas('proyecto.examen', function ($q) use ($hoyIso): void {
+                $q->whereDate('fecha_examen', '<=', $hoyIso);
+            })
+            ->update([
+                'estado_aceptacion' => JuradoProyecto::ESTADO_RECHAZADO,
+                'updated_at' => now(),
+            ]);
+
         $roles = RolesDocente::disponibles($userId);
 
         return Inertia::render('docentes/calendario/index', [
             'roles_disponibles' => $roles,
             'eventos' => EventosCalendarioDocente::paraDocente($userId, $roles),
-            'hoy' => CarbonImmutable::today()->toDateString(),
+            'hoy' => $hoyIso,
         ]);
     }
 }

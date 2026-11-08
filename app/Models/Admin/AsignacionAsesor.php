@@ -14,6 +14,18 @@ class AsignacionAsesor extends Model
 {
     public const ESTADO_ACTIVO = 'Activo';
 
+    public const ESTADO_FINALIZADO = 'Finalizado';
+
+    /**
+     * Estados que conservan visibilidad histórica en el portal del docente (excluye 'Baja').
+     *
+     * @var array<int, string>
+     */
+    public const ESTADOS_VISIBLES_DOCENTE = [
+        self::ESTADO_ACTIVO,
+        self::ESTADO_FINALIZADO,
+    ];
+
     public const MAX_PROYECTOS_ACTIVOS_POR_ASESOR = 5;
 
     protected $table = 'tblasesores_proyectos';
