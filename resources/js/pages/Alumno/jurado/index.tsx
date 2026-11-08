@@ -127,22 +127,22 @@ export default function MiJuradoIndex({ proyecto }: Props) {
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                                         Proyecto de Tesis Registrado
                                     </span>
-                                    <h2 className="text-sm font-bold text-foreground line-clamp-2 mt-0.5">
+                                    <h2 className="text-sm font-bold text-foreground line-clamp-2 break-words mt-0.5">
                                         {proyecto.titulo}
                                     </h2>
                                 </div>
                             </div>
 
                             {proyecto.asesor && (
-                                <div className="flex items-center gap-3 pt-3 md:pt-0 border-t md:border-t-0 md:border-l border-border md:pl-5 shrink-0">
+                                <div className="flex items-center gap-3 pt-3 md:pt-0 border-t md:border-t-0 md:border-l border-border md:pl-5 shrink-0 min-w-0">
                                     <div className="p-2 rounded-lg bg-emerald-500/10 text-[#10B981] shrink-0">
                                         <UserCheck className="size-4" />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                                             Director de Tesis (Asesor)
                                         </span>
-                                        <p className="text-xs font-bold text-foreground">
+                                        <p className="text-xs font-bold text-foreground break-words">
                                             {proyecto.asesor.abreviatura_grado
                                                 ? `${proyecto.asesor.abreviatura_grado} `
                                                 : ''}

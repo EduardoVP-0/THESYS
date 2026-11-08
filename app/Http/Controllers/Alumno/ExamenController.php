@@ -163,12 +163,16 @@ class ExamenController extends Controller
         );
         $revisoresAprobaron = $estadoRevisores['global'] === 'Aprobado';
         $juradoCompleto = $this->juradoCompleto($jurados);
+        $juradoRechazados = $jurados
+            ->filter(fn (JuradoProyecto $miembro): bool => $miembro->estado_aceptacion === 'Rechazado')
+            ->count();
 
         return [
             'director_aprobo' => $directorAprobo,
             'revisores_aprobaron' => $revisoresAprobaron,
             'jurado_completo' => $juradoCompleto,
             'jurado_asignados' => $jurados->count(),
+            'jurado_rechazados' => $juradoRechazados,
             'revisores_asignados' => count($estadoRevisores['estados']),
             'listo' => $directorAprobo && $revisoresAprobaron && $juradoCompleto,
         ];
@@ -268,9 +272,13 @@ class ExamenController extends Controller
     {
         $cargos = $jurados->pluck('cargo')->unique();
         $docentes = $jurados->pluck('id_usuario')->unique();
+        $sinRechazados = $jurados->every(
+            fn (JuradoProyecto $miembro): bool => $miembro->estado_aceptacion !== 'Rechazado',
+        );
 
         return $docentes->count() === count(JuradoProyecto::CARGOS)
             && $cargos->count() === count(JuradoProyecto::CARGOS)
+            && $sinRechazados
             && collect(JuradoProyecto::CARGOS)->every(
                 fn (string $cargo): bool => $cargos->contains($cargo),
             );

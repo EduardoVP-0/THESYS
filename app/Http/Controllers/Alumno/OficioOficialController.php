@@ -34,18 +34,15 @@ class OficioOficialController extends Controller
             ->where('estado', true);
 
         if ($request->filled('tipo')) {
-            $tipo = $request->input('tipo');
-            $query->where(function ($q) use ($tipo) {
-                $q->where('tipo', 'like', "%{$tipo}%")
-                    ->orWhereRaw('LOWER(tipo) LIKE LOWER(?)', ["%{$tipo}%"]);
-            });
+            $tipo = trim((string) $request->input('tipo'));
+            $query->where('tipo', 'ilike', "%{$tipo}%");
         }
 
         if ($request->filled('search')) {
-            $search = $request->input('search');
+            $search = trim((string) $request->input('search'));
             $query->where(function ($q) use ($search) {
-                $q->where('nombre_oficio', 'like', "%{$search}%")
-                    ->orWhere('tipo', 'like', "%{$search}%");
+                $q->where('nombre_oficio', 'ilike', "%{$search}%")
+                    ->orWhere('tipo', 'ilike', "%{$search}%");
             });
         }
 

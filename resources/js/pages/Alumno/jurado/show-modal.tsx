@@ -129,7 +129,7 @@ export function ShowModal({
                                 {getEstadoBadge(sinodal.estado_aceptacion)}
                             </div>
 
-                            <DialogTitle className="text-lg font-bold text-foreground leading-snug">
+                            <DialogTitle className="text-lg font-bold text-foreground leading-snug break-words">
                                 {nombreConGrado}
                             </DialogTitle>
 
@@ -162,11 +162,11 @@ export function ShowModal({
                         </span>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <div className="p-3 rounded-lg bg-muted/30 border border-border sm:col-span-2">
+                            <div className="p-3 rounded-lg bg-muted/30 border border-border sm:col-span-2 min-w-0">
                                 <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
                                     Especialidad / Línea de Conocimiento
                                 </span>
-                                <p className="text-sm font-semibold text-foreground mt-0.5">
+                                <p className="text-sm font-semibold text-foreground mt-0.5 break-words">
                                     {docente.especialidad}
                                 </p>
                             </div>

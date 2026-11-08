@@ -211,11 +211,11 @@ export default function ExpedienteShow({
                     {/* Resumen del Tema de Tesis Activo */}
                     {proyecto ? (
                         <div className="p-4 sm:p-5 bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                            <div className="space-y-1">
+                            <div className="space-y-1 min-w-0 flex-1">
                                 <span className="font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">
                                     Proyecto de Titulación Registrado
                                 </span>
-                                <p className="text-sm font-bold text-foreground">
+                                <p className="text-sm font-bold text-foreground break-words">
                                     {proyecto.titulo}
                                 </p>
                             </div>
@@ -348,7 +348,7 @@ export default function ExpedienteShow({
                                                         <p className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-md">
                                                             {version.nombre_archivo}
                                                         </p>
-                                                        <p className="text-[11px] text-muted-foreground">
+                                                        <p className="text-[11px] text-muted-foreground break-words">
                                                             Entregado: {version.fecha}
                                                             {version.comentario ? ` • "${version.comentario}"` : ''}
                                                         </p>
@@ -702,33 +702,45 @@ export default function ExpedienteShow({
                             <div className="px-4 pb-4 pt-1 border-t border-border/60">
                                 {carpetas.pagos.length > 0 ? (
                                     <div className="space-y-2 mt-2">
-                                        {carpetas.pagos.map((pago) => (
-                                            <div
-                                                key={pago.id_pago}
-                                                className="p-3 rounded-lg bg-muted/30 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                                            >
-                                                <div>
-                                                    <p className="text-xs sm:text-sm font-bold text-foreground">
-                                                        {pago.concepto}
-                                                    </p>
-                                                    <p className="text-[11px] text-muted-foreground">
-                                                        Monto: ${Number(pago.monto).toFixed(2)} MXN
-                                                        {pago.referencia_bancaria ? ` • Ref: ${pago.referencia_bancaria}` : ''}
-                                                        {` • ${pago.fecha}`}
-                                                    </p>
-                                                </div>
+                                        {carpetas.pagos.map((pago) => {
+                                            const enRevision =
+                                                pago.estado_validacion === 'Pendiente' &&
+                                                Boolean(pago.referencia_bancaria);
+                                            const esRechazado = pago.estado_validacion === 'Rechazado';
+                                            const esValidado = pago.estado_validacion === 'Validado';
 
-                                                <span
-                                                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold self-start sm:self-auto ${
-                                                        pago.estado_validacion === 'Validado'
-                                                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
-                                                            : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
-                                                    }`}
+                                            return (
+                                                <div
+                                                    key={pago.id_pago}
+                                                    className="p-3 rounded-lg bg-muted/30 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                                                 >
-                                                    {pago.estado_validacion}
-                                                </span>
-                                            </div>
-                                        ))}
+                                                    <div>
+                                                        <p className="text-xs sm:text-sm font-bold text-foreground">
+                                                            {pago.concepto}
+                                                        </p>
+                                                        <p className="text-[11px] text-muted-foreground">
+                                                            Monto: ${Number(pago.monto).toFixed(2)} MXN
+                                                            {pago.referencia_bancaria ? ` • Ref: ${pago.referencia_bancaria}` : ''}
+                                                            {` • ${pago.fecha}`}
+                                                        </p>
+                                                    </div>
+
+                                                    <span
+                                                        className={`px-2.5 py-0.5 rounded-full text-xs font-semibold self-start sm:self-auto border ${
+                                                            esValidado
+                                                                ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
+                                                                : esRechazado
+                                                                  ? 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30'
+                                                                  : enRevision
+                                                                    ? 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30'
+                                                                    : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30'
+                                                        }`}
+                                                    >
+                                                        {enRevision ? 'En revisión' : pago.estado_validacion}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <p className="text-xs text-muted-foreground py-3 italic">

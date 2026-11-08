@@ -273,6 +273,7 @@ export default function ExpedientesIndex({
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                 <Input
                                     type="text"
+                                    maxLength={100}
                                     placeholder="Buscar por sustentante, matrícula, tema de tesis..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -397,14 +398,15 @@ export default function ExpedientesIndex({
                                                     <div className="size-9 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xs font-bold shrink-0">
                                                         {item.iniciales}
                                                     </div>
-                                                    <div className="min-w-0">
+                                                    <div className="min-w-0 max-w-[240px]">
                                                         <Link
                                                             href={`/admin/expedientes/${item.id_usuario}`}
                                                             className="text-xs sm:text-sm font-bold text-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors truncate block"
+                                                            title={item.nombre_completo}
                                                         >
                                                             {item.nombre_completo}
                                                         </Link>
-                                                        <p className="text-[11px] text-muted-foreground">
+                                                        <p className="text-[11px] text-muted-foreground truncate">
                                                             Matrícula: {item.matricula}
                                                             {item.email ? ` • ${item.email}` : ''}
                                                         </p>

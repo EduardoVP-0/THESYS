@@ -101,6 +101,7 @@ interface RequisitosInfo {
     revisores_aprobaron: boolean;
     jurado_completo: boolean;
     jurado_asignados: number;
+    jurado_rechazados?: number;
     revisores_asignados: number;
     listo: boolean;
 }
@@ -254,8 +255,10 @@ export default function MiExamenIndex({
                   ok: requisitos.jurado_completo,
                   titulo: 'Jurado completo',
                   detalle: requisitos.jurado_completo
-                      ? 'Los 5 cargos del jurado están cubiertos.'
-                      : `Integrantes asignados: ${requisitos.jurado_asignados} de 5.`,
+                      ? 'Los 5 cargos del jurado están cubiertos y confirmados.'
+                      : (requisitos.jurado_rechazados ?? 0) > 0
+                        ? `Hay ${requisitos.jurado_rechazados} integrante(s) en sustitución por coordinación.`
+                        : `Integrantes asignados: ${requisitos.jurado_asignados} de 5.`,
               },
           ]
         : [];
@@ -365,12 +368,12 @@ export default function MiExamenIndex({
                                                     <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                                         Sede del examen
                                                     </span>
-                                                    <p className="mt-1 flex items-start gap-1.5 text-sm font-bold text-foreground">
+                                                    <p className="mt-1 flex items-start gap-1.5 text-sm font-bold text-foreground break-words">
                                                         <MapPin className="mt-0.5 size-4 shrink-0 text-[#EF4444]" />
-                                                        {examen.sede}
+                                                        <span className="break-words">{examen.sede}</span>
                                                     </p>
                                                     {examen.sede_direccion && (
-                                                        <p className="mt-1 pl-5 text-xs text-muted-foreground">
+                                                        <p className="mt-1 pl-5 text-xs text-muted-foreground break-words">
                                                             {
                                                                 examen.sede_direccion
                                                             }
@@ -559,11 +562,11 @@ export default function MiExamenIndex({
                                                 {proyecto.estado}
                                             </span>
                                         </div>
-                                        <h2 className="mt-1 text-sm font-bold text-foreground sm:text-base">
+                                        <h2 className="mt-1 text-sm font-bold text-foreground sm:text-base break-words">
                                             {proyecto.titulo}
                                         </h2>
                                         {proyecto.resumen && (
-                                            <p className="mt-1 line-clamp-3 text-xs text-muted-foreground">
+                                            <p className="mt-1 line-clamp-3 text-xs text-muted-foreground break-words">
                                                 {proyecto.resumen}
                                             </p>
                                         )}
@@ -736,7 +739,7 @@ export default function MiExamenIndex({
                                                         )}
 
                                                         {miembro.observaciones && (
-                                                            <p className="mt-2 text-[11px] text-muted-foreground italic">
+                                                            <p className="mt-2 text-[11px] text-muted-foreground italic break-words">
                                                                 “
                                                                 {
                                                                     miembro.observaciones

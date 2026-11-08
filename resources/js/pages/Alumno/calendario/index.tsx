@@ -103,11 +103,11 @@ function TarjetaEvento({ evento }: { evento: Evento }) {
                     >
                         {evento.etiqueta}
                     </span>
-                    <p className="mt-0.5 text-xs font-bold text-foreground">
+                    <p className="mt-0.5 text-xs font-bold text-foreground break-words">
                         {evento.titulo}
                     </p>
                     {evento.descripcion && (
-                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground break-words">
                             {evento.descripcion}
                         </p>
                     )}

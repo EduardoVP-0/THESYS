@@ -253,6 +253,7 @@ export default function AlumnoOficiosIndex({ oficios, filters }: Props) {
                                             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                                             <Input
                                                 value={query}
+                                                maxLength={100}
                                                 onChange={(e) => handleSearchChange(e.target.value)}
                                                 placeholder="Buscar nombre del oficio..."
                                                 className="border-border bg-background pl-9 text-sm"
@@ -318,10 +319,10 @@ export default function AlumnoOficiosIndex({ oficios, filters }: Props) {
                                                                     : 'hover:bg-accent/20'
                                                             }`}
                                                         >
-                                                            <td className="px-4 py-3">
-                                                                <div className="flex items-center gap-2.5">
+                                                            <td className="px-4 py-3 max-w-[260px]">
+                                                                <div className="flex items-center gap-2.5 min-w-0">
                                                                     <div className="min-w-0">
-                                                                        <p className="truncate font-semibold text-foreground">
+                                                                        <p className="truncate font-semibold text-foreground" title={o.nombre_oficio}>
                                                                             {o.nombre_oficio}
                                                                         </p>
                                                                     </div>

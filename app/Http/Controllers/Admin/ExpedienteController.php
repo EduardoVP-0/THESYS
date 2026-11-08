@@ -117,7 +117,9 @@ class ExpedienteController extends Controller
                         'nombre_completo' => $proyecto->asesor_asignado->nombre_completo,
                         'grado_academico' => $proyecto->asesor_asignado->grado_academico,
                     ] : null,
-                    'revisores_count' => $proyecto->revisores->count(),
+                    'revisores_count' => $proyecto->revisores
+                        ->filter(fn ($r): bool => ($r->pivot->estado_asignacion ?? 'Activo') === 'Activo')
+                        ->count(),
                     'versiones_count' => $totalVersiones,
                 ] : null,
                 'total_documentos' => $totalDocumentos,
@@ -248,15 +250,18 @@ class ExpedienteController extends Controller
                     'especialidad' => $proyecto->asesor_asignado->especialidad,
                     'email' => $proyecto->asesor_asignado->user?->email,
                 ] : null,
-                'revisores' => $proyecto->revisores->map(function ($r) {
-                    return [
-                        'id_usuario' => $r->id_usuario,
-                        'nombre_completo' => $r->nombre_completo,
-                        'grado_academico' => $r->grado_academico,
-                        'especialidad' => $r->especialidad,
-                        'email' => $r->user?->email,
-                    ];
-                }),
+                'revisores' => $proyecto->revisores
+                    ->filter(fn ($r): bool => ($r->pivot->estado_asignacion ?? 'Activo') === 'Activo')
+                    ->values()
+                    ->map(function ($r) {
+                        return [
+                            'id_usuario' => $r->id_usuario,
+                            'nombre_completo' => $r->nombre_completo,
+                            'grado_academico' => $r->grado_academico,
+                            'especialidad' => $r->especialidad,
+                            'email' => $r->user?->email,
+                        ];
+                    }),
                 'jurados' => $proyecto->jurados->map(function ($j) {
                     return [
                         'id_jurado_proyecto' => $j->id_jurado_proyecto,
@@ -288,7 +293,9 @@ class ExpedienteController extends Controller
                 'total_archivos' => $totalArchivos,
                 'tiene_anteproyecto' => (bool) $anteproyectoDoc,
                 'tiene_asesor' => (bool) $proyecto?->asesor_asignado,
-                'tiene_revisores' => $proyecto ? $proyecto->revisores->count() >= 2 : false,
+                'tiene_revisores' => $proyecto
+                    ? $proyecto->revisores->filter(fn ($r): bool => ($r->pivot->estado_asignacion ?? 'Activo') === 'Activo')->count() >= 2
+                    : false,
                 'tiene_versiones' => $versionesDocs->isNotEmpty(),
                 'tiene_oficios' => $oficiosDocs->isNotEmpty(),
             ],
