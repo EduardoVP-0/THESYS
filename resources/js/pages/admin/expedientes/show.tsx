@@ -56,6 +56,7 @@ export default function ExpedienteShow({
         versiones: true,
         oficios: true,
         comite: true,
+        examen: true,
         pagos: false,
     });
 
@@ -556,7 +557,124 @@ export default function ExpedienteShow({
                         )}
                     </Card>
 
-                    {/* CARPETA 5: TRAMITES FINANCIEROS Y PAGOS */}
+                    {/* CARPETA 5: JURADO SINODAL, EXAMEN PROFESIONAL Y VEREDICTO FINAL */}
+                    <Card className="border-border shadow-xs rounded-xl bg-card overflow-hidden">
+                        <div
+                            onClick={() => toggleFolder('examen')}
+                            className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/40 transition-colors select-none"
+                        >
+                            <div className="flex items-center gap-2.5">
+                                {openFolders.examen ? (
+                                    <ChevronDown className="size-4 text-muted-foreground" />
+                                ) : (
+                                    <ChevronRight className="size-4 text-muted-foreground" />
+                                )}
+                                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                    <GraduationCap className="size-4" />
+                                </div>
+                                <span className="text-xs sm:text-sm font-bold text-foreground">
+                                    Jurado Sinodal, Examen Profesional y Veredicto
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    ({proyecto?.jurados?.length || 0}/5 sinodales)
+                                </span>
+                            </div>
+
+                            {proyecto?.examen && (
+                                <span
+                                    className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                                        proyecto.examen.estado_examen === 'Realizado'
+                                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
+                                            : 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30'
+                                    }`}
+                                >
+                                    {proyecto.examen.resultado_final || proyecto.examen.estado_examen}
+                                </span>
+                            )}
+                        </div>
+
+                        {openFolders.examen && (
+                            <div className="px-4 pb-4 pt-1 border-t border-border/60 space-y-4 mt-2">
+                                {/* Datos del Examen y Veredicto */}
+                                <div>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                                        Programación y Resultado del Examen Profesional
+                                    </span>
+                                    {proyecto?.examen ? (
+                                        <div className="p-3.5 rounded-lg bg-muted/30 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                            <div className="space-y-1">
+                                                <p className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+                                                    <Calendar className="size-3.5 text-[#10B981]" />
+                                                    Fecha: {proyecto.examen.fecha_examen} a las {proyecto.examen.hora_examen} hrs
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Sede: <strong className="text-foreground">{proyecto.examen.sede}</strong> • Estatus del acto: <strong className="text-foreground">{proyecto.examen.estado_examen}</strong>
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span
+                                                    className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                                                        proyecto.examen.resultado_final?.toLowerCase().includes('aprob')
+                                                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
+                                                            : proyecto.examen.resultado_final?.toLowerCase().includes('rechaz')
+                                                              ? 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30'
+                                                              : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30'
+                                                    }`}
+                                                >
+                                                    Veredicto: {proyecto.examen.resultado_final || 'Pendiente de deliberación'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground italic">
+                                            Aún no se ha programado la fecha y sede del examen profesional.
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Integrantes del Jurado */}
+                                <div>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                                        Integración del Jurado Sinodal
+                                    </span>
+                                    {proyecto?.jurados && proyecto.jurados.length > 0 ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                            {proyecto.jurados.map((sinodal) => (
+                                                <div
+                                                    key={sinodal.id_jurado_proyecto}
+                                                    className="p-3 rounded-lg bg-muted/20 border border-border flex flex-col justify-between gap-1.5"
+                                                >
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded-full">
+                                                            {sinodal.cargo}
+                                                        </span>
+                                                        <span className="text-[10px] font-semibold text-muted-foreground">
+                                                            {sinodal.estado_aceptacion}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs font-bold text-foreground">
+                                                        {sinodal.grado_academico ? `${sinodal.grado_academico} ` : ''}
+                                                        {sinodal.nombre_completo}
+                                                    </p>
+                                                    {sinodal.voto && (
+                                                        <p className="text-[11px] text-muted-foreground">
+                                                            Voto emitido: <strong className="text-foreground">{sinodal.voto}</strong>
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground italic">
+                                            Aún no se ha designado el jurado sinodal para este proyecto.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </Card>
+
+                    {/* CARPETA 6: TRAMITES FINANCIEROS Y PAGOS */}
                     <Card className="border-border shadow-xs rounded-xl bg-card overflow-hidden">
                         <div
                             onClick={() => toggleFolder('pagos')}

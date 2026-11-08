@@ -12,6 +12,13 @@ export interface SolicitudAsignacion {
         resumen: string | null;
         estado: string;
     };
+    asesor_actual?: {
+        id_usuario: number;
+        nombre_completo: string;
+    } | null;
+    revisores_ids?: number[];
+    presidente_jurado_id?: number | null;
+    bloqueado?: boolean;
 }
 
 export interface AsesorAsignacion {

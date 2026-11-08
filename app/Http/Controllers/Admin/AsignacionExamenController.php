@@ -32,11 +32,17 @@ class AsignacionExamenController extends Controller
     {
         $proyectos = Proyecto::query()
             ->whereHas('jurados')
-            ->whereDoesntHave('examen')
+            ->where(function ($query): void {
+                $query->whereDoesntHave('examen')
+                    ->orWhereHas('examen', function ($eq): void {
+                        $eq->where('estado_examen', ExamenProfesional::ESTADO_PROGRAMADO);
+                    });
+            })
             ->with($this->relacionesProyecto())
             ->orderBy('titulo')
             ->get()
             ->map(fn (Proyecto $proyecto): array => $this->transformarProyecto($proyecto))
+            ->sortBy(fn (array $item): int => $item['examen_actual'] === null ? 0 : 1)
             ->values();
 
         $proyectoSeleccionadoId = $request->integer('proyecto');
@@ -74,17 +80,21 @@ class AsignacionExamenController extends Controller
     public function store(ProgramarExamenRequest $request): RedirectResponse
     {
         $validated = $request->validated();
+        $esReprogramacion = false;
 
-        $examen = DB::transaction(function () use ($validated): ExamenProfesional {
+        $examen = DB::transaction(function () use ($validated, &$esReprogramacion): ExamenProfesional {
             $proyecto = Proyecto::query()
+                ->with('examen')
                 ->lockForUpdate()
                 ->findOrFail($validated['id_proyecto']);
 
-            if ($proyecto->examen()->exists()) {
+            if ($proyecto->examen && $proyecto->examen->estado_examen === ExamenProfesional::ESTADO_REALIZADO) {
                 throw ValidationException::withMessages([
-                    'id_proyecto' => 'Este proyecto ya tiene un examen profesional programado.',
+                    'id_proyecto' => 'No se puede reprogramar un examen profesional que ya fue realizado.',
                 ]);
             }
+
+            $esReprogramacion = $proyecto->examen !== null;
 
             $miembros = JuradoProyecto::query()
                 ->where('id_proyecto', $proyecto->id_proyecto)
@@ -93,7 +103,7 @@ class AsignacionExamenController extends Controller
 
             if (! $this->juradoCompleto($miembros)) {
                 throw ValidationException::withMessages([
-                    'id_proyecto' => 'RN-04: completa los cinco puestos titulares y suplentes del jurado antes de programar el examen.',
+                    'id_proyecto' => 'Los cinco integrantes del jurado deben estar asignados y haber aceptado su designación antes de programar el examen.',
                 ]);
             }
 
@@ -111,30 +121,33 @@ class AsignacionExamenController extends Controller
 
             $fecha = CarbonImmutable::parse($validated['fecha_examen'])->toDateString();
 
-            if (ExamenProfesional::fechaOcupada($fecha)) {
+            if (ExamenProfesional::fechaOcupada($fecha, $proyecto->id_proyecto)) {
                 throw ValidationException::withMessages([
                     'fecha_examen' => 'La fecha seleccionada ya está ocupada por otro examen profesional.',
                 ]);
             }
 
-            return ExamenProfesional::query()->create([
-                'id_proyecto' => $proyecto->id_proyecto,
-                'id_sede' => $sede->id_sede,
-                'fecha_examen' => $fecha,
-                'hora_examen' => $validated['hora_examen'],
-                'sede' => $sede->nombre_sede,
-                'estado_examen' => ExamenProfesional::ESTADO_PROGRAMADO,
-            ]);
+            return ExamenProfesional::query()->updateOrCreate(
+                ['id_proyecto' => $proyecto->id_proyecto],
+                [
+                    'id_sede' => $sede->id_sede,
+                    'fecha_examen' => $fecha,
+                    'hora_examen' => $validated['hora_examen'],
+                    'sede' => $sede->nombre_sede,
+                    'estado_examen' => ExamenProfesional::ESTADO_PROGRAMADO,
+                ],
+            );
         });
 
         $fecha = CarbonImmutable::parse($examen->fecha_examen)->format('d/m/Y');
         $hora = substr((string) $examen->hora_examen, 0, 5);
+        $accion = $esReprogramacion ? 'Examen reprogramado' : 'Examen programado';
 
         return redirect()
             ->route('admin.asignaciones.examenes.index')
             ->with(
                 'success',
-                "Examen programado para el {$fecha} a las {$hora} en {$examen->sede}.",
+                "{$accion} para el {$fecha} a las {$hora} en {$examen->sede}.",
             );
     }
 
@@ -147,6 +160,7 @@ class AsignacionExamenController extends Controller
     {
         return [
             'alumnos:id_usuario,nombre,apellido_p,apellido_m,matricula',
+            'examen',
             'docentesAsesores' => function ($query): void {
                 $query->where(
                     'tblasesores_proyectos.estado_asignacion',
@@ -216,6 +230,10 @@ class AsignacionExamenController extends Controller
             ->values()
             ->all();
 
+        $aceptadosCount = $proyecto->jurados
+            ->filter(fn (JuradoProyecto $m): bool => $m->estado_aceptacion === JuradoProyecto::ESTADO_ACEPTADO)
+            ->count();
+
         return [
             'id_proyecto' => $proyecto->id_proyecto,
             'titulo' => $proyecto->titulo,
@@ -226,11 +244,20 @@ class AsignacionExamenController extends Controller
             'jurado' => $jurado,
             'jurado_completo' => $this->juradoCompleto($proyecto->jurados),
             'jurado_count' => count($jurado),
+            'jurado_aceptados_count' => $aceptadosCount,
+            'examen_actual' => $proyecto->examen ? [
+                'id_examen' => $proyecto->examen->id_examen,
+                'fecha_examen' => CarbonImmutable::parse($proyecto->examen->fecha_examen)->toDateString(),
+                'hora_examen' => substr((string) $proyecto->examen->hora_examen, 0, 5),
+                'id_sede' => $proyecto->examen->id_sede,
+                'sede' => $proyecto->examen->sede,
+                'estado_examen' => $proyecto->examen->estado_examen,
+            ] : null,
         ];
     }
 
     /**
-     * Verifica que estén cubiertos los cinco cargos con docentes distintos.
+     * Verifica que estén cubiertos los cinco cargos con docentes distintos y todos hayan aceptado.
      *
      * @param  Collection<int, JuradoProyecto>  $miembros
      */
@@ -238,9 +265,13 @@ class AsignacionExamenController extends Controller
     {
         $cargos = $miembros->pluck('cargo')->unique();
         $docentes = $miembros->pluck('id_usuario')->unique();
+        $todosAceptaron = $miembros->every(
+            fn (JuradoProyecto $m): bool => $m->estado_aceptacion === JuradoProyecto::ESTADO_ACEPTADO,
+        );
 
         return $docentes->count() === count(JuradoProyecto::CARGOS)
             && $cargos->count() === count(JuradoProyecto::CARGOS)
+            && $todosAceptaron
             && collect(JuradoProyecto::CARGOS)->every(
                 fn (string $cargo): bool => $cargos->contains($cargo),
             );

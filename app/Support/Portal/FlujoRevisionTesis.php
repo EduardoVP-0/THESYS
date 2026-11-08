@@ -181,4 +181,21 @@ class FlujoRevisionTesis
         return $asesor['fecha_decision'] === null
             || $revisores['fecha_con_cambios']->greaterThan($asesor['fecha_decision']);
     }
+
+    /**
+     * Indica si la tesis ya cuenta con la liberación completa del comité
+     * (aprobada tanto por el Director de Tesis como por los 2 Revisores).
+     */
+    public static function tesisLiberadaPorComite(int $idProyecto): bool
+    {
+        if (! self::revisoresDesbloqueadosPorAsesor($idProyecto)) {
+            return false;
+        }
+
+        $revisores = self::estadoRevisores($idProyecto);
+
+        return $revisores['version'] !== null
+            && count($revisores['estados']) >= 2
+            && $revisores['global'] === RevisionesRevisor::ESTADO_APROBADO;
+    }
 }

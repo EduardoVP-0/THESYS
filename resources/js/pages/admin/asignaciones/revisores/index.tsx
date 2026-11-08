@@ -981,7 +981,7 @@ export default function AsignacionRevisoresIndex({
                             processing
                         }
                         onClick={() => setConfirmModalOpen(true)}
-                        className="w-full sm:w-auto bg-[#1e3a8a] hover:bg-[#172554] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold px-8 shadow-sm cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full sm:w-auto bg-[#10B981] hover:bg-[#0FA875] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold px-8 shadow-sm cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <UserCheck className="size-4 mr-2" />
                         Confirmar asignación

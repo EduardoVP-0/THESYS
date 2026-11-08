@@ -143,7 +143,9 @@ export function SustituirJuradoModal({
         }
     }, [esTitular, data.id_suplente_promovido, suplentesActuales, miembroSeleccionado, advisorIds]);
 
-    // Docentes disponibles para ocupar la nueva vacante de suplente
+    const esReemplazoDirecto = data.id_suplente_promovido === 'directo';
+
+    // Docentes disponibles para ocupar la nueva vacante
     // Excluir a los docentes que ya forman parte del jurado (excepto el que sale) y sustentantes
     const docentesElegibles = useMemo(() => {
         const idsOcupados = miembrosJurado
@@ -155,6 +157,14 @@ export function SustituirJuradoModal({
         return docentes.filter((d) => {
             if (idsOcupados.includes(d.id_usuario)) return false;
             if (sustentanteIds.includes(d.id_usuario)) return false;
+            if (
+                esTitular &&
+                esReemplazoDirecto &&
+                miembroSeleccionado?.cargo === 'Presidente' &&
+                advisorIds.includes(d.id_usuario)
+            ) {
+                return false;
+            }
 
             if (!term) return true;
 
@@ -165,19 +175,19 @@ export function SustituirJuradoModal({
                 (d.email?.toLowerCase().includes(term) ?? false)
             );
         });
-    }, [docentes, miembrosJurado, miembroSeleccionado, sustentanteIds, busquedaDocente]);
+    }, [docentes, miembrosJurado, miembroSeleccionado, sustentanteIds, busquedaDocente, esTitular, esReemplazoDirecto, advisorIds]);
 
     const canSubmit = useMemo(() => {
         if (!proyecto || !data.id_jurado_rechazado || !data.id_nuevo_docente || processing) {
             return false;
         }
-        if (esTitular) {
+        if (esTitular && !esReemplazoDirecto) {
             if (!data.id_suplente_promovido || suplenteEsAsesorParaPresidente) {
                 return false;
             }
         }
         return true;
-    }, [proyecto, data, processing, esTitular, suplenteEsAsesorParaPresidente]);
+    }, [proyecto, data, processing, esTitular, esReemplazoDirecto, suplenteEsAsesorParaPresidente]);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -320,6 +330,11 @@ export function SustituirJuradoModal({
                                     <SelectValue placeholder="Selecciona al suplente que ascenderá" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-popover border-border">
+                                    <SelectItem value="directo">
+                                        <span className="font-semibold text-[#10B981]">
+                                            Reemplazo directo en {miembroSeleccionado.cargo} (sin mover suplentes)
+                                        </span>
+                                    </SelectItem>
                                     {suplentesActuales.map((suplente) => {
                                         const esAsesor = advisorIds.includes(suplente.id_usuario);
                                         const noPuedePresidir =
@@ -332,7 +347,7 @@ export function SustituirJuradoModal({
                                                 disabled={noPuedePresidir}
                                             >
                                                 <span className="font-semibold text-foreground">
-                                                    {suplente.cargo}: {suplente.docente.nombre_completo}
+                                                    Promover a {suplente.cargo}: {suplente.docente.nombre_completo}
                                                 </span>
                                                 {noPuedePresidir && (
                                                     <span className="ml-2 text-[10px] text-amber-600 dark:text-amber-400 font-medium">

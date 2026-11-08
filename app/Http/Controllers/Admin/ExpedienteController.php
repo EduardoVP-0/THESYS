@@ -159,6 +159,9 @@ class ExpedienteController extends Controller
                     'asesores.user',
                     'revisores.user',
                     'versiones',
+                    'jurados.docente.user',
+                    'jurados.dictamen',
+                    'examen',
                 ]);
             },
             'oficiosExpediente',
@@ -254,6 +257,26 @@ class ExpedienteController extends Controller
                         'email' => $r->user?->email,
                     ];
                 }),
+                'jurados' => $proyecto->jurados->map(function ($j) {
+                    return [
+                        'id_jurado_proyecto' => $j->id_jurado_proyecto,
+                        'id_usuario' => $j->id_usuario,
+                        'cargo' => $j->cargo,
+                        'estado_aceptacion' => $j->estado_aceptacion,
+                        'nombre_completo' => $j->docente?->nombre_completo ?? 'Docente asignado',
+                        'grado_academico' => $j->docente?->grado_academico,
+                        'voto' => $j->dictamen?->voto,
+                        'observaciones_voto' => $j->dictamen?->observaciones,
+                    ];
+                })->values(),
+                'examen' => $proyecto->examen ? [
+                    'id_examen' => $proyecto->examen->id_examen,
+                    'fecha_examen' => $proyecto->examen->fecha_examen?->format('d/m/Y'),
+                    'hora_examen' => substr((string) $proyecto->examen->hora_examen, 0, 5),
+                    'sede' => $proyecto->examen->sede,
+                    'estado_examen' => $proyecto->examen->estado_examen,
+                    'resultado_final' => $proyecto->examen->resultado_final,
+                ] : null,
             ] : null,
             'carpetas' => [
                 'anteproyecto' => $anteproyectoDoc,

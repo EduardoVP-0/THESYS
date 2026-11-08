@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Docente;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin\Alumno;
 use App\Models\Admin\Dictamen;
+use App\Models\Admin\ExamenProfesional;
 use App\Models\Admin\JuradoProyecto;
 use App\Models\Admin\Proyecto;
 use App\Models\Admin\VersionTesis;
@@ -262,8 +264,19 @@ class JuradoDocenteController extends Controller
 
         abort_unless((int) $jurado->id_usuario === $userId, 403, 'No tienes permiso para votar en este proyecto.');
 
+        if (! $jurado->esTitular()) {
+            return back()->with('error', 'Solo los integrantes titulares del jurado (Presidente, Secretario y Vocal) pueden emitir voto deliberativo.');
+        }
+
         if ($jurado->estado_aceptacion === JuradoProyecto::ESTADO_RECHAZADO) {
             return back()->with('error', 'No puedes emitir voto en un proyecto cuya designación fue rechazada.');
+        }
+
+        $jurado->loadMissing('proyecto.examen');
+        $examen = $jurado->proyecto?->examen;
+
+        if (! $examen) {
+            return back()->with('error', 'No se puede emitir voto hasta que el examen profesional tenga fecha y sede programadas.');
         }
 
         if ($jurado->dictamen()->exists()) {
@@ -305,6 +318,59 @@ class JuradoDocenteController extends Controller
         // Si el docente seguía en estado Pendiente al momento de votar, se marca como Aceptado
         if ($jurado->estado_aceptacion === JuradoProyecto::ESTADO_PENDIENTE) {
             $jurado->update(['estado_aceptacion' => JuradoProyecto::ESTADO_ACEPTADO]);
+        }
+
+        // Verificar si los 3 titulares ya emitieron su voto para cerrar el examen y el flujo
+        $titulares = JuradoProyecto::query()
+            ->where('id_proyecto', $jurado->id_proyecto)
+            ->whereIn('cargo', JuradoProyecto::CARGOS_TITULARES)
+            ->with('dictamen')
+            ->get();
+
+        if (
+            $titulares->count() === count(JuradoProyecto::CARGOS_TITULARES)
+            && $titulares->every(fn (JuradoProyecto $m): bool => $m->dictamen !== null)
+        ) {
+            $favor = $titulares
+                ->filter(fn (JuradoProyecto $m): bool => $m->dictamen?->voto === Dictamen::VOTO_A_FAVOR)
+                ->count();
+            $contra = $titulares
+                ->filter(fn (JuradoProyecto $m): bool => $m->dictamen?->voto === Dictamen::VOTO_EN_CONTRA)
+                ->count();
+
+            $resultadoFinal = match (true) {
+                $favor === 3 => ExamenProfesional::RESULTADO_APROBADO,
+                $favor > $contra => ExamenProfesional::RESULTADO_CON_OBSERVACIONES,
+                default => ExamenProfesional::RESULTADO_RECHAZADO,
+            };
+
+            $examen->update([
+                'estado_examen' => ExamenProfesional::ESTADO_REALIZADO,
+                'resultado_final' => $resultadoFinal,
+            ]);
+
+            if ($favor > $contra) {
+                Alumno::query()
+                    ->whereHas('proyectos', fn ($q) => $q->where('tblproyectos.id_proyecto', $jurado->id_proyecto))
+                    ->where('estado_academico', 'Activo')
+                    ->update(['estado_academico' => 'Egresado']);
+
+                DB::table('tblasesores_proyectos')
+                    ->where('id_proyecto', $jurado->id_proyecto)
+                    ->where('estado_asignacion', 'Activo')
+                    ->update([
+                        'estado_asignacion' => 'Finalizado',
+                        'updated_at' => now(),
+                    ]);
+
+                DB::table('tblrevisores_proyectos')
+                    ->where('id_proyecto', $jurado->id_proyecto)
+                    ->where('estado_asignacion', 'Activo')
+                    ->update([
+                        'estado_asignacion' => 'Finalizado',
+                        'updated_at' => now(),
+                    ]);
+            }
         }
 
         return back()->with('success', "Tu voto \"{$validated['voto']}\" ha sido registrado exitosamente en el acta.");

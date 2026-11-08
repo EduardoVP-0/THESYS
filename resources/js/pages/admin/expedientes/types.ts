@@ -124,6 +124,26 @@ export interface DocenteParticipante {
     email?: string;
 }
 
+export interface JuradoExpedienteItem {
+    id_jurado_proyecto: number;
+    id_usuario: number;
+    cargo: string;
+    estado_aceptacion: string;
+    nombre_completo: string;
+    grado_academico?: string | null;
+    voto?: string | null;
+    observaciones_voto?: string | null;
+}
+
+export interface ExamenExpedienteItem {
+    id_examen: number;
+    fecha_examen?: string | null;
+    hora_examen?: string | null;
+    sede?: string | null;
+    estado_examen: string;
+    resultado_final?: string | null;
+}
+
 export interface ProyectoDetalle {
     id_proyecto: number;
     titulo: string;
@@ -132,6 +152,8 @@ export interface ProyectoDetalle {
     observaciones_coordinacion?: string | null;
     asesor?: DocenteParticipante | null;
     revisores: DocenteParticipante[];
+    jurados?: JuradoExpedienteItem[];
+    examen?: ExamenExpedienteItem | null;
 }
 
 export interface CarpetasExpediente {

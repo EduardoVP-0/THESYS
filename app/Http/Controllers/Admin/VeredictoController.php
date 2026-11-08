@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin\Alumno;
 use App\Models\Admin\Dictamen;
 use App\Models\Admin\ExamenProfesional;
 use App\Models\Admin\JuradoProyecto;
@@ -10,6 +11,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -147,6 +149,45 @@ class VeredictoController extends Controller
         $emitidos = $titulares
             ->filter(fn (JuradoProyecto $miembro): bool => $miembro->dictamen !== null)
             ->count();
+
+        if (
+            $emitidos === count(JuradoProyecto::CARGOS_TITULARES)
+            && ($examen->estado_examen !== ExamenProfesional::ESTADO_REALIZADO || empty($examen->resultado_final))
+        ) {
+            $resultadoSincronizado = match (true) {
+                $favor === 3 => ExamenProfesional::RESULTADO_APROBADO,
+                $favor > $contra => ExamenProfesional::RESULTADO_CON_OBSERVACIONES,
+                default => ExamenProfesional::RESULTADO_RECHAZADO,
+            };
+
+            $examen->update([
+                'estado_examen' => ExamenProfesional::ESTADO_REALIZADO,
+                'resultado_final' => $resultadoSincronizado,
+            ]);
+
+            if ($favor > $contra) {
+                Alumno::query()
+                    ->whereHas('proyectos', fn ($q) => $q->where('tblproyectos.id_proyecto', $examen->id_proyecto))
+                    ->where('estado_academico', 'Activo')
+                    ->update(['estado_academico' => 'Egresado']);
+
+                DB::table('tblasesores_proyectos')
+                    ->where('id_proyecto', $examen->id_proyecto)
+                    ->where('estado_asignacion', 'Activo')
+                    ->update([
+                        'estado_asignacion' => 'Finalizado',
+                        'updated_at' => now(),
+                    ]);
+
+                DB::table('tblrevisores_proyectos')
+                    ->where('id_proyecto', $examen->id_proyecto)
+                    ->where('estado_asignacion', 'Activo')
+                    ->update([
+                        'estado_asignacion' => 'Finalizado',
+                        'updated_at' => now(),
+                    ]);
+            }
+        }
 
         $estado = $this->calcularEstado(
             $examen->resultado_final,

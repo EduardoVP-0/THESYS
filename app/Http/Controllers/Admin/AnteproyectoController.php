@@ -30,15 +30,15 @@ class AnteproyectoController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('titulo', 'like', "%{$search}%")
-                    ->orWhere('resumen', 'like', "%{$search}%")
+                $q->where('titulo', 'ilike', "%{$search}%")
+                    ->orWhere('resumen', 'ilike', "%{$search}%")
                     ->orWhereHas('alumnos', function ($qa) use ($search) {
-                        $qa->where('nombre', 'like', "%{$search}%")
-                            ->orWhere('apellido_p', 'like', "%{$search}%")
-                            ->orWhere('apellido_m', 'like', "%{$search}%")
-                            ->orWhere('matricula', 'like', "%{$search}%")
+                        $qa->where('nombre', 'ilike', "%{$search}%")
+                            ->orWhere('apellido_p', 'ilike', "%{$search}%")
+                            ->orWhere('apellido_m', 'ilike', "%{$search}%")
+                            ->orWhere('matricula', 'ilike', "%{$search}%")
                             ->orWhereHas('user', function ($qu) use ($search) {
-                                $qu->where('email', 'like', "%{$search}%");
+                                $qu->where('email', 'ilike', "%{$search}%");
                             });
                     });
             });
@@ -104,6 +104,11 @@ class AnteproyectoController extends Controller
         if ($proyecto->estado === 'Borrador') {
             return redirect()->route('admin.anteproyectos.index')
                 ->with('error', 'No se pueden solicitar cambios a un anteproyecto en borrador. El sustentante aún no lo envía para su dictamen.');
+        }
+
+        if ($proyecto->estado === 'Aprobado' && $proyecto->asesores()->exists()) {
+            return redirect()->route('admin.anteproyectos.index')
+                ->with('error', 'No se pueden solicitar cambios a este anteproyecto porque ya fue aprobado y cuenta con seguimiento activo de asesoría.');
         }
 
         $validated = $request->validate([

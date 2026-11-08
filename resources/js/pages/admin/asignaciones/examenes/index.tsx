@@ -77,6 +77,13 @@ export default function AsignacionExamenesIndex({
             (proyecto) => String(proyecto.id_proyecto) === data.id_proyecto,
         ) ?? null;
 
+    const esReprogramacion = Boolean(proyectoSeleccionado?.examen_actual);
+
+    const fechasOcupadasFiltradas = { ...fechasOcupadas };
+    if (proyectoSeleccionado?.examen_actual?.fecha_examen) {
+        delete fechasOcupadasFiltradas[proyectoSeleccionado.examen_actual.fecha_examen];
+    }
+
     const sedeSeleccionada =
         sedes.find((sede) => String(sede.id_sede) === data.id_sede) ?? null;
 
@@ -93,7 +100,20 @@ export default function AsignacionExamenesIndex({
         !processing;
 
     const handleProjectChange = (value: string) => {
-        setData('id_proyecto', value);
+        const proyecto = proyectos.find((p) => String(p.id_proyecto) === value);
+        if (proyecto?.examen_actual) {
+            setData({
+                id_proyecto: value,
+                fecha_examen: proyecto.examen_actual.fecha_examen,
+                hora_examen: proyecto.examen_actual.hora_examen,
+                id_sede: String(proyecto.examen_actual.id_sede),
+            });
+        } else {
+            setData({
+                ...EMPTY_FORM,
+                id_proyecto: value,
+            });
+        }
         clearErrors();
     };
 
@@ -410,14 +430,14 @@ export default function AsignacionExamenesIndex({
                                     selectedDate={data.fecha_examen}
                                     fechaMinima={fechaMinima}
                                     diasInhabiles={diasInhabiles}
-                                    fechasOcupadas={fechasOcupadas}
+                                    fechasOcupadas={fechasOcupadasFiltradas}
                                     onSelectDate={handleDateSelect}
                                     disabled={!puedeProgramar || processing}
                                     disabledMessage={
                                         !proyectoSeleccionado
                                             ? 'Selecciona un proyecto de tesis para habilitar la selección de fechas.'
                                             : !proyectoSeleccionado.jurado_completo
-                                              ? 'RN-04: completa el jurado del proyecto para habilitar la selección de fechas.'
+                                              ? 'Los 5 integrantes del jurado deben aceptar su designación para habilitar la selección de fechas.'
                                               : undefined
                                     }
                                 />
@@ -434,10 +454,12 @@ export default function AsignacionExamenesIndex({
                             )}
                             <p>
                                 {!proyectoSeleccionado
-                                    ? 'Selecciona un proyecto de tesis para programar su examen.'
+                                    ? 'Selecciona un proyecto de tesis para programar o reprogramar su examen.'
                                     : !proyectoSeleccionado.jurado_completo
-                                      ? 'RN-04: el jurado debe tener sus cinco puestos titulares y suplentes completos antes de fijar la fecha del examen.'
-                                      : 'El jurado está completo. Revisa la fecha, la hora y la sede antes de confirmar la programación.'}
+                                      ? 'Los cinco integrantes del jurado deben haber aceptado su designación antes de fijar la fecha del examen.'
+                                      : esReprogramacion
+                                        ? 'Puedes modificar la fecha, la hora o la sede actual y confirmar para reprogramar el examen.'
+                                        : 'El jurado está confirmado. Revisa la fecha, la hora y la sede antes de confirmar la programación.'}
                             </p>
                         </div>
 
@@ -460,8 +482,10 @@ export default function AsignacionExamenesIndex({
                                     <ClipboardCheck className="size-4" />
                                 )}
                                 {processing
-                                    ? 'Programando examen...'
-                                    : 'Confirmar programación'}
+                                    ? 'Guardando...'
+                                    : esReprogramacion
+                                      ? 'Guardar reprogramación'
+                                      : 'Confirmar programación'}
                             </Button>
                         </div>
                     </section>

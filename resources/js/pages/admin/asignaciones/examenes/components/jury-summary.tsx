@@ -12,6 +12,10 @@ interface JurySummaryProps {
 }
 
 export function JurySummary({ jurado, completo }: JurySummaryProps) {
+    const aceptadosCount = jurado.filter(
+        (m) => m.estado_aceptacion.toLowerCase() === 'aceptado',
+    ).length;
+
     return (
         <section className="mt-5 rounded-lg border border-border bg-muted/10 p-3.5">
             <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
@@ -24,7 +28,7 @@ export function JurySummary({ jurado, completo }: JurySummaryProps) {
                             Jurado asignado
                         </p>
                         <p className="text-[11px] text-muted-foreground">
-                            Titulares y suplentes que evaluarán el examen.
+                            Titulares y suplentes que evaluarán el examen (todos deben aceptar para programar).
                         </p>
                     </div>
                 </div>
@@ -41,7 +45,7 @@ export function JurySummary({ jurado, completo }: JurySummaryProps) {
                     ) : (
                         <span className="size-1.5 rounded-full bg-current" />
                     )}
-                    {jurado.length}/5 · {completo ? 'Completo' : 'Incompleto'}
+                    {aceptadosCount}/5 Aceptados · {completo ? 'Confirmado' : 'Pendiente de confirmación'}
                 </span>
             </div>
 

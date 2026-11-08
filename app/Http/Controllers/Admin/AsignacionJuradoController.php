@@ -7,8 +7,10 @@ use App\Http\Requests\AsignarJuradoRequest;
 use App\Models\Admin\Alumno;
 use App\Models\Admin\AsignacionAsesor;
 use App\Models\Admin\Docente;
+use App\Models\Admin\ExamenProfesional;
 use App\Models\Admin\JuradoProyecto;
 use App\Models\Admin\Proyecto;
+use App\Support\Portal\FlujoRevisionTesis;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -26,7 +28,7 @@ use Inertia\Response;
 class AsignacionJuradoController extends Controller
 {
     /**
-     * Muestra los proyectos con asesor activo y los docentes disponibles.
+     * Muestra los proyectos liberados por asesor y revisores y los docentes disponibles.
      */
     public function index(Request $request): Response
     {
@@ -44,6 +46,13 @@ class AsignacionJuradoController extends Controller
             ->with($this->relacionesProyecto())
             ->orderBy('titulo')
             ->get()
+            ->filter(function (Proyecto $proyecto): bool {
+                if ($proyecto->jurados->isNotEmpty()) {
+                    return true;
+                }
+
+                return FlujoRevisionTesis::tesisLiberadaPorComite($proyecto->id_proyecto);
+            })
             ->map(fn (Proyecto $proyecto): array => $this->transformarProyecto($proyecto))
             ->values();
 
@@ -76,6 +85,12 @@ class AsignacionJuradoController extends Controller
             if (JuradoProyecto::query()->where('id_proyecto', $proyecto->id_proyecto)->exists()) {
                 throw ValidationException::withMessages([
                     'id_proyecto' => 'Este proyecto ya tiene un jurado asignado.',
+                ]);
+            }
+
+            if (! FlujoRevisionTesis::tesisLiberadaPorComite($proyecto->id_proyecto)) {
+                throw ValidationException::withMessages([
+                    'id_proyecto' => 'Solo se puede asignar jurado a proyectos cuya tesis ya fue aprobada por el Director de Tesis y los 2 Revisores.',
                 ]);
             }
 
@@ -145,20 +160,33 @@ class AsignacionJuradoController extends Controller
     {
         $validated = $request->validate([
             'id_jurado_rechazado' => ['required', 'integer', 'exists:tbljurados_proyectos,id_jurado_proyecto'],
-            'id_suplente_promovido' => ['nullable', 'integer', 'exists:tbljurados_proyectos,id_jurado_proyecto'],
+            'id_suplente_promovido' => ['nullable', 'string'],
             'id_nuevo_docente' => ['required', 'integer', 'exists:tbldocentes,id_usuario'],
         ]);
 
         DB::transaction(function () use ($proyecto, $validated): void {
+            if ($proyecto->examen()->where('estado_examen', ExamenProfesional::ESTADO_REALIZADO)->exists()) {
+                throw ValidationException::withMessages([
+                    'id_jurado_rechazado' => 'No se puede modificar el jurado porque el examen profesional ya fue realizado.',
+                ]);
+            }
+
             /** @var JuradoProyecto $juradoRechazado */
             $juradoRechazado = JuradoProyecto::where('id_proyecto', $proyecto->id_proyecto)
                 ->findOrFail($validated['id_jurado_rechazado']);
 
+            if ($juradoRechazado->dictamen()->exists()) {
+                throw ValidationException::withMessages([
+                    'id_jurado_rechazado' => 'No se puede sustituir a este sinodal porque ya emitió su voto de dictamen en el examen profesional.',
+                ]);
+            }
+
             $idNuevoDocente = (int) $validated['id_nuevo_docente'];
 
-            // Verificar que el nuevo docente esté activo
+            // Verificar que el nuevo docente esté activo y tenga acceso al sistema
             $docenteValido = Docente::where('id_usuario', $idNuevoDocente)
                 ->where('estado', true)
+                ->whereHas('user', fn ($q) => $q->where('estado', true))
                 ->exists();
 
             if (! $docenteValido) {
@@ -171,6 +199,7 @@ class AsignacionJuradoController extends Controller
             $miembrosActuales = JuradoProyecto::where('id_proyecto', $proyecto->id_proyecto)
                 ->where('id_jurado_proyecto', '!=', $juradoRechazado->id_jurado_proyecto)
                 ->pluck('id_usuario')
+                ->map(fn ($id) => (int) $id)
                 ->all();
 
             if (in_array($idNuevoDocente, $miembrosActuales, true)) {
@@ -179,17 +208,14 @@ class AsignacionJuradoController extends Controller
                 ]);
             }
 
-            if ($juradoRechazado->esTitular()) {
-                if (empty($validated['id_suplente_promovido'])) {
-                    throw ValidationException::withMessages([
-                        'id_suplente_promovido' => 'Debes seleccionar qué suplente asumirá el cargo titular.',
-                    ]);
-                }
+            $modoPromocion = $validated['id_suplente_promovido'] ?? null;
+            $esReemplazoDirecto = $modoPromocion === 'directo' || empty($modoPromocion);
 
+            if ($juradoRechazado->esTitular() && ! $esReemplazoDirecto) {
                 /** @var JuradoProyecto $suplentePromovido */
                 $suplentePromovido = JuradoProyecto::where('id_proyecto', $proyecto->id_proyecto)
                     ->whereIn('cargo', [JuradoProyecto::CARGO_SUPLENTE_1, JuradoProyecto::CARGO_SUPLENTE_2])
-                    ->findOrFail($validated['id_suplente_promovido']);
+                    ->findOrFail((int) $modoPromocion);
 
                 $cargoTitular = $juradoRechazado->cargo;
                 $cargoSuplente = $suplentePromovido->cargo;
@@ -220,7 +246,20 @@ class AsignacionJuradoController extends Controller
                     'estado_aceptacion' => JuradoProyecto::ESTADO_PENDIENTE,
                 ]);
             } else {
-                // El que rechazó era un suplente directamente
+                // Reemplazo directo en el mismo cargo (suplente o titular directo)
+                if ($juradoRechazado->cargo === JuradoProyecto::CARGO_PRESIDENTE) {
+                    $esAsesor = $proyecto->docentesAsesores()
+                        ->where('tblasesores_proyectos.id_usuario', $idNuevoDocente)
+                        ->where('tblasesores_proyectos.estado_asignacion', AsignacionAsesor::ESTADO_ACTIVO)
+                        ->exists();
+
+                    if ($esAsesor) {
+                        throw ValidationException::withMessages([
+                            'id_nuevo_docente' => 'El docente seleccionado es el Asesor del proyecto y el reglamento le impide presidir el jurado.',
+                        ]);
+                    }
+                }
+
                 $juradoRechazado->update([
                     'id_usuario' => $idNuevoDocente,
                     'estado_aceptacion' => JuradoProyecto::ESTADO_PENDIENTE,

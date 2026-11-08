@@ -152,6 +152,9 @@ export function ProjectSelector({
                                         <div className="flex flex-col text-left py-0.5">
                                             <span className="font-semibold text-foreground">
                                                 {nombres} {matricula}
+                                                {proyecto.examen_actual
+                                                    ? ` · (Programado: ${proyecto.examen_actual.fecha_examen} ${proyecto.examen_actual.hora_examen})`
+                                                    : ' · (Por programar)'}
                                             </span>
                                             <span className="text-[11px] text-muted-foreground line-clamp-1">
                                                 Tesis: {proyecto.titulo}
@@ -256,9 +259,14 @@ export function ProjectSelector({
                                     }`}
                                 >
                                     {proyectoSeleccionado.jurado_completo
-                                        ? 'Jurado completo'
-                                        : 'Jurado incompleto'}
+                                        ? 'Jurado aceptado (5/5)'
+                                        : 'Pendiente de aceptación del jurado'}
                                 </span>
+                                {proyectoSeleccionado.examen_actual && (
+                                    <span className="inline-flex w-fit items-center rounded-full border border-blue-500/25 bg-blue-500/10 px-2.5 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                                        Programado: {proyectoSeleccionado.examen_actual.fecha_examen} · {proyectoSeleccionado.examen_actual.hora_examen} ({proyectoSeleccionado.examen_actual.sede})
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -272,9 +280,7 @@ export function ProjectSelector({
                         <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-[11px] text-amber-800 dark:text-amber-300">
                             <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
                             <p>
-                                RN-04: el jurado debe tener sus cinco puestos
-                                titulares y suplentes completos antes de
-                                programar el examen.
+                                Los cinco integrantes del jurado (titulares y suplentes) deben estar asignados y con estatus «Aceptado» antes de poder programar o reprogramar el examen profesional.
                             </p>
                         </div>
                     )}

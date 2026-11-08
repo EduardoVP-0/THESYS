@@ -207,13 +207,13 @@ export function JurySlotCard({
                             Quitar
                         </button>
                     )}
-                    {readOnly && existingMember && existingMember.estado_aceptacion.toLowerCase().startsWith('rechaz') && onSustituir && (
+                    {readOnly && existingMember && onSustituir && (
                         <button
                             type="button"
                             onClick={() => onSustituir(existingMember)}
-                            className="text-[10px] font-bold text-amber-600 dark:text-amber-400 underline hover:text-amber-700"
+                            className="text-[10px] font-bold text-[#10B981] underline hover:text-[#0FA875]"
                         >
-                            Sustituir
+                            Cambiar / Sustituir
                         </button>
                     )}
                     <span className="text-[10px] text-muted-foreground">

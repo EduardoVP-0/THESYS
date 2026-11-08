@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use App\Models\Admin\AsignacionAsesor;
 use App\Models\Admin\Docente;
+use App\Models\Admin\ExamenProfesional;
+use App\Models\Admin\JuradoProyecto;
 use App\Models\Admin\Proyecto;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -54,12 +56,21 @@ class AsignarAsesorRequest extends FormRequest
                 $idProyecto = $this->integer('id_proyecto');
                 $idAsesor = $this->integer('id_asesor');
 
-                $proyecto = Proyecto::query()->find($idProyecto);
+                $proyecto = Proyecto::query()->with('examen')->find($idProyecto);
 
                 if (! $proyecto || ! $proyecto->estaAprobado()) {
                     $validator->errors()->add(
                         'id_proyecto',
                         'El anteproyecto debe estar aprobado para asignarle un asesor.',
+                    );
+
+                    return;
+                }
+
+                if ($proyecto->examen?->estado_examen === ExamenProfesional::ESTADO_REALIZADO) {
+                    $validator->errors()->add(
+                        'id_proyecto',
+                        'No se puede cambiar el asesor porque el examen profesional de este proyecto ya fue realizado.',
                     );
 
                     return;
@@ -79,15 +90,45 @@ class AsignarAsesorRequest extends FormRequest
                     return;
                 }
 
-                $tieneAsesorActivo = AsignacionAsesor::query()
+                $asignacionActual = AsignacionAsesor::query()
                     ->where('id_proyecto', $idProyecto)
                     ->where('estado_asignacion', AsignacionAsesor::ESTADO_ACTIVO)
+                    ->first();
+
+                if ($asignacionActual && (int) $asignacionActual->id_usuario === $idAsesor) {
+                    $validator->errors()->add(
+                        'id_asesor',
+                        'Este docente ya se encuentra asignado como asesor activo de este proyecto.',
+                    );
+
+                    return;
+                }
+
+                $esRevisorActivo = DB::table('tblrevisores_proyectos')
+                    ->where('id_proyecto', $idProyecto)
+                    ->where('id_usuario', $idAsesor)
+                    ->where('estado_asignacion', 'Activo')
                     ->exists();
 
-                if ($tieneAsesorActivo) {
+                if ($esRevisorActivo) {
                     $validator->errors()->add(
-                        'id_proyecto',
-                        'Este anteproyecto ya cuenta con un asesor asignado.',
+                        'id_asesor',
+                        'Este docente ya participa como revisor activo en este mismo proyecto.',
+                    );
+
+                    return;
+                }
+
+                $esPresidenteJurado = JuradoProyecto::query()
+                    ->where('id_proyecto', $idProyecto)
+                    ->where('id_usuario', $idAsesor)
+                    ->where('cargo', JuradoProyecto::CARGO_PRESIDENTE)
+                    ->exists();
+
+                if ($esPresidenteJurado) {
+                    $validator->errors()->add(
+                        'id_asesor',
+                        'Este docente ocupa la presidencia del jurado en este proyecto y no puede ser su asesor.',
                     );
 
                     return;

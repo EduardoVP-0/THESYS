@@ -71,6 +71,7 @@ class AsignacionRevisorController extends Controller
 
         // Consulta de Docentes activos con su carga academica calculada
         $docentesQuery = Docente::where('estado', true)
+            ->whereHas('user', fn ($q) => $q->where('estado', true))
             ->with('user')
             ->withCount([
                 'proyectos as carga_asesor' => function ($q) {
@@ -128,7 +129,9 @@ class AsignacionRevisorController extends Controller
             ->values();
 
         // Metricas globales antes de aplicar filtros de disponibilidad y especialidad
-        $totalDocentes = Docente::where('estado', true)->count();
+        $totalDocentes = Docente::where('estado', true)
+            ->whereHas('user', fn ($q) => $q->where('estado', true))
+            ->count();
         $docentesDisponibles = $todosDocentes->where('disponible', true)->count();
         $docentesCompletos = $todosDocentes->where('disponible', false)->count();
 
@@ -197,11 +200,15 @@ class AsignacionRevisorController extends Controller
             'revisores.size' => 'Debes seleccionar exactamente 2 revisores para el anteproyecto.',
         ]);
 
-        $proyecto = Proyecto::with('asesores')->findOrFail($validated['id_proyecto']);
+        $proyecto = Proyecto::with(['asesores', 'examen'])->findOrFail($validated['id_proyecto']);
 
         // Validar que el proyecto este en estado Aprobado
         if ($proyecto->estado !== 'Aprobado') {
             return redirect()->back()->with('error', 'Solo se pueden asignar revisores a anteproyectos en estado Aprobado.');
+        }
+
+        if ($proyecto->examen?->estado_examen === 'Realizado') {
+            return redirect()->back()->with('error', 'No se pueden modificar los revisores porque el examen profesional de este proyecto ya fue realizado.');
         }
 
         // Validar que el proyecto cuente formalmente con un Director / Asesor de tesis asignado
@@ -220,18 +227,69 @@ class AsignacionRevisorController extends Controller
             return redirect()->back()->with('error', 'El Director / Asesor de tesis no puede ser seleccionado como revisor de su propio anteproyecto.');
         }
 
-        // Guardar en base de datos mediante transaccion
-        DB::transaction(function () use ($proyecto, $validated) {
-            $syncData = [];
-            foreach ($validated['revisores'] as $idDocente) {
-                $syncData[$idDocente] = [
-                    'estado_asignacion' => 'Activo',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+        $revisoresActualesIds = DB::table('tblrevisores_proyectos')
+            ->where('id_proyecto', $proyecto->id_proyecto)
+            ->where('estado_asignacion', 'Activo')
+            ->pluck('id_usuario')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        foreach ($validated['revisores'] as $idDocente) {
+            $docente = Docente::with('user')
+                ->withCount([
+                    'proyectos as carga_asesor' => fn ($q) => $q->where('estado_asignacion', 'Activo'),
+                    'proyectosComoRevisor as carga_revisor' => fn ($q) => $q->where('estado_asignacion', 'Activo'),
+                ])
+                ->find($idDocente);
+
+            if (! $docente || ! $docente->estado || ! $docente->user?->estado) {
+                return redirect()->back()->with('error', 'Uno de los docentes seleccionados no cuenta con acceso activo en el sistema.');
             }
 
-            $proyecto->revisores()->sync($syncData);
+            $yaEraRevisorDeEsteProyecto = in_array((int) $idDocente, $revisoresActualesIds, true);
+            $cargaTotal = (int) $docente->carga_asesor + (int) $docente->carga_revisor;
+            if (! $yaEraRevisorDeEsteProyecto && $cargaTotal >= 5) {
+                return redirect()->back()->with('error', "El docente {$docente->nombre_completo} ya alcanzó su carga académica máxima de 5 proyectos.");
+            }
+        }
+
+        // Guardar en base de datos conservando el dictamen del revisor que permanece sin cambios
+        DB::transaction(function () use ($proyecto, $validated) {
+            $existentes = DB::table('tblrevisores_proyectos')
+                ->where('id_proyecto', $proyecto->id_proyecto)
+                ->get()
+                ->keyBy('id_usuario');
+
+            $nuevosIds = array_map('intval', $validated['revisores']);
+
+            DB::table('tblrevisores_proyectos')
+                ->where('id_proyecto', $proyecto->id_proyecto)
+                ->whereNotIn('id_usuario', $nuevosIds)
+                ->delete();
+
+            foreach ($nuevosIds as $idDocente) {
+                $previo = $existentes->get($idDocente);
+
+                if ($previo) {
+                    DB::table('tblrevisores_proyectos')
+                        ->where('id_revisor_proyecto', $previo->id_revisor_proyecto)
+                        ->update([
+                            'estado_asignacion' => 'Activo',
+                            'updated_at' => now(),
+                        ]);
+                } else {
+                    DB::table('tblrevisores_proyectos')->insert([
+                        'id_proyecto' => $proyecto->id_proyecto,
+                        'id_usuario' => $idDocente,
+                        'estado_asignacion' => 'Activo',
+                        'estado_revision' => 'Pendiente',
+                        'comentarios_revision' => null,
+                        'fecha_revision' => null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
         });
 
         return redirect()->route('admin.asignaciones.revisores.index')

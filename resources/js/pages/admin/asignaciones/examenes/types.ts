@@ -25,6 +25,15 @@ export interface MiembroJuradoExamen {
     docente: DocenteResumenExamen;
 }
 
+export interface ExamenActual {
+    id_examen: number;
+    fecha_examen: string;
+    hora_examen: string;
+    id_sede: number;
+    sede: string;
+    estado_examen: string;
+}
+
 export interface ProyectoExamen {
     id_proyecto: number;
     titulo: string;
@@ -35,6 +44,8 @@ export interface ProyectoExamen {
     jurado: MiembroJuradoExamen[];
     jurado_completo: boolean;
     jurado_count: number;
+    jurado_aceptados_count?: number;
+    examen_actual?: ExamenActual | null;
 }
 
 export interface SedeExamen {

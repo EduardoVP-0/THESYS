@@ -3,11 +3,12 @@ import {
     AlertCircle,
     CheckCircle2,
     ClipboardCheck,
+    Search,
     UserCheck,
     UserRoundCheck,
     UsersRound,
 } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -45,6 +46,8 @@ export default function AsignacionAsesoresIndex({
     }>().props;
 
     const [showAlert, setShowAlert] = useState(false);
+    const [filtroEstado, setFiltroEstado] = useState<'todos' | 'pendientes' | 'asignados'>('todos');
+    const [busquedaAsesor, setBusquedaAsesor] = useState('');
 
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm({
@@ -53,12 +56,36 @@ export default function AsignacionAsesoresIndex({
             id_asesor: '',
         });
 
+    const solicitudesFiltradas = useMemo(() => {
+        if (filtroEstado === 'pendientes') {
+            return solicitudes.filter((s) => !s.asesor_actual);
+        }
+        if (filtroEstado === 'asignados') {
+            return solicitudes.filter((s) => Boolean(s.asesor_actual));
+        }
+        return solicitudes;
+    }, [solicitudes, filtroEstado]);
+
     const solicitudSeleccionada =
         solicitudes.find(
             (solicitud) =>
                 String(solicitud.id_alumno) === data.id_alumno &&
                 String(solicitud.id_proyecto) === data.id_proyecto,
         ) ?? null;
+
+    const esCambioAsesor = Boolean(solicitudSeleccionada?.asesor_actual);
+    const proyectoBloqueado = Boolean(solicitudSeleccionada?.bloqueado);
+
+    const asesoresFiltrados = useMemo(() => {
+        const term = busquedaAsesor.trim().toLowerCase();
+        if (!term) return asesores;
+        return asesores.filter(
+            (a) =>
+                a.nombre_completo.toLowerCase().includes(term) ||
+                a.especialidad.toLowerCase().includes(term) ||
+                a.grado_academico.toLowerCase().includes(term),
+        );
+    }, [asesores, busquedaAsesor]);
 
     const asesorSeleccionado =
         asesores.find(
@@ -68,6 +95,9 @@ export default function AsignacionAsesoresIndex({
     const asesoresDisponibles = asesores.filter(
         (asesor) => asesor.disponible,
     ).length;
+
+    const totalPendientes = solicitudes.filter((s) => !s.asesor_actual).length;
+    const totalAsignados = solicitudes.filter((s) => Boolean(s.asesor_actual)).length;
 
     useEffect(() => {
         if (flash?.success) {
@@ -154,18 +184,55 @@ export default function AsignacionAsesoresIndex({
                     noValidate
                 >
                     <section className="rounded-xl border border-border bg-card p-5 shadow-xs">
-                        <div className="flex items-start gap-3">
-                            <div className="rounded-lg bg-[#10B981]/15 p-2.5 text-[#10B981]">
-                                <UserRoundCheck className="size-5" />
+                        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                            <div className="flex items-start gap-3">
+                                <div className="rounded-lg bg-[#10B981]/15 p-2.5 text-[#10B981]">
+                                    <UserRoundCheck className="size-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-foreground">
+                                        Asignar o cambiar asesor de anteproyecto aprobado
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground">
+                                        Selecciona al sustentante para asignarle su asesor inicial o cambiar su asesor actual.
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 className="text-lg font-bold text-foreground">
-                                    Asignar asesor a anteproyecto aprobado
-                                </h2>
-                                <p className="text-xs text-muted-foreground">
-                                    Selecciona al sustentante y verifica su
-                                    anteproyecto antes de elegir al asesor.
-                                </p>
+
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <button
+                                    type="button"
+                                    onClick={() => setFiltroEstado('todos')}
+                                    className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors ${
+                                        filtroEstado === 'todos'
+                                            ? 'border-[#10B981] bg-[#10B981]/15 text-[#10B981]'
+                                            : 'border-border bg-background text-muted-foreground hover:text-foreground'
+                                    }`}
+                                >
+                                    Todos ({solicitudes.length})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFiltroEstado('pendientes')}
+                                    className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors ${
+                                        filtroEstado === 'pendientes'
+                                            ? 'border-[#10B981] bg-[#10B981]/15 text-[#10B981]'
+                                            : 'border-border bg-background text-muted-foreground hover:text-foreground'
+                                    }`}
+                                >
+                                    Pendientes ({totalPendientes})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFiltroEstado('asignados')}
+                                    className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors ${
+                                        filtroEstado === 'asignados'
+                                            ? 'border-[#10B981] bg-[#10B981]/15 text-[#10B981]'
+                                            : 'border-border bg-background text-muted-foreground hover:text-foreground'
+                                    }`}
+                                >
+                                    Con asesor ({totalAsignados})
+                                </button>
                             </div>
                         </div>
 
@@ -185,7 +252,7 @@ export default function AsignacionAsesoresIndex({
                                     }
                                     onValueChange={handleSolicitudChange}
                                     disabled={
-                                        solicitudes.length === 0 || processing
+                                        solicitudesFiltradas.length === 0 || processing
                                     }
                                 >
                                     <SelectTrigger
@@ -195,14 +262,14 @@ export default function AsignacionAsesoresIndex({
                                     >
                                         <SelectValue
                                             placeholder={
-                                                solicitudes.length === 0
-                                                    ? 'No hay anteproyectos pendientes'
+                                                solicitudesFiltradas.length === 0
+                                                    ? 'No hay sustentantes en este filtro'
                                                     : 'Selecciona un sustentante'
                                             }
                                         />
                                     </SelectTrigger>
-                                    <SelectContent className="border-border bg-popover">
-                                        {solicitudes.map((solicitud) => (
+                                    <SelectContent className="border-border bg-popover max-h-72">
+                                        {solicitudesFiltradas.map((solicitud) => (
                                             <SelectItem
                                                 key={`${solicitud.id_alumno}:${solicitud.id_proyecto}`}
                                                 value={`${solicitud.id_alumno}:${solicitud.id_proyecto}`}
@@ -212,6 +279,9 @@ export default function AsignacionAsesoresIndex({
                                                         .nombre_completo
                                                 }{' '}
                                                 - {solicitud.alumno.matricula}
+                                                {solicitud.asesor_actual
+                                                    ? ` · (Asesor: ${solicitud.asesor_actual.nombre_completo})`
+                                                    : ' · (Sin asesor)'}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -278,41 +348,58 @@ export default function AsignacionAsesoresIndex({
                             </p>
                         )}
 
-                        <div className="mt-4 flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-xs">
-                            <UserCheck className="size-4 shrink-0 text-[#10B981]" />
-                            {asesorSeleccionado ? (
-                                <span>
-                                    Asesor seleccionado:{' '}
-                                    <strong className="font-semibold text-foreground">
-                                        {asesorSeleccionado.nombre_completo}
-                                    </strong>
-                                </span>
-                            ) : (
-                                <span className="text-muted-foreground">
-                                    {solicitudes.length === 0
-                                        ? 'No hay anteproyectos pendientes de asignación.'
-                                        : solicitudSeleccionada
-                                          ? 'Selecciona un asesor de la lista para continuar.'
-                                          : 'Selecciona primero un sustentante y luego un asesor.'}
+                        <div className="mt-4 flex flex-col gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-2">
+                                <UserCheck className="size-4 shrink-0 text-[#10B981]" />
+                                {asesorSeleccionado ? (
+                                    <span>
+                                        {esCambioAsesor ? 'Nuevo asesor seleccionado:' : 'Asesor seleccionado:'}{' '}
+                                        <strong className="font-semibold text-foreground">
+                                            {asesorSeleccionado.nombre_completo}
+                                        </strong>
+                                    </span>
+                                ) : (
+                                    <span className="text-muted-foreground">
+                                        {solicitudes.length === 0
+                                            ? 'No hay anteproyectos aprobados registrados.'
+                                            : solicitudSeleccionada
+                                              ? proyectoBloqueado
+                                                  ? 'Este proyecto ya concluyó su examen profesional y no admite cambios de asesor.'
+                                                  : esCambioAsesor
+                                                    ? 'Selecciona un nuevo docente de la lista inferior para reemplazar al asesor actual.'
+                                                    : 'Selecciona un asesor de la lista para continuar.'
+                                              : 'Selecciona primero un sustentante y luego un asesor.'}
+                                    </span>
+                                )}
+                            </div>
+                            {solicitudSeleccionada?.asesor_actual && (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#10B981]/30 bg-[#10B981]/10 px-2.5 py-1 text-[11px] font-semibold text-[#10B981]">
+                                    Asesor actual: {solicitudSeleccionada.asesor_actual.nombre_completo}
                                 </span>
                             )}
                         </div>
                     </section>
 
                     <section className="flex flex-col gap-3">
-                        <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-end">
+                        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                             <div>
                                 <h2 className="text-xl font-bold text-foreground">
                                     Asesores
                                 </h2>
                                 <p className="text-xs text-muted-foreground">
-                                    Disponibilidad y carga académica.
+                                    Disponibilidad y carga académica ({asesoresDisponibles} de {asesores.length} disponibles).
                                 </p>
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                                {asesoresDisponibles} de {asesores.length}{' '}
-                                asesores disponibles
-                            </p>
+                            <div className="relative w-full sm:w-72">
+                                <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    value={busquedaAsesor}
+                                    onChange={(e) => setBusquedaAsesor(e.target.value)}
+                                    placeholder="Buscar docente o especialidad..."
+                                    className="h-9 border-border bg-card pl-8 text-xs"
+                                />
+                            </div>
                         </div>
 
                         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
@@ -334,22 +421,31 @@ export default function AsignacionAsesoresIndex({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {asesores.length === 0 ? (
+                                    {asesoresFiltrados.length === 0 ? (
                                         <TableRow>
                                             <TableCell
                                                 colSpan={4}
                                                 className="px-4 py-10 text-center text-sm text-muted-foreground"
                                             >
-                                                No hay docentes activos
-                                                registrados para asignar como
-                                                asesores.
+                                                No se encontraron docentes con ese criterio de búsqueda.
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        asesores.map((asesor) => {
+                                        asesoresFiltrados.map((asesor) => {
                                             const estaSeleccionado =
                                                 data.id_asesor ===
                                                 String(asesor.id_usuario);
+                                            const esAsesorActual =
+                                                solicitudSeleccionada?.asesor_actual?.id_usuario ===
+                                                asesor.id_usuario;
+                                            const esRevisorProyecto = Boolean(
+                                                solicitudSeleccionada?.revisores_ids?.includes(
+                                                    asesor.id_usuario,
+                                                ),
+                                            );
+                                            const esPresidenteJurado =
+                                                solicitudSeleccionada?.presidente_jurado_id ===
+                                                asesor.id_usuario;
                                             const porcentajeCarga = Math.min(
                                                 (asesor.carga_actual /
                                                     asesor.carga_maxima) *
@@ -454,12 +550,40 @@ export default function AsignacionAsesoresIndex({
                                                         </span>
                                                     </TableCell>
                                                     <TableCell className="px-4 py-3 text-right">
-                                                        {asesor.disponible ? (
+                                                        {esAsesorActual ? (
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                disabled
+                                                                className="min-w-[120px] border-2 border-[#10B981]/50 bg-[#10B981]/10 text-xs font-semibold text-[#10B981]"
+                                                            >
+                                                                Asesor actual
+                                                            </Button>
+                                                        ) : esRevisorProyecto ? (
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                disabled
+                                                                className="min-w-[120px] border-2 border-amber-500/40 bg-amber-500/10 text-xs font-semibold text-amber-600 dark:text-amber-400"
+                                                            >
+                                                                Es revisor
+                                                            </Button>
+                                                        ) : esPresidenteJurado ? (
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                disabled
+                                                                className="min-w-[120px] border-2 border-amber-500/40 bg-amber-500/10 text-xs font-semibold text-amber-600 dark:text-amber-400"
+                                                            >
+                                                                Presidente jurado
+                                                            </Button>
+                                                        ) : asesor.disponible ? (
                                                             <Button
                                                                 type="button"
                                                                 variant="outline"
                                                                 disabled={
                                                                     !solicitudSeleccionada ||
+                                                                    proyectoBloqueado ||
                                                                     processing
                                                                 }
                                                                 onClick={() =>
@@ -538,6 +662,7 @@ export default function AsignacionAsesoresIndex({
                             type="submit"
                             disabled={
                                 !solicitudSeleccionada ||
+                                proyectoBloqueado ||
                                 !asesorSeleccionado ||
                                 !asesorSeleccionado.disponible ||
                                 processing
@@ -550,8 +675,10 @@ export default function AsignacionAsesoresIndex({
                                 <ClipboardCheck className="size-4" />
                             )}
                             {processing
-                                ? 'Asignando...'
-                                : 'Confirmar asignación'}
+                                ? 'Guardando...'
+                                : esCambioAsesor
+                                  ? 'Cambiar asesor'
+                                  : 'Confirmar asignación'}
                         </Button>
                     </section>
                 </form>

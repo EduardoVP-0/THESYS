@@ -24,6 +24,8 @@ export function DrawerRevision({ open, onClose, proyecto }: DrawerRevisionProps)
     if (!open || !proyecto) return null;
 
     const isBorrador = proyecto.estado === 'Borrador';
+    const tieneAsesor = Boolean(proyecto.asesores && proyecto.asesores.length > 0);
+    const bloqueadoPorSeguimiento = proyecto.estado === 'Aprobado' && tieneAsesor;
     const hasDocumento = Boolean(proyecto.ruta_documento && proyecto.ruta_documento.trim() !== '');
 
     const sustentante = proyecto.sustentante || proyecto.alumnos?.[0];
@@ -124,12 +126,25 @@ export function DrawerRevision({ open, onClose, proyecto }: DrawerRevisionProps)
                     </div>
                 )}
 
+                {/* AVISO SI YA TIENE SEGUIMIENTO DE ASESORÍA ACTIVO */}
+                {bloqueadoPorSeguimiento && (
+                    <div className="p-3 rounded-xl border border-[#10B981]/30 bg-[#10B981]/10 text-emerald-800 dark:text-emerald-300 flex items-start gap-2.5 text-xs shadow-xs">
+                        <CheckCircle2 className="size-4 shrink-0 text-[#10B981] mt-0.5" />
+                        <div className="space-y-0.5">
+                            <p className="font-semibold">Seguimiento activo de asesoría</p>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                Este anteproyecto ya fue aprobado y cuenta con asesor asignado, por lo que no puede regresarse al estado de correcciones.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* TITULO */}
                 <div className="space-y-1">
                     <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                         Título
                     </label>
-                    <p className="text-sm font-semibold text-foreground leading-snug">
+                    <p className="text-sm font-semibold text-foreground leading-snug break-words">
                         {proyecto.titulo}
                     </p>
                 </div>
@@ -139,7 +154,7 @@ export function DrawerRevision({ open, onClose, proyecto }: DrawerRevisionProps)
                     <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
                         Resumen
                     </label>
-                    <p className="text-xs text-muted-foreground leading-relaxed bg-muted/30 p-3 rounded-lg border border-border">
+                    <p className="text-xs text-muted-foreground leading-relaxed bg-muted/30 p-3 rounded-lg border border-border break-words">
                         {proyecto.resumen || 'Sin resumen registrado por el sustentante.'}
                     </p>
                 </div>
@@ -220,22 +235,30 @@ export function DrawerRevision({ open, onClose, proyecto }: DrawerRevisionProps)
 
                 {/* OBSERVACIONES DE COORDINACION */}
                 <div className="space-y-1.5">
-                    <label htmlFor="obs_coordinacion" className="text-xs font-semibold text-foreground block">
-                        Observaciones de coordinación
-                    </label>
+                    <div className="flex items-center justify-between">
+                        <label htmlFor="obs_coordinacion" className="text-xs font-semibold text-foreground block">
+                            Observaciones de coordinación
+                        </label>
+                        <span className="text-[10px] text-muted-foreground">
+                            {observaciones.length}/2000
+                        </span>
+                    </div>
                     <textarea
                         id="obs_coordinacion"
                         rows={4}
+                        maxLength={2000}
                         value={observaciones}
-                        disabled={isBorrador}
+                        disabled={isBorrador || bloqueadoPorSeguimiento}
                         onChange={(e) => {
-                            setObservaciones(e.target.value);
+                            setObservaciones(e.target.value.slice(0, 2000));
                             if (errorMessage) setErrorMessage(null);
                         }}
                         placeholder={
                             isBorrador
                                 ? 'No disponible mientras el anteproyecto esté en fase de borrador...'
-                                : 'Escribe aquí las observaciones o retroalimentación sobre el anteproyecto...'
+                                : bloqueadoPorSeguimiento
+                                  ? 'El anteproyecto ya cuenta con seguimiento activo de asesoría...'
+                                  : 'Escribe aquí las observaciones o retroalimentación sobre el anteproyecto...'
                         }
                         className={`w-full p-3 rounded-lg border bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#10B981] placeholder:text-muted-foreground transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
                             errorMessage ? 'border-[#EF4444]' : 'border-border'
@@ -258,12 +281,16 @@ export function DrawerRevision({ open, onClose, proyecto }: DrawerRevisionProps)
                     disabled={processing}
                     className="btn btn-sm border border-border bg-background hover:bg-accent/40 text-foreground font-medium text-xs px-4"
                 >
-                    {isBorrador ? 'Cerrar' : 'Cancelar'}
+                    {isBorrador || bloqueadoPorSeguimiento ? 'Cerrar' : 'Cancelar'}
                 </button>
 
                 {isBorrador ? (
                     <span className="text-[11px] text-muted-foreground italic">
                         Acciones deshabilitadas en borrador
+                    </span>
+                ) : bloqueadoPorSeguimiento ? (
+                    <span className="text-[11px] text-muted-foreground italic">
+                        Dictamen bloqueado por seguimiento activo
                     </span>
                 ) : (
                     <>

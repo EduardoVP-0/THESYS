@@ -7,6 +7,8 @@ use App\Http\Requests\AsignarAsesorRequest;
 use App\Models\Admin\Alumno;
 use App\Models\Admin\AsignacionAsesor;
 use App\Models\Admin\Docente;
+use App\Models\Admin\ExamenProfesional;
+use App\Models\Admin\JuradoProyecto;
 use App\Models\Admin\Proyecto;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -17,13 +19,12 @@ use Inertia\Response;
 /**
  * CONTROLADOR DE ASIGNACIÓN DE ASESORES
  *
- * Permite vincular un asesor académico a los anteproyectos aprobados que
- * todavía no cuentan con uno.
+ * Permite vincular o reasignar un asesor académico a los anteproyectos aprobados.
  */
 class AsignacionAsesorController extends Controller
 {
     /**
-     * Muestra los sustentantes pendientes y los docentes disponibles.
+     * Muestra los sustentantes con anteproyecto aprobado y los docentes disponibles.
      */
     public function index(): Response
     {
@@ -33,24 +34,24 @@ class AsignacionAsesorController extends Controller
                 'proyectos' => function ($query) {
                     $query
                         ->whereIn('tblproyectos.estado', Proyecto::ESTADOS_APROBADOS)
-                        ->whereDoesntHave('asesores', function ($asesores) {
-                            $asesores->where(
-                                'tblasesores_proyectos.estado_asignacion',
-                                AsignacionAsesor::ESTADO_ACTIVO,
-                            );
-                        })
+                        ->with([
+                            'asesores' => function ($asesores) {
+                                $asesores->wherePivot(
+                                    'estado_asignacion',
+                                    AsignacionAsesor::ESTADO_ACTIVO,
+                                );
+                            },
+                            'revisores' => function ($revisores) {
+                                $revisores->wherePivot('estado_asignacion', 'Activo');
+                            },
+                            'jurados',
+                            'examen',
+                        ])
                         ->orderBy('tblproyectos.titulo');
                 },
             ])
             ->whereHas('proyectos', function ($query) {
-                $query
-                    ->whereIn('tblproyectos.estado', Proyecto::ESTADOS_APROBADOS)
-                    ->whereDoesntHave('asesores', function ($asesores) {
-                        $asesores->where(
-                            'tblasesores_proyectos.estado_asignacion',
-                            AsignacionAsesor::ESTADO_ACTIVO,
-                        );
-                    });
+                $query->whereIn('tblproyectos.estado', Proyecto::ESTADOS_APROBADOS);
             })
             ->orderBy('apellido_p')
             ->orderBy('apellido_m')
@@ -62,6 +63,16 @@ class AsignacionAsesorController extends Controller
                 if (! $proyecto) {
                     return null;
                 }
+
+                $asesorActual = $proyecto->asesores->first();
+                $examenConcluido = $proyecto->examen?->estado_examen === ExamenProfesional::ESTADO_REALIZADO;
+                $revisoresIds = $proyecto->revisores
+                    ->pluck('id_usuario')
+                    ->map(fn ($id): int => (int) $id)
+                    ->values()
+                    ->all();
+                $presidenteJurado = $proyecto->jurados
+                    ->firstWhere('cargo', JuradoProyecto::CARGO_PRESIDENTE);
 
                 return [
                     'id_alumno' => $alumno->id_usuario,
@@ -77,9 +88,17 @@ class AsignacionAsesorController extends Controller
                         'resumen' => $proyecto->resumen,
                         'estado' => $proyecto->estado,
                     ],
+                    'asesor_actual' => $asesorActual ? [
+                        'id_usuario' => $asesorActual->id_usuario,
+                        'nombre_completo' => $asesorActual->nombre_completo,
+                    ] : null,
+                    'revisores_ids' => $revisoresIds,
+                    'presidente_jurado_id' => $presidenteJurado ? (int) $presidenteJurado->id_usuario : null,
+                    'bloqueado' => $examenConcluido,
                 ];
             })
             ->filter()
+            ->sortBy(fn (array $item): int => $item['asesor_actual'] === null ? 0 : 1)
             ->values();
 
         $asesores = Docente::query()
@@ -125,20 +144,29 @@ class AsignacionAsesorController extends Controller
     }
 
     /**
-     * Registra la asignación de un asesor a un anteproyecto aprobado.
+     * Registra o actualiza la asignación de un asesor a un anteproyecto aprobado.
      */
     public function store(AsignarAsesorRequest $request): RedirectResponse
     {
         $validated = $request->validated();
+        $esReasignacion = false;
 
-        DB::transaction(function () use ($validated): void {
+        DB::transaction(function () use ($validated, &$esReasignacion): void {
             $proyecto = Proyecto::query()
+                ->with('examen')
                 ->lockForUpdate()
                 ->findOrFail($validated['id_proyecto']);
 
             $docente = Docente::query()
+                ->with('user')
                 ->lockForUpdate()
                 ->findOrFail($validated['id_asesor']);
+
+            if (! $docente->estado || ! $docente->user?->estado) {
+                throw ValidationException::withMessages([
+                    'id_asesor' => 'El docente seleccionado no cuenta con acceso activo en el sistema.',
+                ]);
+            }
 
             $perteneceAlAlumno = DB::table('tblalumnos_proyectos')
                 ->where('id_alumno', $validated['id_alumno'])
@@ -151,14 +179,45 @@ class AsignacionAsesorController extends Controller
                 ]);
             }
 
-            $tieneAsesorActivo = AsignacionAsesor::query()
+            if ($proyecto->examen?->estado_examen === ExamenProfesional::ESTADO_REALIZADO) {
+                throw ValidationException::withMessages([
+                    'id_proyecto' => 'No se puede cambiar el asesor porque el examen profesional de este proyecto ya fue realizado.',
+                ]);
+            }
+
+            $esRevisorActivo = DB::table('tblrevisores_proyectos')
                 ->where('id_proyecto', $proyecto->id_proyecto)
-                ->where('estado_asignacion', AsignacionAsesor::ESTADO_ACTIVO)
+                ->where('id_usuario', $docente->id_usuario)
+                ->where('estado_asignacion', 'Activo')
                 ->exists();
 
-            if ($tieneAsesorActivo) {
+            if ($esRevisorActivo) {
                 throw ValidationException::withMessages([
-                    'id_proyecto' => 'Este anteproyecto ya cuenta con un asesor asignado.',
+                    'id_asesor' => 'Este docente ya participa como revisor activo en este mismo proyecto.',
+                ]);
+            }
+
+            $esPresidenteJurado = JuradoProyecto::query()
+                ->where('id_proyecto', $proyecto->id_proyecto)
+                ->where('id_usuario', $docente->id_usuario)
+                ->where('cargo', JuradoProyecto::CARGO_PRESIDENTE)
+                ->exists();
+
+            if ($esPresidenteJurado) {
+                throw ValidationException::withMessages([
+                    'id_asesor' => 'Este docente ocupa la presidencia del jurado en este proyecto y no puede ser su asesor.',
+                ]);
+            }
+
+            $asignacionActual = AsignacionAsesor::query()
+                ->where('id_proyecto', $proyecto->id_proyecto)
+                ->where('estado_asignacion', AsignacionAsesor::ESTADO_ACTIVO)
+                ->lockForUpdate()
+                ->first();
+
+            if ($asignacionActual && (int) $asignacionActual->id_usuario === (int) $docente->id_usuario) {
+                throw ValidationException::withMessages([
+                    'id_asesor' => 'Este docente ya se encuentra asignado como asesor activo de este proyecto.',
                 ]);
             }
 
@@ -171,6 +230,23 @@ class AsignacionAsesorController extends Controller
                 throw ValidationException::withMessages([
                     'id_asesor' => 'El asesor seleccionado alcanzó su carga académica máxima.',
                 ]);
+            }
+
+            if ($asignacionActual) {
+                $esReasignacion = true;
+
+                AsignacionAsesor::query()
+                    ->where('id_proyecto', $proyecto->id_proyecto)
+                    ->where('id_usuario', $docente->id_usuario)
+                    ->where('id_asesor_proyecto', '!=', $asignacionActual->id_asesor_proyecto)
+                    ->delete();
+
+                $asignacionActual->update([
+                    'id_usuario' => $docente->id_usuario,
+                    'estado_asignacion' => AsignacionAsesor::ESTADO_ACTIVO,
+                ]);
+
+                return;
             }
 
             AsignacionAsesor::query()->updateOrCreate(
@@ -186,6 +262,11 @@ class AsignacionAsesorController extends Controller
 
         return redirect()
             ->route('admin.asignaciones.asesores.index')
-            ->with('success', 'Asesor asignado correctamente al anteproyecto.');
+            ->with(
+                'success',
+                $esReasignacion
+                    ? 'El asesor del proyecto fue actualizado correctamente.'
+                    : 'Asesor asignado correctamente al anteproyecto.',
+            );
     }
 }

@@ -282,23 +282,35 @@ export default function AsignacionJuradosIndex({
                                                 <strong className="font-semibold text-foreground">
                                                     {existingJury.length} de 5
                                                 </strong>{' '}
-                                                integrantes. Consulta la
-                                                conformación completa y el estado de
-                                                aceptación en la vista de jurados
-                                                asignados.
+                                                integrantes. Puedes cambiar a cualquier integrante o consultar el estado de aceptación.
                                             </p>
                                         </div>
 
-                                        <Button
-                                            asChild
-                                            variant="outline"
-                                            className="gap-2 border-[#10B981]/40 bg-background font-semibold text-[#10B981] hover:bg-[#10B981]/10"
-                                        >
-                                            <Link href={consulta.url()}>
-                                                <Eye className="size-4" />
-                                                Consultar jurado
-                                            </Link>
-                                        </Button>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setMiembroParaSustituir(null);
+                                                    setSustituirOpen(true);
+                                                }}
+                                                className="gap-2 border-[#10B981]/40 bg-background font-semibold text-[#10B981] hover:bg-[#10B981]/10"
+                                            >
+                                                <RefreshCw className="size-4" />
+                                                Cambiar integrante
+                                            </Button>
+
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                                className="gap-2 border-[#10B981]/40 bg-background font-semibold text-[#10B981] hover:bg-[#10B981]/10"
+                                            >
+                                                <Link href={consulta.url()}>
+                                                    <Eye className="size-4" />
+                                                    Consultar jurado
+                                                </Link>
+                                            </Button>
+                                        </div>
                                     </section>
                                 )
                             ) : (

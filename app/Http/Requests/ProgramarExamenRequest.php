@@ -56,8 +56,8 @@ class ProgramarExamenRequest extends FormRequest
 
                 $proyecto = Proyecto::query()
                     ->with([
-                        'jurados:id_usuario,id_proyecto,cargo',
-                        'examen:id_examen,id_proyecto',
+                        'jurados:id_usuario,id_proyecto,cargo,estado_aceptacion',
+                        'examen:id_examen,id_proyecto,estado_examen',
                     ])
                     ->find($this->integer('id_proyecto'));
 
@@ -70,10 +70,10 @@ class ProgramarExamenRequest extends FormRequest
                     return;
                 }
 
-                if ($proyecto->examen) {
+                if ($proyecto->examen && $proyecto->examen->estado_examen === ExamenProfesional::ESTADO_REALIZADO) {
                     $validator->errors()->add(
                         'id_proyecto',
-                        'Este proyecto ya tiene un examen profesional programado.',
+                        'No se puede reprogramar un examen profesional que ya fue realizado.',
                     );
 
                     return;
@@ -87,6 +87,9 @@ class ProgramarExamenRequest extends FormRequest
                     ->pluck('id_usuario')
                     ->unique()
                     ->count();
+                $todosAceptaron = $proyecto->jurados->every(
+                    fn (JuradoProyecto $m): bool => $m->estado_aceptacion === JuradoProyecto::ESTADO_ACEPTADO,
+                );
 
                 if (
                     count(array_intersect(JuradoProyecto::CARGOS, $cargosRegistrados)) !== count(JuradoProyecto::CARGOS)
@@ -94,7 +97,16 @@ class ProgramarExamenRequest extends FormRequest
                 ) {
                     $validator->errors()->add(
                         'id_proyecto',
-                        'RN-04: completa los cinco puestos titulares y suplentes del jurado antes de programar el examen.',
+                        'Completa los cinco puestos titulares y suplentes del jurado antes de programar el examen.',
+                    );
+
+                    return;
+                }
+
+                if (! $todosAceptaron) {
+                    $validator->errors()->add(
+                        'id_proyecto',
+                        'Los 5 integrantes del jurado (titulares y suplentes) deben haber aceptado su designación antes de programar o reprogramar el examen.',
                     );
 
                     return;
@@ -132,7 +144,7 @@ class ProgramarExamenRequest extends FormRequest
                     return;
                 }
 
-                if (ExamenProfesional::fechaOcupada($fecha->toDateString())) {
+                if (ExamenProfesional::fechaOcupada($fecha->toDateString(), $proyecto->id_proyecto)) {
                     $validator->errors()->add(
                         'fecha_examen',
                         'La fecha seleccionada ya está ocupada por otro examen profesional.',

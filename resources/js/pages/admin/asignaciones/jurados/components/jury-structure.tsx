@@ -79,9 +79,7 @@ export function JuryStructure({
             {readOnly && (
                 <p className="flex items-start gap-2 rounded-lg border border-[#10B981]/20 bg-[#10B981]/5 px-3 py-2.5 text-[11px] text-muted-foreground">
                     <ShieldAlert className="mt-0.5 size-3.5 shrink-0 text-[#10B981]" />
-                    La estructura de este jurado ya fue registrada. Puedes
-                    consultar los cargos y su estado de aceptación, pero no
-                    modificarlos desde esta vista.
+                    La estructura de este jurado ya fue registrada. Si necesitas modificar o reemplazar a algún integrante, utiliza el botón «Cambiar / Sustituir» en su tarjeta.
                 </p>
             )}
 
