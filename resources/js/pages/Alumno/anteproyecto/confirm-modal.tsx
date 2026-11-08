@@ -51,12 +51,12 @@ export function ConfirmModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1.5 text-xs">
+                <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1.5 text-xs min-w-0">
                     <div>
                         <span className="text-[10px] font-semibold uppercase text-muted-foreground block">
                             Título a registrar:
                         </span>
-                        <p className="font-semibold text-foreground line-clamp-2">{titulo}</p>
+                        <p className="font-semibold text-foreground line-clamp-2 break-words">{titulo}</p>
                     </div>
                     <div>
                         <span className="text-[10px] font-semibold uppercase text-muted-foreground block">

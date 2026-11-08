@@ -83,7 +83,16 @@ class PagoController extends Controller
             $pago = (clone $query)->find($idPago);
         } else {
             $pago = (clone $query)
-                ->whereIn('estado_validacion', ['Pendiente', 'Rechazado'])
+                ->where(function ($q): void {
+                    $q->where('estado_validacion', 'Rechazado')
+                        ->orWhere(function ($sub): void {
+                            $sub->where('estado_validacion', 'Pendiente')
+                                ->where(function ($r): void {
+                                    $r->whereNull('referencia_bancaria')
+                                        ->orWhere('referencia_bancaria', '');
+                                });
+                        });
+                })
                 ->orderBy('id_pago', 'asc')
                 ->first();
         }
@@ -149,6 +158,16 @@ class PagoController extends Controller
         $pago = Pago::where('id_usuario', $userId)
             ->with('conceptoPago')
             ->findOrFail($validated['id_pago']);
+
+        if ($pago->estado_validacion === 'Validado') {
+            return redirect()->route('alumno.pagos.index')
+                ->with('error', 'Este concepto de pago ya fue validado y no puede volver a procesarse.');
+        }
+
+        if ($pago->estado_validacion === 'Pendiente' && ! empty(trim((string) $pago->referencia_bancaria))) {
+            return redirect()->route('alumno.pagos.index')
+                ->with('error', 'Este concepto de pago ya cuenta con un comprobante enviado y se encuentra en revisión administrativa.');
+        }
 
         $claveConcepto = $pago->conceptoPago?->clave ?? 'TES-001';
         $sufijoPago = str_pad((string) $pago->id_pago, 3, '0', STR_PAD_LEFT);

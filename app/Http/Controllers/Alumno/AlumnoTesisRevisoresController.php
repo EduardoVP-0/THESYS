@@ -164,8 +164,11 @@ class AlumnoTesisRevisoresController extends Controller
             : false;
         $bloqueoPorAsesor = false;
 
-        if (! $proyecto) {
+        if (! $proyecto || ! $proyecto->estaAprobado()) {
             $motivoBloqueo = 'Primero debes registrar y tener aprobado tu anteproyecto.';
+        } elseif ($proyecto->examen()->where('estado_examen', 'Realizado')->exists()) {
+            $motivoBloqueo = 'Tu examen profesional ya fue realizado. El expediente de tesis se encuentra cerrado.';
+            $estadoGlobal = 'Aprobado';
         } elseif (! $tieneDobleRevisor) {
             $motivoBloqueo = 'No puedes subir versiones hasta que la coordinación asigne a tus 2 revisores.';
         } elseif (! $ultimaVersion) {
@@ -233,8 +236,12 @@ class AlumnoTesisRevisoresController extends Controller
 
         $proyecto = $alumno->proyectos()->latest('tblproyectos.id_proyecto')->first();
 
-        if (! $proyecto) {
-            return redirect()->back()->with('error', 'No cuentas con un proyecto registrado para subir versiones de tesis.');
+        if (! $proyecto || ! $proyecto->estaAprobado()) {
+            return redirect()->back()->with('error', 'Primero debes contar con tu anteproyecto aprobado para subir versiones de tesis.');
+        }
+
+        if ($proyecto->examen()->where('estado_examen', 'Realizado')->exists()) {
+            return redirect()->back()->with('error', 'Tu examen profesional ya fue realizado y el expediente no admite nuevas versiones.');
         }
 
         $revisores = $proyecto->revisores()

@@ -12,6 +12,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -91,15 +92,30 @@ class AnteproyectoController extends Controller
                 ->with('error', 'No puedes modificar el anteproyecto mientras se encuentra en revisión o una vez aprobado.');
         }
 
+        $request->merge([
+            'titulo' => preg_replace('/\s+/', ' ', trim((string) $request->input('titulo', ''))),
+            'resumen' => $request->filled('resumen') ? trim((string) $request->input('resumen')) : null,
+        ]);
+
         $validated = $request->validate([
-            'titulo' => ['required', 'string', 'min:5', 'max:255'],
-            'resumen' => ['nullable', 'string', 'max:2000'],
+            'titulo' => [
+                'required',
+                'string',
+                'min:5',
+                'max:255',
+                'regex:/^(?=.*[\pL])[\pL\pN\s.,:;()"\'¿?¡!\/\-–—]+$/u',
+                Rule::unique('tblproyectos', 'titulo')->ignore($proyecto?->id_proyecto, 'id_proyecto'),
+            ],
+            'resumen' => ['nullable', 'string', 'max:2000', 'regex:/^(?=.*[\pL])/su'],
             'documento' => ['nullable', 'file', 'mimes:pdf', 'max:2048'],
         ], [
             'titulo.required' => 'Ingresa al menos un título preliminar para poder guardar tu borrador.',
             'titulo.min' => 'El título debe contener al menos 5 caracteres.',
             'titulo.max' => 'El título no puede exceder los 255 caracteres.',
+            'titulo.regex' => 'El título debe contener texto válido con letras y no únicamente números o símbolos.',
+            'titulo.unique' => 'Ya existe otro anteproyecto registrado con este mismo título.',
             'resumen.max' => 'El resumen no puede exceder los 2,000 caracteres.',
+            'resumen.regex' => 'El resumen debe contener texto descriptivo válido con letras.',
             'documento.mimes' => 'El documento adjunto debe estar estrictamente en formato PDF.',
             'documento.max' => 'El archivo PDF no debe superar el tamaño máximo permitido de 2 MB.',
         ]);
@@ -165,17 +181,32 @@ class AnteproyectoController extends Controller
 
         $tieneDocumentoPrevio = (bool) ($proyecto && $proyecto->ruta_documento && trim($proyecto->ruta_documento) !== '');
 
+        $request->merge([
+            'titulo' => preg_replace('/\s+/', ' ', trim((string) $request->input('titulo', ''))),
+            'resumen' => trim((string) $request->input('resumen', '')),
+        ]);
+
         $validated = $request->validate([
-            'titulo' => ['required', 'string', 'min:10', 'max:255'],
-            'resumen' => ['required', 'string', 'min:30', 'max:2000'],
+            'titulo' => [
+                'required',
+                'string',
+                'min:10',
+                'max:255',
+                'regex:/^(?=.*[\pL])[\pL\pN\s.,:;()"\'¿?¡!\/\-–—]+$/u',
+                Rule::unique('tblproyectos', 'titulo')->ignore($proyecto?->id_proyecto, 'id_proyecto'),
+            ],
+            'resumen' => ['required', 'string', 'min:30', 'max:2000', 'regex:/^(?=.*[\pL].*[\pL].*[\pL])/su'],
             'documento' => [$tieneDocumentoPrevio ? 'nullable' : 'required', 'file', 'mimes:pdf', 'max:2048'],
         ], [
             'titulo.required' => 'El título del proyecto es obligatorio para enviarlo a revisión.',
             'titulo.min' => 'El título definitivo debe tener al menos 10 caracteres.',
             'titulo.max' => 'El título no puede exceder los 255 caracteres.',
+            'titulo.regex' => 'El título debe contener texto académico válido con letras y no únicamente números o símbolos.',
+            'titulo.unique' => 'Ya existe otro anteproyecto registrado con este mismo título.',
             'resumen.required' => 'El resumen ejecutivo es obligatorio para enviar tu propuesta a revisión.',
             'resumen.min' => 'El resumen debe describir tu propuesta con al menos 30 caracteres.',
             'resumen.max' => 'El resumen no puede exceder los 2,000 caracteres.',
+            'resumen.regex' => 'El resumen ejecutivo debe contener texto descriptivo válido con palabras reales.',
             'documento.required' => 'Debes adjuntar el documento PDF de tu anteproyecto para enviarlo a revisión.',
             'documento.mimes' => 'El archivo del anteproyecto debe estar únicamente en formato PDF.',
             'documento.max' => 'El archivo PDF no debe superar el límite máximo de 2 MB (2,048 KB).',

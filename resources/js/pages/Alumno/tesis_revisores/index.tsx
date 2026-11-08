@@ -346,7 +346,7 @@ export default function AlumnoTesisRevisoresIndex({
 
                     <div className="mt-2 border-t border-border pt-2">
                         {item.observaciones && item.observaciones.trim() !== '' ? (
-                            <p className="leading-relaxed whitespace-pre-line text-foreground">
+                            <p className="leading-relaxed whitespace-pre-line break-words text-foreground">
                                 {item.observaciones}
                             </p>
                         ) : (
@@ -483,7 +483,7 @@ export default function AlumnoTesisRevisoresIndex({
                                             {revisor.estado_label === 'Con cambios' &&
                                                 revisor.observaciones &&
                                                 revisor.observaciones.trim() !== '' && (
-                                                    <p className="mt-3 rounded-lg border border-red-500/20 bg-red-500/5 p-2.5 text-[11px] leading-relaxed text-foreground whitespace-pre-line">
+                                                    <p className="mt-3 rounded-lg border border-red-500/20 bg-red-500/5 p-2.5 text-[11px] leading-relaxed text-foreground whitespace-pre-line break-words">
                                                         {revisor.observaciones}
                                                     </p>
                                                 )}
@@ -603,14 +603,27 @@ export default function AlumnoTesisRevisoresIndex({
                                     </div>
 
                                     <div>
-                                        <label className="mb-1 block text-xs font-semibold text-foreground">
-                                            Comentario de entrega para tus revisores (opcional)
-                                        </label>
+                                        <div className="mb-1 flex items-center justify-between gap-2">
+                                            <label className="block text-xs font-semibold text-foreground">
+                                                Comentario de entrega para tus revisores (opcional)
+                                            </label>
+                                            <span
+                                                className={`text-[11px] font-medium ${
+                                                    comentarioAlumno.length >= 1000
+                                                        ? 'font-semibold text-red-500'
+                                                        : 'text-muted-foreground'
+                                                }`}
+                                            >
+                                                {comentarioAlumno.length} / 1000 caracteres
+                                            </span>
+                                        </div>
                                         <textarea
                                             rows={2}
                                             maxLength={1000}
                                             value={comentarioAlumno}
-                                            onChange={(e) => setComentarioAlumno(e.target.value)}
+                                            onChange={(e) =>
+                                                setComentarioAlumno(e.target.value.replace(/^\s+/, ''))
+                                            }
                                             placeholder="Ej. Se atendieron las observaciones de los capítulos 1 y 3 y se ajustó la metodología..."
                                             className="w-full rounded-lg border border-border bg-card p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#B8D4E3] focus:outline-none"
                                         />
@@ -791,13 +804,13 @@ export default function AlumnoTesisRevisoresIndex({
                                                         </div>
 
                                                         {/* Bloque 2: Comentario del Alumno y acceso al PDF */}
-                                                        <div className="flex flex-col justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-2xs">
+                                                        <div className="flex flex-col justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-2xs min-w-0">
                                                             <div>
                                                                 <p className="mb-1.5 font-semibold text-foreground">
                                                                     Tu nota de entrega
                                                                 </p>
                                                                 {v.comentario_alumno ? (
-                                                                    <p className="leading-relaxed whitespace-pre-line text-muted-foreground">
+                                                                    <p className="leading-relaxed whitespace-pre-line break-words text-muted-foreground">
                                                                         {v.comentario_alumno}
                                                                     </p>
                                                                 ) : (

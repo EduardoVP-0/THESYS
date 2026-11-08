@@ -173,15 +173,48 @@ export default function CreatePago({
         );
     };
 
+    const pagoYaCubierto =
+        pago?.estado_validacion === 'Validado' ||
+        (pago?.estado_validacion === 'Pendiente' && Boolean(pago?.referencia_bancaria));
+
     // Validar todos los campos de la tarjeta y lanzar simulación
     const handleSimulateCardPayment = () => {
+        if (pagoYaCubierto) {
+            setCardError('Este concepto de pago ya cuenta con un comprobante enviado o ya fue validado.');
+            return;
+        }
+
+        const nombreLimpio = cardName.trim();
         const cleanDigits = cardNumber.replace(/\s/g, '');
         const cleanExpiry = cardExpiry.replace(/\D/g, '');
 
-        if (!cardName.trim() || cleanDigits.length < 16 || cleanExpiry.length < 4 || cardCvv.length < 3) {
+        if (!nombreLimpio || cleanDigits.length < 16 || cleanExpiry.length < 4 || cardCvv.length < 3) {
             setCardError(
                 'Por favor completa TODOS los campos de la tarjeta: Nombre del titular, los 16 dígitos de la tarjeta, Fecha de expiración (MM/AA) y Código de seguridad (CVV).'
             );
+            return;
+        }
+
+        if (nombreLimpio.length < 5 || !/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(nombreLimpio)) {
+            setCardError(
+                'El nombre del titular debe contener únicamente letras y espacios (al menos 5 caracteres).'
+            );
+            return;
+        }
+
+        const mesExp = parseInt(cleanExpiry.slice(0, 2), 10);
+        const anioExp = 2000 + parseInt(cleanExpiry.slice(2, 4), 10);
+        const ahora = new Date();
+        const mesActual = ahora.getMonth() + 1;
+        const anioActual = ahora.getFullYear();
+
+        if (Number.isNaN(mesExp) || mesExp < 1 || mesExp > 12) {
+            setCardError('El mes de expiración de la tarjeta debe estar entre 01 y 12.');
+            return;
+        }
+
+        if (anioExp < anioActual || (anioExp === anioActual && mesExp < mesActual) || anioExp > anioActual + 20) {
+            setCardError('La fecha de expiración ingresada corresponde a una tarjeta vencida o inválida.');
             return;
         }
 
@@ -192,6 +225,9 @@ export default function CreatePago({
 
     // Simular pago en persona con espera de 5 segundos (notificación bancaria de 24h)
     const handleSimulateCashPayment = () => {
+        if (pagoYaCubierto) {
+            return;
+        }
         setCashCountdown(5);
         setSimulationModal('processing-cash');
         submitPaymentToServer('cash', 5000);
@@ -489,7 +525,11 @@ export default function CreatePago({
                                             value={cardName}
                                             onFocus={() => setIsCardFlipped(false)}
                                             onChange={(e) => {
-                                                setCardName(e.target.value);
+                                                const limpio = e.target.value
+                                                    .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '')
+                                                    .replace(/^\s+/, '')
+                                                    .replace(/\s{2,}/g, ' ');
+                                                setCardName(limpio);
                                                 setIsCardFlipped(false);
                                                 if (cardError) setCardError(null);
                                             }}
@@ -554,10 +594,12 @@ export default function CreatePago({
                                 <Button
                                     type="button"
                                     onClick={handleSimulateCardPayment}
-                                    disabled={simulationModal !== 'none'}
+                                    disabled={simulationModal !== 'none' || pagoYaCubierto}
                                     className="w-full bg-[#10B981] hover:bg-[#0ea371] text-white font-bold h-11 mt-2 gap-2 cursor-pointer"
                                 >
-                                    Pagar · {formatCurrency(montoActual)}
+                                    {pagoYaCubierto
+                                        ? 'Pago ya registrado / en revisión'
+                                        : `Pagar · ${formatCurrency(montoActual)}`}
                                 </Button>
                             </div>
                         ) : (
@@ -584,7 +626,7 @@ export default function CreatePago({
                                         <Button
                                             type="button"
                                             onClick={handleGenerateFolio}
-                                            disabled={isGenerating}
+                                            disabled={isGenerating || pagoYaCubierto}
                                             className="bg-[#2D2D2D] hover:bg-[#2D2D2D]/90 text-white font-bold h-11 gap-2 mt-4 cursor-pointer"
                                         >
                                             {isGenerating ? (
@@ -664,7 +706,7 @@ export default function CreatePago({
                                             <Button
                                                 type="button"
                                                 onClick={handleSimulateCashPayment}
-                                                disabled={simulationModal !== 'none'}
+                                                disabled={simulationModal !== 'none' || pagoYaCubierto}
                                                 className="flex-1 bg-[#10B981] hover:bg-[#0ea371] text-white font-bold h-11 gap-2 cursor-pointer"
                                             >
                                                 <CheckCircle2 className="size-4" />

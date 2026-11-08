@@ -129,7 +129,7 @@ export function PaymentDetailsModal({ isOpen, onClose, pago }: Props) {
                                 <AlertTriangle className="size-4 shrink-0" />
                                 Motivo del rechazo (Administrador)
                             </div>
-                            <p className="text-sm leading-relaxed font-medium">
+                            <p className="text-sm leading-relaxed font-medium break-words">
                                 {pago.comentarios || 'El área administrativa rechazó este comprobante por inconsistencias en la validación. Por favor, realiza el pago nuevamente.'}
                             </p>
                         </div>
@@ -141,7 +141,7 @@ export function PaymentDetailsModal({ isOpen, onClose, pago }: Props) {
                             <p className="font-bold text-foreground uppercase tracking-wider text-[10px]">
                                 Nota del Administrador:
                             </p>
-                            <p className="text-muted-foreground leading-relaxed">{pago.comentarios}</p>
+                            <p className="text-muted-foreground leading-relaxed break-words">{pago.comentarios}</p>
                         </div>
                     )}
 
@@ -150,7 +150,7 @@ export function PaymentDetailsModal({ isOpen, onClose, pago }: Props) {
                         <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                             Descripción del concepto
                         </h3>
-                        <p className="text-sm text-foreground mt-1 leading-relaxed">
+                        <p className="text-sm text-foreground mt-1 leading-relaxed break-words">
                             {pago.concepto_pago?.descripcion || 'Trámite oficial requerido dentro del proceso de titulación integral.'}
                         </p>
                     </div>

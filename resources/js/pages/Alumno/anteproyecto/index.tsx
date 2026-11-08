@@ -195,14 +195,21 @@ export default function MiAnteproyectoIndex({ proyecto, alumno }: Props) {
         }
 
         const nuevosErrores: typeof localErrors = {};
-        if (titulo.trim().length < 5) {
+        const tituloLimpio = titulo.trim();
+        const resumenLimpio = resumen.trim();
+
+        if (tituloLimpio.length < 5) {
             nuevosErrores.titulo = 'Ingresa un título de al menos 5 caracteres para guardar tu borrador.';
-        } else if (titulo.trim().length > MAX_TITULO_LENGTH) {
+        } else if (tituloLimpio.length > MAX_TITULO_LENGTH) {
             nuevosErrores.titulo = `El título no puede superar los ${MAX_TITULO_LENGTH} caracteres.`;
+        } else if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/.test(tituloLimpio)) {
+            nuevosErrores.titulo = 'El título debe contener texto válido con letras y no únicamente números o símbolos.';
         }
 
-        if (resumen.trim().length > MAX_RESUMEN_LENGTH) {
+        if (resumenLimpio.length > MAX_RESUMEN_LENGTH) {
             nuevosErrores.resumen = `El resumen no puede superar los ${MAX_RESUMEN_LENGTH} caracteres.`;
+        } else if (resumenLimpio.length > 0 && !/[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/.test(resumenLimpio)) {
+            nuevosErrores.resumen = 'El resumen debe contener texto descriptivo válido con letras.';
         }
 
         if (Object.keys(nuevosErrores).length > 0) {
@@ -237,17 +244,23 @@ export default function MiAnteproyectoIndex({ proyecto, alumno }: Props) {
         }
 
         const nuevosErrores: typeof localErrors = {};
+        const tituloLimpio = titulo.trim();
+        const resumenLimpio = resumen.trim();
 
-        if (titulo.trim().length < 10) {
+        if (tituloLimpio.length < 10) {
             nuevosErrores.titulo = 'El título definitivo debe contener al menos 10 caracteres.';
-        } else if (titulo.trim().length > MAX_TITULO_LENGTH) {
+        } else if (tituloLimpio.length > MAX_TITULO_LENGTH) {
             nuevosErrores.titulo = `El título no puede superar los ${MAX_TITULO_LENGTH} caracteres.`;
+        } else if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/.test(tituloLimpio)) {
+            nuevosErrores.titulo = 'El título debe contener texto académico válido con letras y no únicamente números o símbolos.';
         }
 
-        if (resumen.trim().length < 30) {
+        if (resumenLimpio.length < 30) {
             nuevosErrores.resumen = 'El resumen es obligatorio y debe describir tu propuesta en al menos 30 caracteres.';
-        } else if (resumen.trim().length > MAX_RESUMEN_LENGTH) {
+        } else if (resumenLimpio.length > MAX_RESUMEN_LENGTH) {
             nuevosErrores.resumen = `El resumen no puede superar los ${MAX_RESUMEN_LENGTH} caracteres.`;
+        } else if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ].*[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ].*[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/.test(resumenLimpio)) {
+            nuevosErrores.resumen = 'El resumen ejecutivo debe contener texto descriptivo válido con palabras reales.';
         }
 
         if (!archivoNuevo && !tieneDocumentoGuardado) {
@@ -484,7 +497,7 @@ export default function MiAnteproyectoIndex({ proyecto, alumno }: Props) {
                                         value={titulo}
                                         disabled={!esEditable || savingDraft || submittingReview}
                                         onChange={(e) => {
-                                            setTitulo(e.target.value);
+                                            setTitulo(e.target.value.replace(/^\s+/, '').replace(/\s{2,}/g, ' '));
                                             if (localErrors.titulo) {
                                                 setLocalErrors((prev) => ({ ...prev, titulo: undefined }));
                                             }
@@ -865,7 +878,7 @@ export default function MiAnteproyectoIndex({ proyecto, alumno }: Props) {
                                         </div>
                                     </div>
 
-                                    <div className="p-3.5 rounded-lg bg-muted/30 border border-border text-xs text-foreground leading-relaxed whitespace-pre-line">
+                                    <div className="p-3.5 rounded-lg bg-muted/30 border border-border text-xs text-foreground leading-relaxed whitespace-pre-line break-words">
                                         {proyecto?.observaciones_coordinacion ||
                                             'Se solicitaron ajustes en tu propuesta. Por favor revisa tu documento.'}
                                     </div>
@@ -891,15 +904,15 @@ export default function MiAnteproyectoIndex({ proyecto, alumno }: Props) {
                                         </div>
                                     </div>
 
-                                    <div className="p-3 rounded-lg bg-muted/25 border border-border space-y-0.5">
-                                        <p className="text-xs font-bold text-foreground">
+                                    <div className="p-3 rounded-lg bg-muted/25 border border-border space-y-0.5 min-w-0">
+                                        <p className="text-xs font-bold text-foreground break-words">
                                             {proyecto.asesor.grado_academico
                                                 ? `${proyecto.asesor.grado_academico} `
                                                 : ''}
                                             {proyecto.asesor.nombre_completo}
                                         </p>
                                         {proyecto.asesor.email && (
-                                            <p className="text-[11px] text-muted-foreground">
+                                            <p className="text-[11px] text-muted-foreground break-all">
                                                 {proyecto.asesor.email}
                                             </p>
                                         )}

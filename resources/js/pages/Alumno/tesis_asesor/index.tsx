@@ -450,14 +450,27 @@ export default function AlumnoTesisAsesorIndex({
                                     </div>
 
                                     <div>
-                                        <label className="mb-1 block text-xs font-semibold text-foreground">
-                                            Comentario de entrega para tu asesor (opcional)
-                                        </label>
+                                        <div className="mb-1 flex items-center justify-between gap-2">
+                                            <label className="block text-xs font-semibold text-foreground">
+                                                Comentario de entrega para tu asesor (opcional)
+                                            </label>
+                                            <span
+                                                className={`text-[11px] font-medium ${
+                                                    comentarioAlumno.length >= 1000
+                                                        ? 'font-semibold text-red-500'
+                                                        : 'text-muted-foreground'
+                                                }`}
+                                            >
+                                                {comentarioAlumno.length} / 1000 caracteres
+                                            </span>
+                                        </div>
                                         <textarea
                                             rows={2}
                                             maxLength={1000}
                                             value={comentarioAlumno}
-                                            onChange={(e) => setComentarioAlumno(e.target.value)}
+                                            onChange={(e) =>
+                                                setComentarioAlumno(e.target.value.replace(/^\s+/, ''))
+                                            }
                                             placeholder="Ej. Se atendieron las observaciones del capítulo 2 y se agregó el marco metodológico..."
                                             className="w-full rounded-lg border border-border bg-card p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#B8D4E3] focus:outline-none"
                                         />
@@ -621,7 +634,7 @@ export default function AlumnoTesisAsesorIndex({
                                                             </div>
 
                                                             {v.observaciones && v.observaciones.trim() !== '' ? (
-                                                                <p className="leading-relaxed whitespace-pre-line text-foreground">
+                                                                <p className="leading-relaxed whitespace-pre-line break-words text-foreground">
                                                                     {v.observaciones}
                                                                 </p>
                                                             ) : (
@@ -633,7 +646,7 @@ export default function AlumnoTesisAsesorIndex({
                                                             )}
 
                                                             {v.asesor_revisor && (
-                                                                <p className="mt-3 border-t border-border pt-2 text-[11px] text-muted-foreground">
+                                                                <p className="mt-3 border-t border-border pt-2 text-[11px] text-muted-foreground break-words">
                                                                     Revisor:{' '}
                                                                     <strong className="text-foreground">
                                                                         {v.asesor_revisor.grado_academico
@@ -646,13 +659,13 @@ export default function AlumnoTesisAsesorIndex({
                                                         </div>
 
                                                         {/* Bloque 2: Comentario del Alumno y acceso al PDF */}
-                                                        <div className="flex flex-col justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-2xs">
+                                                        <div className="flex flex-col justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-2xs min-w-0">
                                                             <div>
                                                                 <p className="mb-1.5 font-semibold text-foreground">
                                                                     Tu nota de entrega
                                                                 </p>
                                                                 {v.comentario_alumno ? (
-                                                                    <p className="leading-relaxed whitespace-pre-line text-muted-foreground">
+                                                                    <p className="leading-relaxed whitespace-pre-line break-words text-muted-foreground">
                                                                         {v.comentario_alumno}
                                                                     </p>
                                                                 ) : (

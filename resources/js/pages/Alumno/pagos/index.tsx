@@ -112,9 +112,11 @@ export default function AlumnoPagosIndex({ pagos = [] }: Props) {
                                                                 </span>
                                                             )}
                                                             {esRechazado && pago.comentarios && (
-                                                                <span className="inline-flex items-center gap-1 text-[11px] text-red-600 dark:text-red-400 font-medium mt-1">
-                                                                    <AlertCircle className="size-3 shrink-0" />
-                                                                    Motivo de rechazo: {pago.comentarios}
+                                                                <span className="inline-flex items-start gap-1 text-[11px] text-red-600 dark:text-red-400 font-medium mt-1 max-w-md break-words">
+                                                                    <AlertCircle className="size-3 shrink-0 mt-0.5" />
+                                                                    <span className="break-words">
+                                                                        Motivo de rechazo: {pago.comentarios}
+                                                                    </span>
                                                                 </span>
                                                             )}
                                                         </div>

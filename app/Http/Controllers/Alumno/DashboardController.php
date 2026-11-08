@@ -212,6 +212,7 @@ class DashboardController extends Controller
             );
 
         return [
+            'proyecto' => $proyecto,
             'asesor' => $asesor,
             'revisores' => $revisores,
             'revisores_aprobados' => $revisoresAprobados,
@@ -430,6 +431,33 @@ class DashboardController extends Controller
             ];
         }
 
+        /** @var Proyecto|null $proyecto */
+        $proyecto = $contexto['proyecto'] ?? null;
+
+        if ($proyecto && ! $proyecto->estaAprobado()) {
+            if ($proyecto->estado === Proyecto::ESTADO_CON_CAMBIOS) {
+                return [
+                    'label' => 'Anteproyecto con cambios',
+                    'detalle' => 'Atiende observaciones de coordinación',
+                    'tono' => 'warning',
+                ];
+            }
+
+            if ($proyecto->fecha_envio || $proyecto->estado === Proyecto::ESTADO_EN_REVISION) {
+                return [
+                    'label' => 'Anteproyecto en revisión',
+                    'detalle' => 'Evaluación por coordinación',
+                    'tono' => 'info',
+                ];
+            }
+
+            return [
+                'label' => 'Anteproyecto en borrador',
+                'detalle' => 'Envía tu propuesta a revisión',
+                'tono' => 'neutral',
+            ];
+        }
+
         if ($contexto['revisores_con_cambios']
             || $contexto['estado_asesor']['estado'] === RevisionAsesor::ESTADO_CON_CAMBIOS) {
             return [
@@ -540,6 +568,30 @@ class DashboardController extends Controller
             ];
         }
 
+        /** @var Proyecto|null $proyecto */
+        $proyecto = $contexto['proyecto'] ?? null;
+
+        if ($proyecto && ! $proyecto->estaAprobado()) {
+            if ($proyecto->estado === Proyecto::ESTADO_CON_CAMBIOS) {
+                return $this->hitoPendiente(
+                    'Corregir anteproyecto',
+                    'Atiende las observaciones de coordinación',
+                );
+            }
+
+            if ($proyecto->fecha_envio || $proyecto->estado === Proyecto::ESTADO_EN_REVISION) {
+                return $this->hitoPendiente(
+                    'Dictamen de anteproyecto',
+                    'En revisión por coordinación',
+                );
+            }
+
+            return $this->hitoPendiente(
+                'Enviar anteproyecto a revisión',
+                'Completa y envía tu propuesta',
+            );
+        }
+
         if (! $contexto['asesor']) {
             return $this->hitoPendiente(
                 'Asignación de director de tesis',
@@ -608,6 +660,16 @@ class DashboardController extends Controller
     private function retroalimentacion(Proyecto $proyecto, array $contexto): array
     {
         $comentarios = [];
+
+        $observacionCoordinacion = trim((string) $proyecto->observaciones_coordinacion);
+        if ($observacionCoordinacion !== '') {
+            $comentarios[] = [
+                'autor' => 'Coordinación Académica',
+                'origen' => 'coordinacion',
+                'fecha' => $proyecto->updated_at ?? $proyecto->created_at ?? CarbonImmutable::now(),
+                'texto' => $observacionCoordinacion,
+            ];
+        }
 
         $versiones = VersionTesis::with('revisiones')
             ->where('id_proyecto', $proyecto->id_proyecto)
@@ -721,6 +783,26 @@ class DashboardController extends Controller
                 'detalle' => 'A las '.PresentacionExamen::horaLarga((string) $examen->hora_examen),
                 'estado' => $programado ? 'programada' : 'pendiente',
             ];
+        }
+
+        /** @var Proyecto|null $proyecto */
+        $proyecto = $contexto['proyecto'] ?? null;
+
+        if ($proyecto && ! $proyecto->estaAprobado()) {
+            $fechas[] = $this->fechaPendiente(
+                'anteproyecto',
+                $proyecto->estado === Proyecto::ESTADO_CON_CAMBIOS
+                    ? 'Corregir anteproyecto'
+                    : ($proyecto->fecha_envio || $proyecto->estado === Proyecto::ESTADO_EN_REVISION
+                        ? 'Dictamen de anteproyecto'
+                        : 'Enviar anteproyecto a revisión'),
+                'Académico',
+                $proyecto->estado === Proyecto::ESTADO_CON_CAMBIOS
+                    ? 'Atiende observaciones de coordinación'
+                    : ($proyecto->fecha_envio || $proyecto->estado === Proyecto::ESTADO_EN_REVISION
+                        ? 'En revisión por coordinación'
+                        : 'Completa y envía tu propuesta'),
+            );
         }
 
         if (! $contexto['asesor']) {

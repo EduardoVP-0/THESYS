@@ -64,7 +64,7 @@ interface ProximoHito {
 interface Retroalimentacion {
     total: number;
     autor: string | null;
-    origen: 'director' | 'revisor' | null;
+    origen: 'director' | 'revisor' | 'coordinacion' | null;
     fecha: string | null;
     texto: string | null;
 }
@@ -248,7 +248,10 @@ export default function AlumnoDashboard({
             : retroalimentacion.total > 0 &&
                 retroalimentacion.origen === 'revisor'
               ? tesisRevisoresIndex()
-              : null;
+              : retroalimentacion.total > 0 &&
+                  retroalimentacion.origen === 'coordinacion'
+                ? '/alumno/mi-anteproyecto'
+                : null;
 
     const tarjetaRetroalimentacion = (
         <Card className="h-full gap-0 rounded-xl border-border bg-card py-0 shadow-xs transition-colors hover:border-[#B8D4E3]">
@@ -271,7 +274,7 @@ export default function AlumnoDashboard({
                           }`
                         : 'Sin comentarios'}
                 </p>
-                <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
+                <p className="mt-0.5 line-clamp-2 break-words text-[11px] text-muted-foreground">
                     {retroalimentacion.autor
                         ? `De ${retroalimentacion.autor}`
                         : 'Aún no hay retroalimentación'}
@@ -321,7 +324,7 @@ export default function AlumnoDashboard({
                                 </div>
                             </div>
 
-                            <p className="mt-2 line-clamp-2 min-h-9 text-sm leading-snug font-bold text-foreground">
+                            <p className="mt-2 line-clamp-2 min-h-9 break-words text-sm leading-snug font-bold text-foreground">
                                 {proyecto?.titulo ?? 'Sin proyecto registrado'}
                             </p>
 
@@ -385,7 +388,7 @@ export default function AlumnoDashboard({
                             <p className="mt-2 text-sm leading-snug font-bold text-foreground">
                                 {proximoHito.etiqueta_fecha ?? 'Por definir'}
                             </p>
-                            <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
+                            <p className="mt-0.5 line-clamp-2 break-words text-[11px] text-muted-foreground">
                                 {proximoHito.titulo} · {proximoHito.detalle}
                             </p>
 
@@ -542,7 +545,7 @@ export default function AlumnoDashboard({
                                                         {item.titulo}
                                                     </p>
                                                     {item.descripcion && (
-                                                        <p className="line-clamp-1 text-[10px] text-muted-foreground">
+                                                        <p className="line-clamp-1 break-words text-[10px] text-muted-foreground">
                                                             {item.descripcion}
                                                         </p>
                                                     )}

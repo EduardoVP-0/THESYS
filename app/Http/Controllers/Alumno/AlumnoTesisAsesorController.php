@@ -123,8 +123,14 @@ class AlumnoTesisAsesorController extends Controller
         $motivoBloqueo = null;
         $reactivadoPorRevisores = false;
 
-        if (! $proyecto) {
+        if (! $proyecto || ! $proyecto->estaAprobado()) {
             $motivoBloqueo = 'Primero debes registrar y tener aprobado tu anteproyecto.';
+        } elseif ($proyecto->examen()->where('estado_examen', 'Realizado')->exists()) {
+            $motivoBloqueo = 'Tu examen profesional ya fue realizado. El expediente de tesis se encuentra cerrado.';
+            $estadoGlobal = 'Aprobado';
+        } elseif (FlujoRevisionTesis::tesisLiberadaPorComite($proyecto->id_proyecto)) {
+            $motivoBloqueo = '¡Felicidades! Tu tesis ya fue liberada por tu Director de Tesis y tus 2 Revisores.';
+            $estadoGlobal = 'Aprobado';
         } elseif (! $tieneAsesor) {
             $motivoBloqueo = 'No puedes subir versiones hasta tener un asesor asignado.';
         } elseif (! $ultimaVersion) {
@@ -196,8 +202,13 @@ class AlumnoTesisAsesorController extends Controller
 
         $proyecto = $alumno->proyectos()->latest('tblproyectos.id_proyecto')->first();
 
-        if (! $proyecto) {
-            return redirect()->back()->with('error', 'No cuentas con un proyecto registrado para subir versiones de tesis.');
+        if (! $proyecto || ! $proyecto->estaAprobado()) {
+            return redirect()->back()->with('error', 'Primero debes contar con tu anteproyecto aprobado para subir versiones de tesis.');
+        }
+
+        if ($proyecto->examen()->where('estado_examen', 'Realizado')->exists()
+            || FlujoRevisionTesis::tesisLiberadaPorComite($proyecto->id_proyecto)) {
+            return redirect()->back()->with('error', 'Tu tesis ya fue liberada por el comité revisor y no admite nuevas versiones.');
         }
 
         $asignacionAsesor = AsignacionAsesor::where('id_proyecto', $proyecto->id_proyecto)
