@@ -83,7 +83,7 @@ export function JuryStructure({
                 </p>
             )}
 
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 min-w-0">
                 {JURY_SLOTS.map((slot) => (
                     <JurySlotCard
                         key={slot.key}

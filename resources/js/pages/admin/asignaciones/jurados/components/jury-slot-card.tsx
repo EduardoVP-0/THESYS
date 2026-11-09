@@ -72,7 +72,7 @@ export function JurySlotCard({
     return (
         <div
             className={cn(
-                'rounded-xl border bg-card p-4 transition-colors',
+                'rounded-xl border bg-card p-4 transition-colors min-w-0 overflow-hidden',
                 value ? 'border-[#10B981]/35' : 'border-border',
                 error && 'border-destructive/50',
             )}
@@ -121,7 +121,7 @@ export function JurySlotCard({
                     <SelectTrigger
                         id={`jurado-${slot.key}`}
                         aria-invalid={Boolean(error)}
-                        className="h-9 w-full border-border bg-background text-sm"
+                        className="h-9 w-full border-border bg-background text-sm min-w-0 overflow-hidden *:data-[slot=select-value]:truncate *:data-[slot=select-value]:min-w-0"
                     >
                         <SelectValue
                             placeholder={
@@ -131,7 +131,7 @@ export function JurySlotCard({
                             }
                         />
                     </SelectTrigger>
-                    <SelectContent className="border-border bg-popover">
+                    <SelectContent className="border-border bg-popover max-h-60 max-w-[calc(100vw-3rem)]">
                         {opciones.map((docente) => {
                             const optionValue = String(docente.id_usuario);
                             const esAsesor = advisorIds.includes(
