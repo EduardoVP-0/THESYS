@@ -364,22 +364,15 @@ class JuradoDocenteController extends Controller
             $favor = $titulares
                 ->filter(fn (JuradoProyecto $m): bool => $m->dictamen?->voto === Dictamen::VOTO_A_FAVOR)
                 ->count();
-            $contra = $titulares
-                ->filter(fn (JuradoProyecto $m): bool => $m->dictamen?->voto === Dictamen::VOTO_EN_CONTRA)
-                ->count();
 
-            $resultadoFinal = match (true) {
-                $favor === 3 => ExamenProfesional::RESULTADO_APROBADO,
-                $favor > $contra => ExamenProfesional::RESULTADO_CON_OBSERVACIONES,
-                default => ExamenProfesional::RESULTADO_RECHAZADO,
-            };
+            $resultadoFinal = ExamenProfesional::resultadoPorVotos($favor);
 
             $examen->update([
                 'estado_examen' => ExamenProfesional::ESTADO_REALIZADO,
                 'resultado_final' => $resultadoFinal,
             ]);
 
-            if ($favor > $contra) {
+            if ($resultadoFinal === ExamenProfesional::RESULTADO_APROBADO) {
                 Alumno::query()
                     ->whereHas('proyectos', fn ($q) => $q->where('tblproyectos.id_proyecto', $jurado->id_proyecto))
                     ->where('estado_academico', 'Activo')

@@ -6,7 +6,6 @@ import {
     CalendarDays,
     CheckCircle2,
     ClipboardCheck,
-    Clock,
     Info,
     MapPin,
     ShieldCheck,
@@ -297,27 +296,22 @@ export default function AsignacionExamenesIndex({
                                                 *
                                             </span>
                                         </Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="hora_examen"
-                                                type="time"
-                                                value={data.hora_examen}
-                                                onChange={(event) =>
-                                                    setData(
-                                                        'hora_examen',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                disabled={
-                                                    formularioDeshabilitado
-                                                }
-                                                aria-invalid={Boolean(
-                                                    errors.hora_examen,
-                                                )}
-                                                className="h-10 border-border bg-background pr-10 text-sm"
-                                            />
-                                            <Clock className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                        </div>
+                                        <Input
+                                            id="hora_examen"
+                                            type="time"
+                                            value={data.hora_examen}
+                                            onChange={(event) =>
+                                                setData(
+                                                    'hora_examen',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            disabled={formularioDeshabilitado}
+                                            aria-invalid={Boolean(
+                                                errors.hora_examen,
+                                            )}
+                                            className="h-10 border-border bg-background text-sm"
+                                        />
                                         {errors.hora_examen && (
                                             <p className="flex items-center gap-1 text-[11px] font-medium text-destructive">
                                                 <AlertCircle className="size-3.5" />

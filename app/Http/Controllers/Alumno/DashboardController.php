@@ -190,7 +190,7 @@ class DashboardController extends Controller
         ) ?? $proyecto->asesores->first();
 
         $revisores = $proyecto->revisores()
-            ->wherePivot('estado_asignacion', 'Activo')
+            ->wherePivotIn('estado_asignacion', ['Activo', 'Finalizado'])
             ->withPivot('estado_revision', 'comentarios_revision', 'fecha_revision')
             ->get();
 

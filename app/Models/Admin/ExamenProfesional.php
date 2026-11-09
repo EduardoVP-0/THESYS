@@ -31,6 +31,8 @@ class ExamenProfesional extends Model
 
     public const RESULTADO_RECHAZADO = 'Rechazado';
 
+    public const VOTOS_MINIMOS_APROBACION = 2;
+
     protected $table = 'tblexamenes_profesionales';
 
     protected $primaryKey = 'id_examen';
@@ -48,6 +50,19 @@ class ExamenProfesional extends Model
     protected $casts = [
         'fecha_examen' => 'date:Y-m-d',
     ];
+
+    /**
+     * Determina el resultado final a partir de los votos a favor de los titulares.
+     *
+     * La mayoría de dos votos aprueba el examen; las observaciones se conservan
+     * en los dictámenes individuales sin modificar el resultado.
+     */
+    public static function resultadoPorVotos(int $votosAFavor): string
+    {
+        return $votosAFavor >= self::VOTOS_MINIMOS_APROBACION
+            ? self::RESULTADO_APROBADO
+            : self::RESULTADO_RECHAZADO;
+    }
 
     /**
      * Proyecto de tesis al que pertenece el examen.

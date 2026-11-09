@@ -7,6 +7,7 @@ import {
     ChevronRight,
     Clock3,
     Eye,
+    MessageSquareText,
     RotateCcw,
     Scale,
     Search,
@@ -465,12 +466,34 @@ export default function VeredictosIndex({
                                             </TableCell>
 
                                             <TableCell className="text-center">
-                                                <VeredictoBadge
-                                                    estado={veredicto.estado}
-                                                    estadoKey={
-                                                        veredicto.estado_key
-                                                    }
-                                                />
+                                                <div className="flex flex-col items-center gap-1.5">
+                                                    <VeredictoBadge
+                                                        estado={veredicto.estado}
+                                                        estadoKey={
+                                                            veredicto.estado_key
+                                                        }
+                                                    />
+                                                    {veredicto.observaciones_count > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                abrirDetalle(
+                                                                    veredicto,
+                                                                )
+                                                            }
+                                                            title="Consultar observaciones del jurado"
+                                                            className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 transition-colors hover:bg-amber-500/15 dark:text-amber-400"
+                                                        >
+                                                            <MessageSquareText className="size-3" />
+                                                            {
+                                                                veredicto.observaciones_count
+                                                            }{' '}
+                                                            {veredicto.observaciones_count === 1
+                                                                ? 'observación'
+                                                                : 'observaciones'}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </TableCell>
 
                                             <TableCell className="text-center">

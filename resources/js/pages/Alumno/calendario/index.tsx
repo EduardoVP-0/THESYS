@@ -8,6 +8,13 @@ import {
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { ESTILOS_TONO, ICONOS_EVENTO } from '@/lib/eventos';
 
 interface AlumnoInfo {
@@ -68,6 +75,8 @@ const DIAS_SEMANA = [
 
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
+const LIMITE_EVENTOS_VISIBLES = 3;
+
 const LEYENDA = [
     { tono: 'info', etiqueta: 'Registros' },
     { tono: 'success', etiqueta: 'Aprobaciones' },
@@ -85,7 +94,13 @@ function isoDelDia(anio: number, mes: number, dia: number): string {
     return `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
 }
 
-function TarjetaEvento({ evento }: { evento: Evento }) {
+function TarjetaEvento({
+    evento,
+    compacta = false,
+}: {
+    evento: Evento;
+    compacta?: boolean;
+}) {
     const estilos = ESTILOS_TONO[evento.tono] ?? ESTILOS_TONO.info;
     const Icono = ICONOS_EVENTO[evento.tipo] ?? CalendarDays;
 
@@ -103,11 +118,19 @@ function TarjetaEvento({ evento }: { evento: Evento }) {
                     >
                         {evento.etiqueta}
                     </span>
-                    <p className="mt-0.5 text-xs font-bold text-foreground break-words">
+                    <p
+                        className={`mt-0.5 text-xs font-bold text-foreground break-words ${
+                            compacta ? 'line-clamp-2' : ''
+                        }`}
+                    >
                         {evento.titulo}
                     </p>
                     {evento.descripcion && (
-                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground break-words">
+                        <p
+                            className={`mt-1 text-[11px] leading-relaxed text-muted-foreground break-words ${
+                                compacta ? 'line-clamp-2' : ''
+                            }`}
+                        >
                             {evento.descripcion}
                         </p>
                     )}
@@ -129,6 +152,7 @@ export default function CalendarioAcademicoIndex({
         () => new Date(hoyDate.getFullYear(), hoyDate.getMonth(), 1),
     );
     const [seleccionada, setSeleccionada] = useState(hoy);
+    const [modalEventosAbierto, setModalEventosAbierto] = useState(false);
 
     const eventosPorFecha = useMemo(() => {
         const mapa: Record<string, Evento[]> = {};
@@ -157,6 +181,8 @@ export default function CalendarioAcademicoIndex({
     const diaSemanaSeleccionado = DIAS_SEMANA[fechaSeleccionada.getDay()];
     const etiquetaSeleccionada = `${diaSel} de ${MESES[mesSel - 1]} de ${anioSel}`;
     const eventosDelDia = eventosPorFecha[seleccionada] ?? [];
+    const eventosVisibles = eventosDelDia.slice(0, LIMITE_EVENTOS_VISIBLES);
+    const eventosOcultos = eventosDelDia.length - eventosVisibles.length;
 
     const irMesAnterior = () => {
         setMes(
@@ -388,12 +414,32 @@ export default function CalendarioAcademicoIndex({
 
                                 <div className="mt-4 flex flex-col gap-2.5">
                                     {eventosDelDia.length > 0 ? (
-                                        eventosDelDia.map((evento) => (
-                                            <TarjetaEvento
-                                                key={evento.id}
-                                                evento={evento}
-                                            />
-                                        ))
+                                        <>
+                                            {eventosVisibles.map((evento) => (
+                                                <TarjetaEvento
+                                                    key={evento.id}
+                                                    evento={evento}
+                                                    compacta
+                                                />
+                                            ))}
+
+                                            {eventosOcultos > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setModalEventosAbierto(
+                                                            true,
+                                                        )
+                                                    }
+                                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+                                                >
+                                                    <CalendarDays className="size-3.5" />
+                                                    Ver los{' '}
+                                                    {eventosDelDia.length}{' '}
+                                                    eventos del día
+                                                </button>
+                                            )}
+                                        </>
                                     ) : (
                                         <div className="flex flex-col items-center gap-2 py-10 text-center">
                                             <CalendarX2 className="size-8 text-muted-foreground/60" />
@@ -413,6 +459,36 @@ export default function CalendarioAcademicoIndex({
                     </div>
                 )}
             </div>
+
+            <Dialog
+                open={modalEventosAbierto}
+                onOpenChange={setModalEventosAbierto}
+            >
+                <DialogContent className="max-h-[88vh] overflow-y-auto border-border bg-background p-5 sm:max-w-[620px]">
+                    <DialogHeader className="border-b border-border pr-6 pb-4 text-left">
+                        <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                            Historial de eventos
+                        </p>
+                        <DialogTitle className="text-lg font-bold text-foreground">
+                            {etiquetaSeleccionada}
+                        </DialogTitle>
+                        <DialogDescription className="text-[11px]">
+                            {eventosDelDia.length === 1
+                                ? '1 evento registrado para este día.'
+                                : `${eventosDelDia.length} eventos registrados para este día.`}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex flex-col gap-2.5">
+                        {eventosDelDia.map((evento) => (
+                            <TarjetaEvento
+                                key={evento.id}
+                                evento={evento}
+                            />
+                        ))}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

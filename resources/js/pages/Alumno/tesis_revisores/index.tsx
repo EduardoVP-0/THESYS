@@ -496,7 +496,8 @@ export default function AlumnoTesisRevisoresIndex({
                 )}
 
                 {/* ALERTA DE TIEMPO DE ENTREGA (se puede quitar con una X) */}
-                {showReminderBanner && (
+                {showReminderBanner &&
+                    controlCarga?.estado_global !== 'Aprobado' && (
                     <div className="flex items-center justify-between gap-3 rounded-xl border border-yellow-200 bg-[#fffbeb] p-4 text-sm text-yellow-800 dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-200">
                         <span>
                             {controlCarga?.tiene_revisores

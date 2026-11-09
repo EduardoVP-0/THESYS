@@ -54,7 +54,7 @@ class VeredictoController extends Controller
         $stats = [
             'total' => $todos->count(),
             'aprobados' => $todos->where('estado_key', 'aprobado')->count(),
-            'observaciones' => $todos->where('estado_key', 'observaciones')->count(),
+            'observaciones' => $todos->where('observaciones_count', '>', 0)->count(),
             'rechazados' => $todos->where('estado_key', 'rechazado')->count(),
             'por_resolver' => $todos
                 ->whereIn('estado_key', ['pendiente', 'revision'])
@@ -85,7 +85,12 @@ class VeredictoController extends Controller
                     })
                     ->values();
             })
-            ->when($estado !== 'todos', function (Collection $items) use ($estado): Collection {
+            ->when($estado === 'observaciones', function (Collection $items): Collection {
+                return $items
+                    ->where('observaciones_count', '>', 0)
+                    ->values();
+            })
+            ->when($estado !== 'todos' && $estado !== 'observaciones', function (Collection $items) use ($estado): Collection {
                 return $items
                     ->where('estado_key', $estado)
                     ->values();
@@ -136,6 +141,10 @@ class VeredictoController extends Controller
             ->filter(fn (JuradoProyecto $miembro): bool => $miembro->esTitular())
             ->values();
 
+        $observaciones = $jurados
+            ->filter(fn (JuradoProyecto $miembro): bool => trim((string) $miembro->dictamen?->observaciones) !== '')
+            ->count();
+
         $favor = $titulares
             ->filter(fn (JuradoProyecto $miembro): bool => $miembro->dictamen?->voto === Dictamen::VOTO_A_FAVOR)
             ->count();
@@ -150,22 +159,23 @@ class VeredictoController extends Controller
             ->filter(fn (JuradoProyecto $miembro): bool => $miembro->dictamen !== null)
             ->count();
 
-        if (
-            $emitidos === count(JuradoProyecto::CARGOS_TITULARES)
-            && ($examen->estado_examen !== ExamenProfesional::ESTADO_REALIZADO || empty($examen->resultado_final))
-        ) {
-            $resultadoSincronizado = match (true) {
-                $favor === 3 => ExamenProfesional::RESULTADO_APROBADO,
-                $favor > $contra => ExamenProfesional::RESULTADO_CON_OBSERVACIONES,
-                default => ExamenProfesional::RESULTADO_RECHAZADO,
-            };
+        $resultadoCalculado = $emitidos === count(JuradoProyecto::CARGOS_TITULARES)
+            ? ExamenProfesional::resultadoPorVotos($favor)
+            : null;
 
+        if (
+            $resultadoCalculado !== null
+            && (
+                $examen->estado_examen !== ExamenProfesional::ESTADO_REALIZADO
+                || $examen->resultado_final !== $resultadoCalculado
+            )
+        ) {
             $examen->update([
                 'estado_examen' => ExamenProfesional::ESTADO_REALIZADO,
-                'resultado_final' => $resultadoSincronizado,
+                'resultado_final' => $resultadoCalculado,
             ]);
 
-            if ($favor > $contra) {
+            if ($resultadoCalculado === ExamenProfesional::RESULTADO_APROBADO) {
                 Alumno::query()
                     ->whereHas('proyectos', fn ($q) => $q->where('tblproyectos.id_proyecto', $examen->id_proyecto))
                     ->where('estado_academico', 'Activo')
@@ -192,8 +202,6 @@ class VeredictoController extends Controller
         $estado = $this->calcularEstado(
             $examen->resultado_final,
             $favor,
-            $contra,
-            $abstencion,
             $emitidos,
         );
 
@@ -229,6 +237,7 @@ class VeredictoController extends Controller
                 'titulares' => $titulares->count(),
             ],
             'voto_resumen' => $votoResumen,
+            'observaciones_count' => $observaciones,
             'jurados' => $this->transformarJurados($jurados),
         ];
     }
@@ -272,41 +281,25 @@ class VeredictoController extends Controller
     private function calcularEstado(
         ?string $resultadoFinal,
         int $favor,
-        int $contra,
-        int $abstencion,
         int $emitidos,
     ): string {
+        if ($emitidos >= count(JuradoProyecto::CARGOS_TITULARES)) {
+            return ExamenProfesional::resultadoPorVotos($favor);
+        }
+
         if ($resultadoFinal !== null && trim($resultadoFinal) !== '') {
             $normalizado = mb_strtolower(Str::ascii(trim($resultadoFinal)));
 
             return match (true) {
-                str_contains($normalizado, 'observ') => 'Con observaciones',
                 str_contains($normalizado, 'rechaz') => 'Rechazado',
                 str_contains($normalizado, 'revision') => 'En revisión',
                 str_contains($normalizado, 'aprob') => 'Aprobado',
+                str_contains($normalizado, 'observ') => 'Aprobado',
                 default => $resultadoFinal,
             };
         }
 
-        if ($emitidos === 0) {
-            return 'Pendiente';
-        }
-
-        if ($emitidos < count(JuradoProyecto::CARGOS_TITULARES)) {
-            return 'En revisión';
-        }
-
-        if ($favor > $contra) {
-            return $contra === 0 && $abstencion === 0
-                ? 'Aprobado'
-                : 'Con observaciones';
-        }
-
-        if ($contra > $favor) {
-            return 'Rechazado';
-        }
-
-        return 'En revisión';
+        return $emitidos === 0 ? 'Pendiente' : 'En revisión';
     }
 
     /**

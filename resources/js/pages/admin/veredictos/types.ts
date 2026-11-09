@@ -52,6 +52,7 @@ export interface Veredicto {
     resultado_final: string | null;
     votos: VotosVeredicto;
     voto_resumen: string;
+    observaciones_count: number;
     jurados: JuradoVeredicto[];
 }
 

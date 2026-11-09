@@ -63,20 +63,9 @@ class RegistrarVotoJurado
         $favor = $jurados
             ->filter(fn (JuradoProyecto $jurado): bool => $jurado->dictamen?->voto === Dictamen::VOTO_A_FAVOR)
             ->count();
-        $contra = $jurados
-            ->filter(fn (JuradoProyecto $jurado): bool => $jurado->dictamen?->voto === Dictamen::VOTO_EN_CONTRA)
-            ->count();
-
-        $resultado = match (true) {
-            $favor > $contra => $favor === $jurados->count()
-                ? ExamenProfesional::RESULTADO_APROBADO
-                : ExamenProfesional::RESULTADO_CON_OBSERVACIONES,
-            $contra > $favor => ExamenProfesional::RESULTADO_RECHAZADO,
-            default => null,
-        };
 
         $examen->update([
-            'resultado_final' => $resultado,
+            'resultado_final' => ExamenProfesional::resultadoPorVotos($favor),
             'estado_examen' => ExamenProfesional::ESTADO_REALIZADO,
         ]);
     }

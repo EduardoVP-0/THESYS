@@ -17,7 +17,10 @@ beforeEach(function () {
 
 function crearAdminVeredictoTest(): User
 {
-    return User::factory()->create(['id_rol' => 1]);
+    return User::factory()->create([
+        'id_rol' => 1,
+        'estado' => true,
+    ]);
 }
 
 /**
@@ -30,6 +33,7 @@ function crearDocentesVeredictoTest(User $admin, int $cantidad = 5): array
             $docente = User::factory()->create([
                 'id_rol' => 4,
                 'name' => "Docente {$indice} ".Str::random(4),
+                'estado' => true,
             ]);
 
             DB::table('tbldocentes')->insert([
@@ -93,6 +97,7 @@ function crearProyectoConExamenVeredictoTest(
     $estudiante = User::factory()->create([
         'id_rol' => 5,
         'name' => 'Alumno '.Str::random(6),
+        'estado' => true,
     ]);
 
     DB::table('tblalumnos')->insert([
@@ -177,11 +182,19 @@ test('renders verdicts with aggregated titular votes and metrics', function () {
         'Tesis con observaciones',
         now()->subDays(2)->toDateString(),
     );
-    registrarVotoVeredictoTest($observado['jurados'][0], Dictamen::VOTO_A_FAVOR);
+    registrarVotoVeredictoTest(
+        $observado['jurados'][0],
+        Dictamen::VOTO_A_FAVOR,
+        'Cumple con los criterios metodológicos.',
+    );
     registrarVotoVeredictoTest($observado['jurados'][1], Dictamen::VOTO_A_FAVOR);
-    registrarVotoVeredictoTest($observado['jurados'][2], Dictamen::VOTO_EN_CONTRA);
+    registrarVotoVeredictoTest(
+        $observado['jurados'][2],
+        Dictamen::VOTO_EN_CONTRA,
+        'Se recomienda ampliar la bibliografía.',
+    );
     $observado['examen']->update([
-        'resultado_final' => ExamenProfesional::RESULTADO_CON_OBSERVACIONES,
+        'resultado_final' => ExamenProfesional::RESULTADO_APROBADO,
         'estado_examen' => ExamenProfesional::ESTADO_REALIZADO,
     ]);
 
@@ -207,7 +220,7 @@ test('renders verdicts with aggregated titular votes and metrics', function () {
     $response->assertInertia(fn (Assert $page) => $page
         ->component('admin/veredictos/index')
         ->where('stats.total', 4)
-        ->where('stats.aprobados', 1)
+        ->where('stats.aprobados', 2)
         ->where('stats.observaciones', 1)
         ->where('stats.por_resolver', 2)
         ->has('veredictos.data', 4)
@@ -215,8 +228,10 @@ test('renders verdicts with aggregated titular votes and metrics', function () {
         ->where('veredictos.data.0.voto_resumen', 'Pendiente')
         ->where('veredictos.data.1.estado_key', 'aprobado')
         ->where('veredictos.data.1.voto_resumen', '3 — 0')
-        ->where('veredictos.data.2.estado_key', 'observaciones')
+        ->where('veredictos.data.2.estado', 'Aprobado')
+        ->where('veredictos.data.2.estado_key', 'aprobado')
         ->where('veredictos.data.2.voto_resumen', '2 — 1')
+        ->where('veredictos.data.2.observaciones_count', 2)
         ->where('veredictos.data.3.estado_key', 'revision')
         ->where('veredictos.data.3.voto_resumen', '1 — 0')
         ->has('veredictos.data.0.jurados', 5)
@@ -234,8 +249,14 @@ test('filters verdicts by search term and status', function () {
         'Energías renovables en comunidades rurales',
         now()->subDay()->toDateString(),
     );
-    foreach (array_slice($aprobado['jurados'], 0, 3) as $jurado) {
-        registrarVotoVeredictoTest($jurado, Dictamen::VOTO_A_FAVOR);
+    foreach (array_slice($aprobado['jurados'], 0, 3) as $indice => $jurado) {
+        registrarVotoVeredictoTest(
+            $jurado,
+            Dictamen::VOTO_A_FAVOR,
+            $indice === 0
+                ? 'Observación sobre el alcance del proyecto.'
+                : null,
+        );
     }
     $aprobado['examen']->update([
         'resultado_final' => ExamenProfesional::RESULTADO_APROBADO,
@@ -269,10 +290,26 @@ test('filters verdicts by search term and status', function () {
         ->where('veredictos.data.0.id_examen', $pendiente['examen']->id_examen)
         ->where('filters.estado', 'pendiente')
     );
+
+    $porObservaciones = $this
+        ->actingAs($admin)
+        ->get(route('admin.veredictos.index', ['estado' => 'observaciones']));
+
+    $porObservaciones->assertOk();
+    $porObservaciones->assertInertia(fn (Assert $page) => $page
+        ->has('veredictos.data', 1)
+        ->where('veredictos.data.0.id_examen', $aprobado['examen']->id_examen)
+        ->where('veredictos.data.0.estado_key', 'aprobado')
+        ->where('veredictos.data.0.observaciones_count', 1)
+        ->where('filters.estado', 'observaciones')
+    );
 });
 
 test('forbids students from accessing verdict management', function () {
-    $student = User::factory()->create(['id_rol' => 5]);
+    $student = User::factory()->create([
+        'id_rol' => 5,
+        'estado' => true,
+    ]);
 
     $this->actingAs($student)
         ->get(route('admin.veredictos.index'))

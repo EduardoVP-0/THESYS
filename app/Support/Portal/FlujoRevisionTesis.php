@@ -102,7 +102,7 @@ class FlujoRevisionTesis
 
         $filas = DB::table('tblrevisores_proyectos')
             ->where('id_proyecto', $idProyecto)
-            ->where('estado_asignacion', 'Activo')
+            ->whereIn('estado_asignacion', ['Activo', 'Finalizado'])
             ->get(['estado_revision', 'fecha_revision', 'updated_at']);
 
         $estados = $filas->pluck('estado_revision')->all();

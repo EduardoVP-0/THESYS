@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Admin\Dictamen;
+use App\Models\Admin\ExamenProfesional;
 use App\Models\Admin\JuradoProyecto;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
@@ -15,7 +16,10 @@ beforeEach(function () {
 
 test('docentes are redirected to the docente dashboard', function () {
     /** @var TestCase $this */
-    $docente = User::factory()->create(['id_rol' => 4]);
+    $docente = User::factory()->create([
+        'id_rol' => 4,
+        'estado' => true,
+    ]);
 
     $this->actingAs($docente)
         ->get(route('dashboard'))
@@ -24,7 +28,10 @@ test('docentes are redirected to the docente dashboard', function () {
 
 test('non docentes cannot access the docente panel', function () {
     /** @var TestCase $this */
-    $alumno = User::factory()->create(['id_rol' => 5]);
+    $alumno = User::factory()->create([
+        'id_rol' => 5,
+        'estado' => true,
+    ]);
 
     $this->actingAs($alumno)
         ->get(route('docente.dashboard'))
@@ -33,7 +40,10 @@ test('non docentes cannot access the docente panel', function () {
 
 test('docente without jury assignment is not flagged as jurado', function () {
     /** @var TestCase $this */
-    $docente = User::factory()->create(['id_rol' => 4]);
+    $docente = User::factory()->create([
+        'id_rol' => 4,
+        'estado' => true,
+    ]);
 
     $this->actingAs($docente)
         ->get(route('docente.dashboard'))
@@ -46,7 +56,10 @@ test('docente without jury assignment is not flagged as jurado', function () {
 
 test('docente assigned as jury can view proyectos asignados and accept cargo', function () {
     /** @var TestCase $this */
-    $docente = User::factory()->create(['id_rol' => 4]);
+    $docente = User::factory()->create([
+        'id_rol' => 4,
+        'estado' => true,
+    ]);
 
     $projectId = DB::table('tblproyectos')->insertGetId([
         'titulo' => 'Proyecto de prueba',
@@ -88,7 +101,10 @@ test('docente assigned as jury can view proyectos asignados and accept cargo', f
 
 test('pending jury assignment is automatically rejected when exam date is reached', function () {
     /** @var TestCase $this */
-    $docente = User::factory()->create(['id_rol' => 4]);
+    $docente = User::factory()->create([
+        'id_rol' => 4,
+        'estado' => true,
+    ]);
 
     $projectId = DB::table('tblproyectos')->insertGetId([
         'titulo' => 'Proyecto con examen vencido',
@@ -131,7 +147,10 @@ test('pending jury assignment is automatically rejected when exam date is reache
 
 test('docente can emit vote in tbldictamenes and cannot vote twice', function () {
     /** @var TestCase $this */
-    $docente = User::factory()->create(['id_rol' => 4]);
+    $docente = User::factory()->create([
+        'id_rol' => 4,
+        'estado' => true,
+    ]);
 
     $projectId = DB::table('tblproyectos')->insertGetId([
         'titulo' => 'Proyecto para votación',
@@ -150,6 +169,16 @@ test('docente can emit vote in tbldictamenes and cannot vote twice', function ()
         'updated_at' => now(),
     ], 'id_jurado_proyecto');
 
+    DB::table('tblexamenes_profesionales')->insert([
+        'id_proyecto' => $projectId,
+        'fecha_examen' => now()->toDateString(),
+        'hora_examen' => '10:00:00',
+        'sede' => 'Sala Audiovisual',
+        'estado_examen' => ExamenProfesional::ESTADO_PROGRAMADO,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
     $this->actingAs($docente)
         ->post(route('docente.jurado.guardar-voto', $juradoId), [
             'voto' => Dictamen::VOTO_A_FAVOR,
@@ -159,4 +188,71 @@ test('docente can emit vote in tbldictamenes and cannot vote twice', function ()
 
     expect(DB::table('tbldictamenes')->where('id_jurado_proyecto', $juradoId)->value('voto'))
         ->toBe(Dictamen::VOTO_A_FAVOR);
+});
+
+test('two favorable votes approve the exam even when the third vote is against', function () {
+    /** @var TestCase $this */
+    $docentes = collect(['Presidente', 'Secretario', 'Vocal'])
+        ->map(fn (string $cargo): User => User::factory()->create([
+            'id_rol' => 4,
+            'estado' => true,
+            'name' => "Docente {$cargo}",
+        ]))
+        ->values();
+
+    $projectId = DB::table('tblproyectos')->insertGetId([
+        'titulo' => 'Proyecto para mayoría de votos',
+        'resumen' => 'Resumen de prueba',
+        'estado' => 'Aprobado',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ], 'id_proyecto');
+
+    $jurados = $docentes
+        ->map(function (User $docente, int $indice) use ($projectId): int {
+            return DB::table('tbljurados_proyectos')->insertGetId([
+                'id_usuario' => $docente->id,
+                'id_proyecto' => $projectId,
+                'cargo' => JuradoProyecto::CARGOS_TITULARES[$indice],
+                'estado_aceptacion' => JuradoProyecto::ESTADO_ACEPTADO,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ], 'id_jurado_proyecto');
+        })
+        ->values();
+
+    DB::table('tblexamenes_profesionales')->insert([
+        'id_proyecto' => $projectId,
+        'fecha_examen' => now()->toDateString(),
+        'hora_examen' => '10:00:00',
+        'sede' => 'Sala Audiovisual',
+        'estado_examen' => ExamenProfesional::ESTADO_PROGRAMADO,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->actingAs($docentes[0])
+        ->post(route('docente.jurado.guardar-voto', $jurados[0]), [
+            'voto' => Dictamen::VOTO_A_FAVOR,
+            'observaciones' => 'Cumple con los criterios del proyecto.',
+        ])
+        ->assertRedirect();
+
+    $this->actingAs($docentes[1])
+        ->post(route('docente.jurado.guardar-voto', $jurados[1]), [
+            'voto' => Dictamen::VOTO_A_FAVOR,
+        ])
+        ->assertRedirect();
+
+    $this->actingAs($docentes[2])
+        ->post(route('docente.jurado.guardar-voto', $jurados[2]), [
+            'voto' => Dictamen::VOTO_EN_CONTRA,
+            'observaciones' => 'Se recomienda ampliar la bibliografía.',
+        ])
+        ->assertRedirect();
+
+    expect(DB::table('tblexamenes_profesionales')->where('id_proyecto', $projectId)->value('resultado_final'))
+        ->toBe(ExamenProfesional::RESULTADO_APROBADO)
+        ->and(DB::table('tblexamenes_profesionales')->where('id_proyecto', $projectId)->value('estado_examen'))
+        ->toBe(ExamenProfesional::ESTADO_REALIZADO);
 });

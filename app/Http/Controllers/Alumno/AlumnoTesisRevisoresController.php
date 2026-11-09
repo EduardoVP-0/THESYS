@@ -53,20 +53,21 @@ class AlumnoTesisRevisoresController extends Controller
         $revisores = collect();
 
         if ($proyecto) {
-            // Revisores activos del proyecto ordenados por su registro en la
-            // tabla pivote para conservar las etiquetas Revisor 1 / Revisor 2.
+            // Revisores activos o finalizados del proyecto, ordenados por su
+            // registro en la tabla pivote para conservar las etiquetas
+            // Revisor 1 / Revisor 2 y el historial al concluir el proceso.
             $revisores = $proyecto->revisores()
                 ->with('user')
                 ->withPivot(
                     'id_revisor_proyecto',
+                    'estado_asignacion',
                     'estado_revision',
                     'comentarios_revision',
                     'fecha_revision',
                 )
+                ->wherePivotIn('estado_asignacion', ['Activo', 'Finalizado'])
                 ->orderBy('tblrevisores_proyectos.id_revisor_proyecto')
-                ->get()
-                ->filter(fn (Docente $docente) => $docente->pivot->estado_asignacion === 'Activo')
-                ->values();
+                ->get();
         }
 
         // Estado individual de cada revisor (columnas de tblrevisores_proyectos)

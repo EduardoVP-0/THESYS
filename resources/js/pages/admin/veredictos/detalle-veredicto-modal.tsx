@@ -2,6 +2,7 @@ import {
     CalendarDays,
     Clock3,
     MapPin,
+    MessageSquareText,
     Scale,
     UserRoundCheck,
 } from 'lucide-react';
@@ -173,6 +174,24 @@ export function DetalleVeredictoModal({
                         </p>
                     </div>
 
+                    {veredicto.observaciones_count > 0 && (
+                        <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3">
+                            <MessageSquareText className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                            <div>
+                                <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                                    {veredicto.observaciones_count}{' '}
+                                    {veredicto.observaciones_count === 1
+                                        ? 'observación registrada'
+                                        : 'observaciones registradas'}
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                    Consulta el texto y el autor en el detalle
+                                    de cada integrante del jurado.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <UserRoundCheck className="size-4 text-[#10B981]" />
@@ -242,9 +261,15 @@ function JuradoCard({ jurado }: { jurado: JuradoVeredicto }) {
             </div>
 
             {jurado.observaciones && (
-                <p className="mt-2 rounded-md bg-muted/40 px-2.5 py-2 text-xs whitespace-pre-line text-muted-foreground">
-                    {jurado.observaciones}
-                </p>
+                <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
+                    <span className="flex items-center gap-1 text-[10px] font-bold tracking-wider text-amber-700 uppercase dark:text-amber-400">
+                        <MessageSquareText className="size-3" />
+                        Observación
+                    </span>
+                    <p className="mt-1 text-xs whitespace-pre-line text-muted-foreground">
+                        {jurado.observaciones}
+                    </p>
+                </div>
             )}
         </div>
     );
