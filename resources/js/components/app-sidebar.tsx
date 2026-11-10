@@ -50,14 +50,12 @@ const alumnoNavItems: NavItem[] = [
         icon: BookType,
     },
     {
-        title: 'Mi Tesis (Director de Tesis)',
-        href: '/alumno/tesis-asesor',
+        title: 'Revisiones',
         icon: FilePenLine,
-    },
-    {
-        title: 'Mi Tesis (Revisores)',
-        href: '/alumno/mi-tesis',
-        icon: FilePenLine,
+        items: [
+            { title: 'Director de Tesis', href: '/alumno/tesis-asesor' },
+            { title: 'Sinodales', href: '/alumno/mi-tesis' },
+        ],
     },
     {
         title: 'Mi Jurado',
