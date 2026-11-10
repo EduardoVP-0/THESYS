@@ -153,6 +153,14 @@ class Alumno extends Model
     }
 
     /**
+     * Mensajes y solicitudes de prórroga del expediente del alumno
+     */
+    public function prorrogasExpediente(): HasMany
+    {
+        return $this->hasMany(ProrrogaExpediente::class, 'id_usuario', 'id_usuario')->oldest();
+    }
+
+    /**
      * Historial de pagos registrados para este alumno
      */
     public function pagos(): HasMany

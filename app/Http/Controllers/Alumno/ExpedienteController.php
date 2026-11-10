@@ -220,7 +220,7 @@ class ExpedienteController extends Controller
     public function verOficioDocumento(Request $request, OficioExpediente $oficio): SymfonyResponse
     {
         abort_unless(
-            (int) $oficio->id_alumno === (int) $request->user()->id,
+            (int) $oficio->id_usuario === (int) $request->user()->id,
             403,
             'No tienes permiso para consultar este oficio.'
         );
@@ -265,26 +265,45 @@ class ExpedienteController extends Controller
         ];
 
         $resolvedPath = null;
+        try {
+            foreach ($candidatePaths as $candidate) {
+                if ($s3->exists($candidate)) {
+                    $resolvedPath = $candidate;
+                    break;
+                }
+            }
+        } catch (\Throwable) {
+            $resolvedPath = null;
+        }
+
+        if ($resolvedPath !== null) {
+            return $s3->response(
+                $resolvedPath,
+                $filename,
+                [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="'.$filename.'"',
+                ]
+            );
+        }
+
+        $localDisk = Storage::disk('local');
         foreach ($candidatePaths as $candidate) {
-            if ($s3->exists($candidate)) {
-                $resolvedPath = $candidate;
-                break;
+            if ($localDisk->exists($candidate)) {
+                return $localDisk->response(
+                    $candidate,
+                    $filename,
+                    [
+                        'Content-Type' => 'application/pdf',
+                        'Content-Disposition' => 'inline; filename="'.$filename.'"',
+                    ]
+                );
             }
         }
 
-        abort_unless(
-            $resolvedPath !== null,
+        abort(
             404,
             "El archivo físico \"{$filename}\" no fue encontrado en el almacenamiento en la nube (carpeta esperada: {$defaultFolder}/)."
-        );
-
-        return $s3->response(
-            $resolvedPath,
-            $filename,
-            [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="'.$filename.'"',
-            ]
         );
     }
 }

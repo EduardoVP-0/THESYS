@@ -1,324 +1,624 @@
-import { useState } from 'react';
-import { Head } from '@inertiajs/react';
-import { 
-    CheckCircle2, 
-    PlayCircle, 
-    ChevronDown, 
+import { Head, router, usePage } from '@inertiajs/react';
+import {
+    AlertCircle,
+    CheckCircle2,
+    ChevronDown,
     ChevronUp,
-    FileText,
-    CloudUpload,
-    X,
-    Info,
     Clock,
+    CloudUpload,
+    Eye,
+    FileText,
+    Info,
+    Loader2,
     Lock,
     MessageSquare,
+    PlayCircle,
     Send,
-    AlertCircle,
-    Calendar,
-    Paperclip,
-    ShieldAlert
+    Unlock,
+    X,
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { 
-    Dialog, 
-    DialogContent, 
-    DialogDescription, 
-    DialogHeader, 
+import { Card, CardContent } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
     DialogTitle,
-    DialogFooter
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
-export default function MisDocumentosIndex() {
+interface DocumentoItem {
+    id_requisito: number;
+    clave: string;
+    title: string;
+    desc: string | null;
+    etapa: number;
+    obligatorio: boolean;
+    isSystem: boolean;
+    isAnteproyectoLink: boolean;
+    isUploaded: boolean;
+    id_oficio: number | null;
+    fileName: string;
+    estadoValidacion: string;
+    observaciones: string | null;
+    fechaSubida: string | null;
+    urlVisor: string | null;
+}
+
+interface MensajeChat {
+    id: number;
+    etapa: number;
+    emisor: 'alumno' | 'admin' | string;
+    nombre: string;
+    fecha: string;
+    mensaje: string;
+    estado: string;
+}
+
+interface Props {
+    documentosPorEtapa: {
+        etapa1: DocumentoItem[];
+        etapa2: DocumentoItem[];
+        etapa3: DocumentoItem[];
+        etapa4: DocumentoItem[];
+    };
+    resumen: {
+        total_requeridos: number;
+        total_subidos: number;
+        porcentaje: number;
+    };
+    historialChat: MensajeChat[];
+    flash?: {
+        success?: string;
+        error?: string;
+    };
+}
+
+export default function MisDocumentosIndex({
+    documentosPorEtapa,
+    resumen,
+    historialChat = [],
+    flash,
+}: Props) {
+    const { errors } = usePage().props as { errors?: Record<string, string> };
+
     const [openStage, setOpenStage] = useState<number | null>(1);
     const [prorrogaModalOpen, setProrrogaModalOpen] = useState(false);
-    const [selectedStageForProrroga, setSelectedStageForProrroga] = useState<string>('Etapa 1: Inicio de Titulación');
-    
-    // Estado simulado para el formulario / minichat de prórroga
+    const [selectedStageNumber, setSelectedStageNumber] = useState<number>(1);
+    const [selectedStageForProrroga, setSelectedStageForProrroga] = useState<string>(
+        'Etapa 1: El Arranque',
+    );
+
+    /*
+     * TODO (Validaciones futuras):
+     * Cuando se active el bloqueo automático por fecha_limite (60 días) y validación
+     * secuencial de etapas en base de datos, este estado vendrá directamente del servidor.
+     * Por ahora se deja desbloqueado por defecto para permitir subir documentos libremente
+     * durante la presentación, con opción de activar la vista previa del bloqueo.
+     */
+    const [simularPlazoVencidoEtapa1, setSimularPlazoVencidoEtapa1] = useState<boolean>(false);
+
+    const [uploadingRequisitoId, setUploadingRequisitoId] = useState<number | null>(null);
+    const [deletingOficioId, setDeletingOficioId] = useState<number | null>(null);
     const [motivoProrroga, setMotivoProrroga] = useState('');
-    const [historialChat, setHistorialChat] = useState([
-        {
-            emisor: 'admin',
-            nombre: 'Coordinación de Titulación',
-            fecha: '02/Nov/2026 10:30 AM',
-            mensaje: 'Atento aviso: Tu periodo de 60 días para completar la Etapa 1 ha vencido el 01/Nov/2026. La subida de documentos se encuentra temporalmente bloqueada. Si requieres prórroga reglamentaria, por favor envía tu justificación por este medio.'
-        }
-    ]);
+    const [enviandoProrroga, setEnviandoProrroga] = useState(false);
 
     const toggleStage = (stage: number) => {
         setOpenStage(openStage === stage ? null : stage);
     };
 
-    // Configuraciones de vigencia y bloqueo por etapa (simulado)
-    const etapasInfo = {
-        etapa1: {
-            diasRestantes: 0,
-            fechaLimite: '01/Nov/2026',
-            bloqueadaPorTiempo: true, // Simulación: bloqueada tras 60 días
-            estado: 'Plazo Vencido',
-        },
-        etapa2: {
-            diasRestantes: 0,
-            fechaLimite: 'Sin fecha asignada',
-            bloqueadaPorTiempo: false,
-            estado: 'Completada',
-        },
-        etapa3: {
-            diasRestantes: 20,
-            fechaLimite: '29/Nov/2026',
-            bloqueadaPorTiempo: false, // Activa en tiempo
-            estado: 'En revisión',
-        },
-        etapa4: {
-            diasRestantes: 45,
-            fechaLimite: '24/Dic/2026',
-            bloqueadaPorTiempo: false, // Pendiente / Activa
-            estado: 'Pendiente',
-        },
-        etapa5: {
-            diasRestantes: null,
-            fechaLimite: 'Sujeto a aprobación de expediente',
-            bloqueadaPorTiempo: false,
-            estado: 'Por programar',
+    const etapa1Docs = documentosPorEtapa?.etapa1 ?? [];
+    const etapa2Docs = documentosPorEtapa?.etapa2 ?? [];
+    const etapa3Docs = documentosPorEtapa?.etapa3 ?? [];
+    const etapa4Docs = documentosPorEtapa?.etapa4 ?? [];
+
+    const countUploaded = (docs: DocumentoItem[]) =>
+        docs.filter((d) => d.isUploaded).length;
+
+    const handleFileSelect = (idRequisito: number, file: File | undefined) => {
+        if (!file) {
+            return;
         }
+
+        setUploadingRequisitoId(idRequisito);
+
+        router.post(
+            '/alumno/mis-documentos',
+            {
+                id_requisito: idRequisito,
+                documento: file,
+            },
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                onFinish: () => setUploadingRequisitoId(null),
+            },
+        );
+    };
+
+    const handleEliminarArchivo = (idOficio: number | null) => {
+        if (!idOficio) {
+            return;
+        }
+
+        setDeletingOficioId(idOficio);
+
+        router.delete(`/alumno/mis-documentos/${idOficio}`, {
+            preserveScroll: true,
+            onFinish: () => setDeletingOficioId(null),
+        });
     };
 
     const handleEnviarSolicitud = () => {
-        if (!motivoProrroga.trim()) return;
-        
-        setHistorialChat([
-            ...historialChat,
+        if (!motivoProrroga.trim() || enviandoProrroga) {
+            return;
+        }
+
+        setEnviandoProrroga(true);
+
+        router.post(
+            '/alumno/mis-documentos/prorroga',
             {
-                emisor: 'alumno',
-                nombre: 'Tú (Sustentante)',
-                fecha: 'Hoy hace un momento',
-                mensaje: motivoProrroga
-            }
-        ]);
-        setMotivoProrroga('');
+                etapa: selectedStageNumber,
+                mensaje: motivoProrroga,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => setMotivoProrroga(''),
+                onFinish: () => setEnviandoProrroga(false),
+            },
+        );
     };
 
-    // Documentos Etapa 1: Arranque (Registro y Aprobación del Tema)
-    const etapa1Docs = [
-        { id: 'e1-1', title: 'Solicitud por escrito', desc: 'Dirigida al Director(a) de tu Facultad pidiendo titularte por la opción de Tesis (Art. 203 y 239).', isUploaded: true, fileName: 'solicitud_titulacion.pdf', isSystem: false },
-        { id: 'e1-2', title: 'Certificado de Estudios Profesionales', desc: 'Acredita que has cursado y aprobado el 100% de los créditos del plan de estudios (Art. 196).', isUploaded: true, fileName: 'certificado_100_creditos.pdf', isSystem: false },
-        { id: 'e1-3', title: 'Constancia de Liberación de Servicio Social', desc: 'Documento oficial con sello y firma que acredita el cumplimiento del servicio social (Art. 198).', isUploaded: false, fileName: '', isSystem: false },
-        { id: 'e1-4', title: 'Constancia de Buena Conducta', desc: 'Expedida por la Dirección o Coordinación de tu Unidad Académica (Art. 203).', isUploaded: false, fileName: '', isSystem: false },
-        { id: 'e1-5', title: 'Acta de Registro de Tema y Asesor', desc: 'Documento oficial emitido por la Facultad donde se aprueba tu tema y se designa a tu Director(a) (Art. 350, Fracc. I).', isUploaded: true, fileName: 'acta_registro_tema.pdf', isSystem: true },
-    ];
+    const FileUploadCard = ({
+        doc,
+        isStageBlocked = false,
+    }: {
+        doc: DocumentoItem;
+        isStageBlocked?: boolean;
+    }) => {
+        const inputRef = useRef<HTMLInputElement | null>(null);
+        const isUploading = uploadingRequisitoId === doc.id_requisito;
+        const isDeleting = doc.id_oficio !== null && deletingOficioId === doc.id_oficio;
 
-    // Documentos Etapa 2: Desarrollo y Originalidad
-    const etapa2Docs = [
-        { 
-            id: 'e2-1', 
-            title: 'Protocolo / Anteproyecto Registrado', 
-            desc: 'Documento inicial cargado y aprobado en el módulo "Mi Anteproyecto". Vinculado automáticamente a tu expediente.', 
-            isUploaded: true, 
-            fileName: 'anteproyecto_aprobado_oficial.pdf', 
-            isSystem: true,
-            isAnteproyectoLink: true 
-        },
-        { 
-            id: 'e2-2', 
-            title: 'Carta Protesta de Honestidad e Integridad', 
-            desc: 'Aceptación expresa de que el trabajo es inédito y original; si se detecta plagio se anula el grado (Art. 242, Fracc. XIII).', 
-            isUploaded: true, 
-            fileName: 'carta_protesta_firmada.pdf', 
-            isSystem: false,
-            isAnteproyectoLink: false 
-        },
-    ];
-
-    // Documentos Etapa 3: Revisión y Sinodales
-    const etapa3Docs = [
-        { id: 'e3-1', title: 'Acta de Revisión y Aprobación de Tesis', desc: 'Firmada por tu Director(a) o Comité Tutorial certificando que el trabajo cumple requisitos de fondo y forma (Art. 350, Fracc. II).', isUploaded: false, fileName: '', isSystem: false },
-        { id: 'e3-2', title: 'Oficios de Asignación del Jurado', desc: 'Designación oficial de los 5 integrantes del jurado (3 titulares y 2 suplentes: Presidente, Secretario y Vocales) (Art. 350, Fracc. III).', isUploaded: true, fileName: 'oficio_comision_jurado.pdf', isSystem: true },
-    ];
-
-    // Documentos Etapa 4: Expediente Final (Previo a la Defensa)
-    const etapa4Docs = [
-        { id: 'e4-1', title: 'Oficio de Entrega de Tesis en Digital', desc: 'Comprobante emitido por la Dirección de Desarrollo Bibliotecario al depositar la tesis en el repositorio (Art. 350, Fracc. V).', isUploaded: false, fileName: '', isSystem: false },
-        { id: 'e4-2', title: 'Constancia de No Adeudo de Biblioteca y Laboratorio', desc: 'Certifica que no tienes pendientes ni adeudos de libros, material o equipo institucional (Art. 350, Fracc. IV).', isUploaded: false, fileName: '', isSystem: false },
-        { id: 'e4-3', title: 'Comprobantes de Pago Oficiales', desc: 'Recibos de derechos de titulación, derecho a examen profesional y expedición de título (Art. 350, Fracc. VI).', isUploaded: false, fileName: '', isSystem: false },
-        { id: 'e4-4', title: 'Documentación adicional (Servicios Escolares)', desc: 'Acta de nacimiento actualizada, CURP, fotos tamaño título e identificación oficial INE (Art. 350, Fracc. VIII).', isUploaded: false, fileName: '', isSystem: false },
-        { id: 'e4-5', title: 'Acuse de Entrega de Ejemplares Impresos', desc: 'Constancia de entrega de los 3 a 5 ejemplares engargolados exigidos por tu Facultad para los sinodales.', isUploaded: false, fileName: '', isSystem: false },
-    ];
-
-    // Componente reutilizable para las tarjetas de subida
-    const FileUploadCard = ({ doc, isStageBlocked = false }: { doc: any, isStageBlocked?: boolean }) => (
-        <div className={`flex flex-col p-4 border rounded-lg shadow-sm transition-all ${
-            isStageBlocked && !doc.isUploaded ? 'opacity-75 bg-gray-50/80 border-gray-200' : 
-            doc.isSystem ? 'border-blue-200 bg-blue-50/20' : 'border-border bg-white'
-        }`}>
-            <div className="flex items-start gap-3 mb-4">
-                <div className={`p-2 rounded-md shrink-0 ${
-                    isStageBlocked && !doc.isUploaded ? 'bg-gray-200 text-gray-400' :
-                    doc.isSystem ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
-                }`}>
-                    <FileText className="w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-semibold text-foreground">{doc.title}</h4>
+        return (
+            <div
+                className={cn(
+                    'flex flex-col rounded-xl border p-4 shadow-xs transition-all',
+                    isStageBlocked && !doc.isUploaded
+                        ? 'border-border bg-muted/40 opacity-75'
+                        : doc.isSystem
+                          ? 'border-accent bg-accent/10 hover:bg-accent/20'
+                          : 'border-border bg-card hover:border-accent hover:bg-accent/10',
+                )}
+            >
+                <div className="mb-4 flex items-start gap-3">
+                    <div
+                        className={cn(
+                            'shrink-0 rounded-lg p-2',
+                            isStageBlocked && !doc.isUploaded
+                                ? 'bg-muted text-muted-foreground'
+                                : doc.isSystem
+                                  ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
+                                  : 'bg-muted text-muted-foreground',
+                        )}
+                    >
+                        <FileText className="size-5" />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{doc.desc}</p>
-                    {doc.isAnteproyectoLink ? (
-                        <span className="inline-block mt-2 text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
-                            Sincronizado de Mi Anteproyecto
-                        </span>
-                    ) : doc.isSystem ? (
-                        <span className="inline-block mt-2 text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                            Generado por el sistema
-                        </span>
-                    ) : null}
-                </div>
-            </div>
-
-            {/* ZONA DE SUBIDA */}
-            {doc.isAnteproyectoLink ? (
-                <div className="mt-auto flex items-center justify-between p-3 border border-emerald-200 bg-emerald-50/70 rounded-lg">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <div className="min-w-0">
-                            <span className="text-xs font-semibold text-emerald-900 truncate block" title={doc.fileName}>
-                                {doc.fileName}
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                            <h4 className="text-sm font-semibold text-foreground">
+                                {doc.title}
+                            </h4>
+                            {!doc.obligatorio && (
+                                <span className="shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                    Opcional
+                                </span>
+                            )}
+                        </div>
+                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                            {doc.desc}
+                        </p>
+                        {doc.isAnteproyectoLink ? (
+                            <span className="mt-2 inline-block rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                Sincronizado de Mi Anteproyecto
                             </span>
-                            <span className="text-[10px] text-emerald-700 block">Vinculado desde tu anteproyecto aprobado</span>
+                        ) : doc.isSystem ? (
+                            <span className="mt-2 inline-block rounded-full border border-blue-500/30 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-400">
+                                Generado / Emitido por Facultad
+                            </span>
+                        ) : null}
+                    </div>
+                </div>
+
+                {/* ZONA DE SUBIDA / VISUALIZACIÓN */}
+                {doc.isAnteproyectoLink ? (
+                    <div className="mt-auto flex items-center justify-between gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
+                        <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+                            <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                            <div className="min-w-0">
+                                <span
+                                    className="block truncate text-xs font-semibold text-foreground"
+                                    title={doc.fileName}
+                                >
+                                    {doc.fileName}
+                                </span>
+                                <span className="block text-[10px] text-muted-foreground">
+                                    Estado: {doc.estadoValidacion}
+                                </span>
+                            </div>
+                        </div>
+                        {doc.urlVisor ? (
+                            <a
+                                href={doc.urlVisor}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="shrink-0"
+                            >
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 cursor-pointer border-emerald-500/30 px-2.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
+                                >
+                                    <Eye className="mr-1 size-3.5" />
+                                    Ver PDF
+                                </Button>
+                            </a>
+                        ) : (
+                            <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                Pendiente en Anteproyecto
+                            </span>
+                        )}
+                    </div>
+                ) : doc.isUploaded ? (
+                    <div className="mt-auto flex items-center justify-between gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
+                        <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+                            <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                            <div className="min-w-0">
+                                <span
+                                    className="block truncate text-xs font-medium text-foreground"
+                                    title={doc.fileName}
+                                >
+                                    {doc.fileName}
+                                </span>
+                                {doc.fechaSubida && (
+                                    <span className="block text-[10px] text-muted-foreground">
+                                        Subido el {doc.fechaSubida}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                            {doc.urlVisor && (
+                                <a
+                                    href={doc.urlVisor}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 cursor-pointer border-emerald-500/30 px-2.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
+                                    >
+                                        <Eye className="mr-1 size-3.5" />
+                                        Ver
+                                    </Button>
+                                </a>
+                            )}
+                            {!isStageBlocked && (
+                                <button
+                                    type="button"
+                                    disabled={isDeleting}
+                                    onClick={() => handleEliminarArchivo(doc.id_oficio)}
+                                    className="cursor-pointer rounded p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+                                    title="Eliminar archivo para subir otro"
+                                >
+                                    {isDeleting ? (
+                                        <Loader2 className="size-4 animate-spin" />
+                                    ) : (
+                                        <X className="size-4" />
+                                    )}
+                                </button>
+                            )}
                         </div>
                     </div>
-                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-200/60 px-2 py-0.5 rounded shrink-0">
-                        Aprobado
-                    </span>
-                </div>
-            ) : doc.isUploaded ? (
-                <div className="mt-auto flex items-center justify-between p-3 border border-green-200 bg-green-50 rounded-lg">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                        <span className="text-xs font-medium text-green-800 truncate" title={doc.fileName}>
-                            {doc.fileName}
+                ) : isStageBlocked ? (
+                    <div className="mt-auto flex w-full cursor-not-allowed flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/40 p-4">
+                        <Lock className="mb-1.5 size-5 text-muted-foreground" />
+                        <span className="text-xs font-semibold text-muted-foreground">
+                            Entrega Bloqueada
+                        </span>
+                        <span className="mt-0.5 text-[10px] text-muted-foreground/80">
+                            Plazo vencido (Requiere prórroga)
                         </span>
                     </div>
-                    {!isStageBlocked && (
-                        <button className="text-green-700 hover:text-red-500 transition-colors p-1" title="Eliminar archivo">
-                            <X className="w-4 h-4" />
+                ) : (
+                    <>
+                        <input
+                            ref={inputRef}
+                            type="file"
+                            accept="application/pdf"
+                            className="hidden"
+                            onChange={(e) =>
+                                handleFileSelect(doc.id_requisito, e.target.files?.[0])
+                            }
+                        />
+                        <button
+                            type="button"
+                            disabled={isUploading}
+                            onClick={() => inputRef.current?.click()}
+                            className="group mt-auto flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-background/50 p-4 transition-all hover:border-accent hover:bg-accent/20 disabled:cursor-wait disabled:opacity-60"
+                        >
+                            {isUploading ? (
+                                <>
+                                    <Loader2 className="mb-2 size-6 animate-spin text-foreground" />
+                                    <span className="text-xs font-semibold text-foreground">
+                                        Subiendo a Supabase...
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    <CloudUpload className="mb-2 size-6 text-muted-foreground transition-colors group-hover:text-foreground" />
+                                    <span className="text-xs font-semibold text-muted-foreground transition-colors group-hover:text-foreground">
+                                        Haz clic para subir PDF
+                                    </span>
+                                    <span className="mt-1 text-[10px] text-muted-foreground">
+                                        PDF (Máx. 10MB) • Se guarda en tu Expediente
+                                    </span>
+                                </>
+                            )}
                         </button>
-                    )}
-                </div>
-            ) : isStageBlocked ? (
-                <div className="mt-auto flex flex-col items-center justify-center w-full p-4 border-2 border-dashed border-gray-200 bg-gray-100/60 rounded-lg cursor-not-allowed">
-                    <Lock className="w-5 h-5 text-gray-400 mb-1.5" />
-                    <span className="text-xs font-semibold text-gray-500">
-                        Entrega Bloqueada
-                    </span>
-                    <span className="text-[10px] text-gray-400 mt-0.5">Plazo vencido (Requiere prórroga)</span>
-                </div>
-            ) : (
-                <button className="mt-auto flex flex-col items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/50 rounded-lg transition-all group cursor-pointer">
-                    <CloudUpload className="w-6 h-6 text-gray-400 group-hover:text-blue-500 mb-2" />
-                    <span className="text-xs font-semibold text-gray-600 group-hover:text-blue-600">
-                        Haz clic para subir
-                    </span>
-                    <span className="text-[10px] text-gray-400 mt-1">PDF (Máx. 10MB)</span>
-                </button>
-            )}
-        </div>
-    );
+                    </>
+                )}
+            </div>
+        );
+    };
 
     return (
         <>
             <Head title="Mis Documentos" />
 
-            <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 bg-background text-foreground">
+            <div className="flex min-h-screen flex-1 flex-col gap-6 bg-background p-4 text-foreground md:p-6">
+                {/* ALERTAS FLASH Y ERRORES */}
+                {flash?.success && (
+                    <div className="flex animate-in items-center gap-2 rounded-xl border border-emerald-500/30 border-l-4 border-l-[#10B981] bg-emerald-500/10 px-4 py-2.5 text-sm text-foreground shadow-xs duration-300 fade-in-50">
+                        <CheckCircle2 className="size-4 shrink-0 text-[#10B981]" />
+                        <span className="font-medium">{flash.success}</span>
+                    </div>
+                )}
+
+                {(flash?.error || errors?.documento || errors?.mensaje) && (
+                    <div className="flex animate-in items-center gap-2 rounded-xl border border-red-500/30 border-l-4 border-l-red-500 bg-red-500/10 px-4 py-2.5 text-sm text-foreground shadow-xs duration-300 fade-in-50">
+                        <AlertCircle className="size-4 shrink-0 text-red-500" />
+                        <span className="font-medium">
+                            {flash?.error || errors?.documento || errors?.mensaje}
+                        </span>
+                    </div>
+                )}
+
                 {/* ENCABEZADO */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+                        <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight text-foreground">
                             MIS DOCUMENTOS
                         </h1>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Consulta los requisitos de cada etapa y carga tus documentos para avanzar hacia tu examen de grado.
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Consulta los requisitos de cada etapa y carga tus documentos oficiales para integrarlos a tu Expediente Digital.
                         </p>
+                    </div>
+
+                    {/* Botón demostrativo para alternar bloqueo de 2 meses o abrir minichat de prórroga */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                                setSimularPlazoVencidoEtapa1(!simularPlazoVencidoEtapa1)
+                            }
+                            className="cursor-pointer rounded-xl border-border bg-card text-xs text-foreground hover:border-accent hover:bg-accent/20"
+                        >
+                            {simularPlazoVencidoEtapa1 ? (
+                                <>
+                                    <Unlock className="mr-1.5 size-3.5 text-emerald-500" />
+                                    Desbloquear Etapa 1
+                                </>
+                            ) : (
+                                <>
+                                    <Lock className="mr-1.5 size-3.5 text-amber-500" />
+                                    Simular Plazo Vencido (60 días)
+                                </>
+                            )}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setSelectedStageNumber(1);
+                                setSelectedStageForProrroga('Etapa 1: El Arranque');
+                                setProrrogaModalOpen(true);
+                            }}
+                            className="cursor-pointer rounded-xl border-border bg-card text-xs text-foreground hover:border-accent hover:bg-accent/20"
+                        >
+                            <MessageSquare className="mr-1.5 size-3.5 text-amber-500" />
+                            Minichat de Prórroga
+                        </Button>
                     </div>
                 </div>
 
                 {/* PROGRESO DE LOS DOCUMENTOS */}
-                <Card className="border-border shadow-sm">
+                <Card className="rounded-2xl border-border bg-card shadow-xs">
                     <CardContent className="p-6">
                         <div className="flex flex-col gap-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h2 className="text-lg font-semibold text-foreground">Avance Integral de Titulación</h2>
-                                    <p className="text-sm text-muted-foreground">Progreso general a través de las 5 etapas reglamentarias de la UNACH.</p>
+                                    <h2 className="text-lg font-semibold text-foreground">
+                                        Avance Integral de Titulación
+                                    </h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Progreso calculado con los {resumen?.total_requeridos ?? 14} documentos de las etapas reglamentarias ({resumen?.total_subidos ?? 0} registrados).
+                                    </p>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-2xl font-bold text-blue-600">55%</span>
-                                    <span className="text-sm text-muted-foreground block">completado</span>
+                                    <span className="text-2xl font-bold text-[#10B981]">
+                                        {resumen?.porcentaje ?? 0}%
+                                    </span>
+                                    <span className="block text-sm text-muted-foreground">
+                                        completado
+                                    </span>
                                 </div>
                             </div>
 
-                            <div className="w-full bg-gray-200 rounded-full h-3">
-                                <div 
-                                    className="bg-blue-500 h-3 rounded-full transition-all duration-500" 
-                                    style={{ width: '55%' }}
-                                ></div>
+                            <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+                                <div
+                                    className="h-3 rounded-full bg-[#10B981] transition-all duration-500"
+                                    style={{ width: `${resumen?.porcentaje ?? 0}%` }}
+                                />
                             </div>
 
                             {/* TARJETAS RESUMEN DE LAS 5 ETAPAS */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mt-2">
-                                <div className="flex flex-col p-3 border border-amber-200 rounded-xl bg-amber-50/40">
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-[11px] font-bold text-amber-700">1</span>
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full flex items-center gap-1 border border-amber-200">
-                                            <Lock className="w-2.5 h-2.5" /> Bloqueado
+                            <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                                <button
+                                    type="button"
+                                    onClick={() => setOpenStage(1)}
+                                    className={cn(
+                                        'flex cursor-pointer flex-col rounded-xl border p-3 text-left transition-all',
+                                        openStage === 1
+                                            ? 'border-accent bg-accent/20 ring-2 ring-accent'
+                                            : 'border-border bg-card hover:border-accent hover:bg-accent/20',
+                                    )}
+                                >
+                                    <div className="mb-1.5 flex items-center justify-between">
+                                        <span className="flex size-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-foreground">
+                                            1
+                                        </span>
+                                        {simularPlazoVencidoEtapa1 ? (
+                                            <span className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+                                                <Lock className="size-2.5" /> Bloqueado
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                                <PlayCircle className="size-2.5" /> Abierta
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h4 className="text-xs font-semibold text-foreground">
+                                        1. Arranque
+                                    </h4>
+                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                        {countUploaded(etapa1Docs)} de {etapa1Docs.length} docs
+                                    </p>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setOpenStage(2)}
+                                    className={cn(
+                                        'flex cursor-pointer flex-col rounded-xl border p-3 text-left transition-all',
+                                        openStage === 2
+                                            ? 'border-accent bg-accent/20 ring-2 ring-accent'
+                                            : 'border-border bg-card hover:border-accent hover:bg-accent/20',
+                                    )}
+                                >
+                                    <div className="mb-1.5 flex items-center justify-between">
+                                        <span className="flex size-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-foreground">
+                                            2
+                                        </span>
+                                        <span className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-400">
+                                            <PlayCircle className="size-2.5" /> Abierta
                                         </span>
                                     </div>
-                                    <h4 className="text-xs font-semibold text-foreground">1. Arranque</h4>
-                                    <p className="text-[11px] text-muted-foreground mt-0.5">3 de 5 docs</p>
-                                </div>
+                                    <h4 className="text-xs font-semibold text-foreground">
+                                        2. Desarrollo
+                                    </h4>
+                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                        {countUploaded(etapa2Docs)} de {etapa2Docs.length} docs
+                                    </p>
+                                </button>
 
-                                <div className="flex flex-col p-3 border border-emerald-200 rounded-xl bg-emerald-50/40">
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-700">2</span>
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full flex items-center gap-1">
-                                            <CheckCircle2 className="w-2.5 h-2.5" /> Lista
+                                <button
+                                    type="button"
+                                    onClick={() => setOpenStage(3)}
+                                    className={cn(
+                                        'flex cursor-pointer flex-col rounded-xl border p-3 text-left transition-all',
+                                        openStage === 3
+                                            ? 'border-accent bg-accent/20 ring-2 ring-accent'
+                                            : 'border-border bg-card hover:border-accent hover:bg-accent/20',
+                                    )}
+                                >
+                                    <div className="mb-1.5 flex items-center justify-between">
+                                        <span className="flex size-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-foreground">
+                                            3
+                                        </span>
+                                        <span className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-400">
+                                            <PlayCircle className="size-2.5" /> Abierta
                                         </span>
                                     </div>
-                                    <h4 className="text-xs font-semibold text-foreground">2. Desarrollo</h4>
-                                    <p className="text-[11px] text-muted-foreground mt-0.5">2 de 2 docs</p>
-                                </div>
+                                    <h4 className="text-xs font-semibold text-foreground">
+                                        3. Revisión
+                                    </h4>
+                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                        {countUploaded(etapa3Docs)} de {etapa3Docs.length} docs
+                                    </p>
+                                </button>
 
-                                <div className="flex flex-col p-3 border border-blue-200 rounded-xl bg-blue-50/50">
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-[11px] font-bold text-blue-700">3</span>
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full flex items-center gap-1">
-                                            <PlayCircle className="w-2.5 h-2.5" /> Activa
+                                <button
+                                    type="button"
+                                    onClick={() => setOpenStage(4)}
+                                    className={cn(
+                                        'flex cursor-pointer flex-col rounded-xl border p-3 text-left transition-all',
+                                        openStage === 4
+                                            ? 'border-accent bg-accent/20 ring-2 ring-accent'
+                                            : 'border-border bg-card hover:border-accent hover:bg-accent/20',
+                                    )}
+                                >
+                                    <div className="mb-1.5 flex items-center justify-between">
+                                        <span className="flex size-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-foreground">
+                                            4
+                                        </span>
+                                        <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                            Exp. Final
                                         </span>
                                     </div>
-                                    <h4 className="text-xs font-semibold text-foreground">3. Revisión</h4>
-                                    <p className="text-[11px] text-muted-foreground mt-0.5">1 de 2 docs</p>
-                                </div>
+                                    <h4 className="text-xs font-semibold text-foreground">
+                                        4. Exp. Final
+                                    </h4>
+                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                        {countUploaded(etapa4Docs)} de {etapa4Docs.length} docs
+                                    </p>
+                                </button>
 
-                                <div className="flex flex-col p-3 border border-border rounded-xl bg-gray-50/60">
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-[11px] font-bold text-gray-600">4</span>
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
-                                            Pendiente
+                                <button
+                                    type="button"
+                                    onClick={() => setOpenStage(5)}
+                                    className={cn(
+                                        'flex cursor-pointer flex-col rounded-xl border p-3 text-left transition-all',
+                                        openStage === 5
+                                            ? 'border-accent bg-accent/20 ring-2 ring-accent'
+                                            : 'border-border bg-card hover:border-accent hover:bg-accent/20',
+                                    )}
+                                >
+                                    <div className="mb-1.5 flex items-center justify-between">
+                                        <span className="flex size-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-foreground">
+                                            5
                                         </span>
-                                    </div>
-                                    <h4 className="text-xs font-semibold text-foreground">4. Exp. Final</h4>
-                                    <p className="text-[11px] text-muted-foreground mt-0.5">0 de 5 docs</p>
-                                </div>
-
-                                <div className="flex flex-col p-3 border border-border rounded-xl bg-gray-50/60">
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-[11px] font-bold text-gray-600">5</span>
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">
+                                        <span className="rounded-full border border-purple-500/30 bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:text-purple-400">
                                             Defensa
                                         </span>
                                     </div>
-                                    <h4 className="text-xs font-semibold text-foreground">5. Examen</h4>
-                                    <p className="text-[11px] text-muted-foreground mt-0.5">Protocolo oral</p>
-                                </div>
+                                    <h4 className="text-xs font-semibold text-foreground">
+                                        5. Examen
+                                    </h4>
+                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                        Protocolo oral
+                                    </p>
+                                </button>
                             </div>
                         </div>
                     </CardContent>
@@ -326,62 +626,93 @@ export default function MisDocumentosIndex() {
 
                 {/* SECCIÓN: ACORDEONES DE LAS ETAPAS */}
                 <div className="flex flex-col gap-4">
-                    
                     {/* ETAPA 1: EL ARRANQUE */}
-                    <div className="border border-border rounded-xl bg-white overflow-hidden shadow-sm">
-                        <button 
+                    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+                        <button
+                            type="button"
                             onClick={() => toggleStage(1)}
-                            className="w-full flex items-center justify-between p-5 bg-gray-50 hover:bg-gray-100 transition-colors"
+                            className="flex w-full cursor-pointer items-center justify-between p-5 text-left transition-colors hover:bg-accent/20"
                         >
                             <div className="flex items-center gap-3">
-                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-sm font-bold text-amber-700">
-                                    <Lock className="w-4 h-4" />
+                                <span
+                                    className={cn(
+                                        'flex size-8 items-center justify-center rounded-full text-sm font-bold',
+                                        simularPlazoVencidoEtapa1
+                                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                            : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+                                    )}
+                                >
+                                    {simularPlazoVencidoEtapa1 ? (
+                                        <Lock className="size-4" />
+                                    ) : (
+                                        '1'
+                                    )}
                                 </span>
-                                <div className="text-left">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-semibold text-lg text-foreground">Etapa 1: El Arranque (Registro y Aprobación del Tema)</h3>
-                                        <span className="text-[11px] font-semibold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
-                                            Plazo vencido (2 meses)
-                                        </span>
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h3 className="text-base font-semibold text-foreground sm:text-lg">
+                                            Etapa 1: El Arranque (Registro y Aprobación del Tema)
+                                        </h3>
+                                        {simularPlazoVencidoEtapa1 ? (
+                                            <span className="rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                                                Plazo vencido (2 meses)
+                                            </span>
+                                        ) : (
+                                            <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                                {countUploaded(etapa1Docs)} de {etapa1Docs.length} entregados
+                                            </span>
+                                        )}
                                     </div>
-                                    <p className="text-sm text-muted-foreground">Solicitud formal de tesis, certificado de estudios y liberación de servicio social.</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Solicitud formal de tesis, certificado de estudios y liberación de servicio social.
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
-                                {openStage === 1 ? <ChevronUp className="w-6 h-6 text-gray-500" /> : <ChevronDown className="w-6 h-6 text-gray-500" />}
+                                {openStage === 1 ? (
+                                    <ChevronUp className="size-5 text-muted-foreground" />
+                                ) : (
+                                    <ChevronDown className="size-5 text-muted-foreground" />
+                                )}
                             </div>
                         </button>
 
                         {openStage === 1 && (
-                            <div className="p-5 border-t border-border bg-white flex flex-col gap-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-amber-50/70 border border-amber-200 rounded-xl text-amber-900">
-                                    <div className="flex items-start gap-3">
-                                        <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                                        <div>
-                                            <h4 className="text-sm font-semibold text-amber-900">El tiempo reglamentario de entrega ha finalizado</h4>
-                                            <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                                                Han transcurrido más de 60 días desde la habilitación de esta etapa. Puedes solicitar una prórroga con justificación a Coordinación.
-                                            </p>
+                            <div className="flex flex-col gap-4 border-t border-border bg-card p-5">
+                                {simularPlazoVencidoEtapa1 && (
+                                    <div className="flex flex-col justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 sm:flex-row sm:items-center">
+                                        <div className="flex items-start gap-3">
+                                            <Clock className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-foreground">
+                                                    El tiempo reglamentario de entrega ha finalizado
+                                                </h4>
+                                                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                                                    Han transcurrido más de 60 días desde la habilitación de esta etapa. Puedes solicitar una prórroga con justificación a Coordinación.
+                                                </p>
+                                            </div>
                                         </div>
+                                        <Button
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedStageNumber(1);
+                                                setSelectedStageForProrroga('Etapa 1: El Arranque');
+                                                setProrrogaModalOpen(true);
+                                            }}
+                                            className="shrink-0 cursor-pointer gap-2 bg-amber-600 text-xs font-semibold text-white shadow-xs hover:bg-amber-700"
+                                        >
+                                            <MessageSquare className="size-4" />
+                                            Solicitar Prórroga
+                                        </Button>
                                     </div>
-                                    <Button 
-                                        onClick={() => {
-                                            setSelectedStageForProrroga('Etapa 1: El Arranque');
-                                            setProrrogaModalOpen(true);
-                                        }}
-                                        className="bg-amber-600 hover:bg-amber-700 text-white shrink-0 text-xs font-semibold gap-2 shadow-xs cursor-pointer"
-                                    >
-                                        <MessageSquare className="w-4 h-4" />
-                                        Solicitar Prórroga
-                                    </Button>
-                                </div>
+                                )}
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     {etapa1Docs.map((doc) => (
-                                        <FileUploadCard 
-                                            key={doc.id} 
-                                            doc={doc} 
-                                            isStageBlocked={etapasInfo.etapa1.bloqueadaPorTiempo} 
+                                        <FileUploadCard
+                                            key={doc.id_requisito}
+                                            doc={doc}
+                                            isStageBlocked={simularPlazoVencidoEtapa1}
                                         />
                                     ))}
                                 </div>
@@ -390,37 +721,44 @@ export default function MisDocumentosIndex() {
                     </div>
 
                     {/* ETAPA 2: EL DESARROLLO */}
-                    <div className="border border-border rounded-xl bg-white overflow-hidden shadow-sm">
-                        <button 
+                    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+                        <button
+                            type="button"
                             onClick={() => toggleStage(2)}
-                            className="w-full flex items-center justify-between p-5 bg-emerald-50/20 hover:bg-emerald-50/40 transition-colors"
+                            className="flex w-full cursor-pointer items-center justify-between p-5 text-left transition-colors hover:bg-accent/20"
                         >
                             <div className="flex items-center gap-3">
-                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">2</span>
-                                <div className="text-left">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-semibold text-lg text-foreground">Etapa 2: El Desarrollo (Elaboración de la Tesis)</h3>
-                                        <span className="text-[11px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
-                                            Requisitos cubiertos
+                                <span className="flex size-8 items-center justify-center rounded-full bg-emerald-500/15 text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                                    2
+                                </span>
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h3 className="text-base font-semibold text-foreground sm:text-lg">
+                                            Etapa 2: El Desarrollo (Elaboración de la Tesis)
+                                        </h3>
+                                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                            {countUploaded(etapa2Docs)} de {etapa2Docs.length} entregados
                                         </span>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">Documento escrito inédito (Art. 212) y carta protesta de honestidad e integridad académica.</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Protocolo sincronizado de Mi Anteproyecto y carta protesta de honestidad e integridad académica.
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
-                                {openStage === 2 ? <ChevronUp className="w-6 h-6 text-gray-500" /> : <ChevronDown className="w-6 h-6 text-gray-500" />}
+                                {openStage === 2 ? (
+                                    <ChevronUp className="size-5 text-muted-foreground" />
+                                ) : (
+                                    <ChevronDown className="size-5 text-muted-foreground" />
+                                )}
                             </div>
                         </button>
 
                         {openStage === 2 && (
-                            <div className="p-5 border-t border-border bg-white">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="border-t border-border bg-card p-5">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     {etapa2Docs.map((doc) => (
-                                        <FileUploadCard 
-                                            key={doc.id} 
-                                            doc={doc} 
-                                            isStageBlocked={etapasInfo.etapa2.bloqueadaPorTiempo} 
-                                        />
+                                        <FileUploadCard key={doc.id_requisito} doc={doc} />
                                     ))}
                                 </div>
                             </div>
@@ -428,37 +766,44 @@ export default function MisDocumentosIndex() {
                     </div>
 
                     {/* ETAPA 3: LA REVISIÓN */}
-                    <div className="border border-border rounded-xl bg-white overflow-hidden shadow-sm">
-                        <button 
+                    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+                        <button
+                            type="button"
                             onClick={() => toggleStage(3)}
-                            className="w-full flex items-center justify-between p-5 bg-blue-50/30 hover:bg-blue-50/60 transition-colors"
+                            className="flex w-full cursor-pointer items-center justify-between p-5 text-left transition-colors hover:bg-accent/20"
                         >
                             <div className="flex items-center gap-3">
-                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-sm font-bold text-blue-700">3</span>
-                                <div className="text-left">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-semibold text-lg text-foreground">Etapa 3: La Revisión (Aprobación del Trabajo)</h3>
-                                        <span className="text-[11px] font-semibold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full border border-blue-200">
-                                            Vigente ({etapasInfo.etapa3.diasRestantes} días restantes)
+                                <span className="flex size-8 items-center justify-center rounded-full bg-blue-500/15 text-sm font-bold text-blue-600 dark:text-blue-400">
+                                    3
+                                </span>
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h3 className="text-base font-semibold text-foreground sm:text-lg">
+                                            Etapa 3: La Revisión (Aprobación del Trabajo)
+                                        </h3>
+                                        <span className="rounded-full border border-blue-500/30 bg-blue-500/15 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:text-blue-400">
+                                            {countUploaded(etapa3Docs)} de {etapa3Docs.length} entregados
                                         </span>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">Acta de aprobación del Comité Tutorial y designación oficial del jurado sinodal.</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Acta de aprobación del Comité Tutorial y designación oficial del jurado sinodal.
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
-                                {openStage === 3 ? <ChevronUp className="w-6 h-6 text-gray-500" /> : <ChevronDown className="w-6 h-6 text-gray-500" />}
+                                {openStage === 3 ? (
+                                    <ChevronUp className="size-5 text-muted-foreground" />
+                                ) : (
+                                    <ChevronDown className="size-5 text-muted-foreground" />
+                                )}
                             </div>
                         </button>
 
                         {openStage === 3 && (
-                            <div className="p-5 border-t border-border bg-white">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="border-t border-border bg-card p-5">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     {etapa3Docs.map((doc) => (
-                                        <FileUploadCard 
-                                            key={doc.id} 
-                                            doc={doc} 
-                                            isStageBlocked={etapasInfo.etapa3.bloqueadaPorTiempo} 
-                                        />
+                                        <FileUploadCard key={doc.id_requisito} doc={doc} />
                                     ))}
                                 </div>
                             </div>
@@ -466,37 +811,44 @@ export default function MisDocumentosIndex() {
                     </div>
 
                     {/* ETAPA 4: EL EXPEDIENTE FINAL */}
-                    <div className="border border-border rounded-xl bg-white overflow-hidden shadow-sm">
-                        <button 
+                    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+                        <button
+                            type="button"
                             onClick={() => toggleStage(4)}
-                            className="w-full flex items-center justify-between p-5 bg-gray-50/70 hover:bg-gray-100 transition-colors"
+                            className="flex w-full cursor-pointer items-center justify-between p-5 text-left transition-colors hover:bg-accent/20"
                         >
                             <div className="flex items-center gap-3">
-                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-sm font-bold text-gray-700">4</span>
-                                <div className="text-left">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-semibold text-lg text-foreground">Etapa 4: El Expediente Final (Trámites previos al Examen)</h3>
-                                        <span className="text-[11px] font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
-                                            Integración de carpeta
+                                <span className="flex size-8 items-center justify-center rounded-full bg-muted text-sm font-bold text-foreground">
+                                    4
+                                </span>
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h3 className="text-base font-semibold text-foreground sm:text-lg">
+                                            Etapa 4: El Expediente Final (Trámites previos al Examen)
+                                        </h3>
+                                        <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                                            {countUploaded(etapa4Docs)} de {etapa4Docs.length} entregados
                                         </span>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">Entrega digital a biblioteca, constancias de no adeudo, cuotas de pago y documentos de Servicios Escolares.</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Entrega digital a biblioteca, constancias de no adeudo, cuotas de pago y documentos de Servicios Escolares.
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
-                                {openStage === 4 ? <ChevronUp className="w-6 h-6 text-gray-500" /> : <ChevronDown className="w-6 h-6 text-gray-500" />}
+                                {openStage === 4 ? (
+                                    <ChevronUp className="size-5 text-muted-foreground" />
+                                ) : (
+                                    <ChevronDown className="size-5 text-muted-foreground" />
+                                )}
                             </div>
                         </button>
 
                         {openStage === 4 && (
-                            <div className="p-5 border-t border-border bg-white">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="border-t border-border bg-card p-5">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     {etapa4Docs.map((doc) => (
-                                        <FileUploadCard 
-                                            key={doc.id} 
-                                            doc={doc} 
-                                            isStageBlocked={etapasInfo.etapa4.bloqueadaPorTiempo} 
-                                        />
+                                        <FileUploadCard key={doc.id_requisito} doc={doc} />
                                     ))}
                                 </div>
                             </div>
@@ -504,51 +856,71 @@ export default function MisDocumentosIndex() {
                     </div>
 
                     {/* ETAPA 5: LA DEFENSA (EXAMEN PROFESIONAL) */}
-                    <div className="border border-purple-200 rounded-xl bg-purple-50/20 overflow-hidden shadow-sm">
-                        <button 
+                    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+                        <button
+                            type="button"
                             onClick={() => toggleStage(5)}
-                            className="w-full flex items-center justify-between p-5 bg-purple-50/40 hover:bg-purple-50/70 transition-colors"
+                            className="flex w-full cursor-pointer items-center justify-between p-5 text-left transition-colors hover:bg-accent/20"
                         >
                             <div className="flex items-center gap-3">
-                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-sm font-bold text-purple-700">5</span>
-                                <div className="text-left">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-semibold text-lg text-foreground">Etapa 5: La Defensa (Examen Profesional y Toma de Protesta)</h3>
-                                        <span className="text-[11px] font-semibold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full border border-purple-200">
+                                <span className="flex size-8 items-center justify-center rounded-full bg-purple-500/15 text-sm font-bold text-purple-600 dark:text-purple-400">
+                                    5
+                                </span>
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h3 className="text-base font-semibold text-foreground sm:text-lg">
+                                            Etapa 5: La Defensa (Examen Profesional y Toma de Protesta)
+                                        </h3>
+                                        <span className="rounded-full border border-purple-500/30 bg-purple-500/15 px-2 py-0.5 text-[11px] font-semibold text-purple-700 dark:text-purple-400">
                                             Acto protocolario
                                         </span>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">Exposición oral de la tesis (90 min), deliberación del jurado y firma del acta oficial (Art. 214).</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Exposición oral de la tesis (90 min), deliberación del jurado y firma del acta oficial (Art. 214).
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
-                                {openStage === 5 ? <ChevronUp className="w-6 h-6 text-gray-500" /> : <ChevronDown className="w-6 h-6 text-gray-500" />}
+                                {openStage === 5 ? (
+                                    <ChevronUp className="size-5 text-muted-foreground" />
+                                ) : (
+                                    <ChevronDown className="size-5 text-muted-foreground" />
+                                )}
                             </div>
                         </button>
 
                         {openStage === 5 && (
-                            <div className="p-5 border-t border-purple-200/60 bg-white">
-                                <div className="p-4 rounded-xl border border-purple-200 bg-purple-50/30 flex items-start gap-3">
-                                    <Info className="w-5 h-5 text-purple-600 mt-0.5 shrink-0" />
-                                    <div className="space-y-1 text-xs text-purple-900 leading-relaxed">
-                                        <p className="font-semibold text-sm">Criterios de la Defensa Oral:</p>
-                                        <p>• Esta etapa se programa una vez validado al 100% el expediente de la Etapa 4 por Servicios Escolares.</p>
-                                        <p>• La réplica oral tiene una duración máxima de 90 minutos ante los 3 sinodales titulares.</p>
-                                        <p>• Una vez aprobado el examen, el acta de examen profesional y el título oficial se emiten conforme al Artículo 199 del Estatuto.</p>
+                            <div className="border-t border-border bg-card p-5">
+                                <div className="flex items-start gap-3 rounded-xl border border-purple-500/30 bg-purple-500/10 p-4">
+                                    <Info className="mt-0.5 size-5 shrink-0 text-purple-600 dark:text-purple-400" />
+                                    <div className="space-y-1 text-xs leading-relaxed text-foreground">
+                                        <p className="text-sm font-semibold">
+                                            Criterios de la Defensa Oral:
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                            • Esta etapa se programa una vez validado al 100% el expediente de la Etapa 4 por Servicios Escolares.
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                            • La réplica oral tiene una duración máxima de 90 minutos ante los 3 sinodales titulares.
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                            • Una vez aprobado el examen, el acta de examen profesional y el título oficial se emiten conforme al Artículo 199 del Estatuto.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
                         )}
                     </div>
-
                 </div>
 
-                {/* AVISO NORMATIVO (Minimalista) */}
-                <div className="flex items-start gap-3 p-5 bg-gray-50 border border-gray-200 rounded-xl mt-4">
-                    <Info className="w-5 h-5 mt-0.5 shrink-0 text-gray-400" />
+                {/* AVISO NORMATIVO (Minimalista, compatible con modo oscuro/claro) */}
+                <div className="mt-2 flex items-start gap-3 rounded-2xl border border-border bg-card p-5 shadow-xs">
+                    <Info className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
                     <div>
-                        <h4 className="text-sm font-semibold text-foreground">Aviso Normativo (Artículos 212 y 214)</h4>
-                        <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                        <h4 className="text-sm font-semibold text-foreground">
+                            Aviso Normativo (Artículos 212 y 214)
+                        </h4>
+                        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                             La tesis debe ser un producto académico original e inédito. Puede ser de autoría individual o colectiva (máximo 2 personas). Su extensión y formato deben sujetarse a los criterios establecidos por tu Facultad. Asegúrate de entregar los ejemplares impresos y digitales que se te soliciten.
                         </p>
                     </div>
@@ -556,49 +928,57 @@ export default function MisDocumentosIndex() {
 
                 {/* MODAL / MINICHAT DE SOLICITUD DE PRÓRROGA */}
                 <Dialog open={prorrogaModalOpen} onOpenChange={setProrrogaModalOpen}>
-                    <DialogContent className="sm:max-w-[580px] w-[95vw] max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-2xl">
-                        <DialogHeader className="p-6 pb-4 bg-muted/30 border-b border-border shrink-0">
+                    <DialogContent className="flex max-h-[90vh] w-[95vw] flex-col overflow-hidden rounded-2xl border-border bg-card p-0 text-foreground sm:max-w-[580px]">
+                        <DialogHeader className="shrink-0 border-b border-border bg-muted/30 p-6 pb-4">
                             <div className="flex items-center gap-2.5">
-                                <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
+                                <div className="rounded-lg bg-amber-500/15 p-2 text-amber-600 dark:text-amber-400">
                                     <MessageSquare className="size-5" />
                                 </div>
                                 <div>
                                     <DialogTitle className="text-lg font-bold text-foreground">
                                         Solicitud de Prórroga
                                     </DialogTitle>
-                                    <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                                    <DialogDescription className="mt-0.5 text-xs text-muted-foreground">
                                         {selectedStageForProrroga} • Coordinación de Titulación
                                     </DialogDescription>
                                 </div>
                             </div>
                         </DialogHeader>
 
-                        <div className="p-6 overflow-y-auto flex-1 space-y-4 min-h-0">
+                        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
                             {/* Alerta informativa */}
-                            <div className="p-3 rounded-lg bg-blue-50/70 border border-blue-200 text-blue-900 text-xs flex items-start gap-2.5">
-                                <Info className="size-4 text-blue-600 shrink-0 mt-0.5" />
-                                <p>
+                            <div className="flex items-start gap-2.5 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-xs text-foreground">
+                                <Info className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                                <p className="text-muted-foreground">
                                     Explica el motivo por el cual no pudiste cargar tu documentación en los 2 meses fijados. El Administrador revisará tu mensaje y decidirá si otorga días adicionales para reactivar tus entregas.
                                 </p>
                             </div>
 
                             {/* HILO DE CONVERSACIÓN / MINICHAT */}
-                            <div className="border border-border rounded-xl p-4 bg-muted/15 max-h-[240px] overflow-y-auto space-y-3">
+                            <div className="max-h-[240px] space-y-3 overflow-y-auto rounded-xl border border-border bg-muted/20 p-4">
                                 {historialChat.map((msg, index) => (
-                                    <div 
-                                        key={index} 
-                                        className={`flex flex-col ${msg.emisor === 'alumno' ? 'items-end' : 'items-start'}`}
+                                    <div
+                                        key={msg.id ?? index}
+                                        className={cn(
+                                            'flex flex-col',
+                                            msg.emisor === 'alumno' ? 'items-end' : 'items-start',
+                                        )}
                                     >
-                                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-1 px-1">
-                                            <span className="font-semibold text-foreground">{msg.nombre}</span>
+                                        <div className="mb-1 flex items-center gap-1.5 px-1 text-[10px] text-muted-foreground">
+                                            <span className="font-semibold text-foreground">
+                                                {msg.nombre}
+                                            </span>
                                             <span>•</span>
                                             <span>{msg.fecha}</span>
                                         </div>
-                                        <div className={`p-3 rounded-2xl text-xs max-w-[85%] leading-relaxed break-words whitespace-pre-wrap ${
-                                            msg.emisor === 'alumno' 
-                                                ? 'bg-blue-600 text-white rounded-tr-xs' 
-                                                : 'bg-white border border-border text-foreground rounded-tl-xs shadow-2xs'
-                                        }`}>
+                                        <div
+                                            className={cn(
+                                                'max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed break-words whitespace-pre-wrap',
+                                                msg.emisor === 'alumno'
+                                                    ? 'rounded-tr-xs bg-[#10B981] text-white'
+                                                    : 'rounded-tl-xs border border-border bg-card text-foreground shadow-2xs',
+                                            )}
+                                        >
                                             {msg.mensaje}
                                         </div>
                                     </div>
@@ -617,40 +997,47 @@ export default function MisDocumentosIndex() {
                                 </div>
                                 <textarea
                                     value={motivoProrroga}
-                                    onChange={(e) => setMotivoProrroga(e.target.value.slice(0, 1000))}
+                                    onChange={(e) =>
+                                        setMotivoProrroga(e.target.value.slice(0, 1000))
+                                    }
                                     placeholder="Escribe detalladamente tu situación (ej. retraso de constancia laboral/servicio social, incapacidad, etc.)..."
-                                    className="w-full text-xs p-3 rounded-lg border border-border bg-background focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none h-28 max-h-36 overflow-y-auto break-words"
+                                    className="h-28 max-h-36 w-full resize-none overflow-y-auto rounded-xl border border-border bg-background p-3 text-xs text-foreground outline-none break-words focus:border-accent focus:ring-2 focus:ring-accent"
                                 />
                             </div>
                         </div>
 
-                        <DialogFooter className="p-4 bg-muted/20 border-t border-border flex sm:justify-between items-center gap-2 shrink-0">
-                            <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                        <DialogFooter className="flex shrink-0 items-center gap-2 border-t border-border bg-muted/20 p-4 sm:justify-between">
+                            <span className="hidden text-[11px] text-muted-foreground sm:inline">
                                 Respuesta estimada: 24 a 48 hrs hábiles
                             </span>
-                            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                                <Button 
-                                    variant="outline" 
+                            <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+                                <Button
+                                    type="button"
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => setProrrogaModalOpen(false)}
-                                    className="text-xs cursor-pointer"
+                                    className="cursor-pointer rounded-xl border-border bg-background text-xs text-foreground hover:bg-accent/40"
                                 >
                                     Cerrar
                                 </Button>
-                                <Button 
+                                <Button
+                                    type="button"
                                     size="sm"
                                     onClick={handleEnviarSolicitud}
-                                    disabled={!motivoProrroga.trim()}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs gap-1.5 cursor-pointer"
+                                    disabled={!motivoProrroga.trim() || enviandoProrroga}
+                                    className="cursor-pointer gap-1.5 rounded-xl bg-[#10B981] text-xs font-semibold text-white hover:bg-[#059669] disabled:opacity-50"
                                 >
-                                    <Send className="size-3.5" />
+                                    {enviandoProrroga ? (
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                    ) : (
+                                        <Send className="size-3.5" />
+                                    )}
                                     Enviar Mensaje
                                 </Button>
                             </div>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-
             </div>
         </>
     );
@@ -669,4 +1056,3 @@ MisDocumentosIndex.layout = {
         },
     ],
 };
-

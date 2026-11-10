@@ -62,6 +62,7 @@ class DatabaseSeeder extends Seeder
             OficiosOficialesSeeder::class,
             AnteproyectoSeeder::class,
             ConceptosPagosSeeder::class,
+            RequisitosDocumentosSeeder::class,
         ]);
     }
 }

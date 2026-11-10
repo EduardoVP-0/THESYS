@@ -146,6 +146,9 @@ Route::middleware(['auth', 'verified', 'role:5'])
         MODULO DE MIS DOCUMENTOS (SUSTENTANTE)
         */
         Route::get('/mis-documentos', [AlumnoDocumentoController::class, 'index'])->name('documentos.index');
+        Route::post('/mis-documentos', [AlumnoDocumentoController::class, 'store'])->name('documentos.store');
+        Route::delete('/mis-documentos/{oficio}', [AlumnoDocumentoController::class, 'destroy'])->name('documentos.destroy');
+        Route::post('/mis-documentos/prorroga', [AlumnoDocumentoController::class, 'enviarProrroga'])->name('documentos.prorroga');
 
         /*
         MODULO DE OFICIOS OFICIALES (SUSTENTANTE)
