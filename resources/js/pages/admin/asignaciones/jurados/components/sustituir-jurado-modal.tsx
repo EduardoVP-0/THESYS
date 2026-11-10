@@ -211,14 +211,14 @@ export function SustituirJuradoModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl bg-card border-border text-foreground">
-                <DialogHeader>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+            <DialogContent className="w-full sm:max-w-xl md:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden bg-card border-border text-foreground p-4 sm:p-6">
+                <DialogHeader className="text-left pr-6 sm:pr-8">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0">
                             <RefreshCw className="size-5" />
                         </div>
-                        <div>
-                            <DialogTitle className="text-xl font-bold">
+                        <div className="min-w-0 flex-1">
+                            <DialogTitle className="text-lg sm:text-xl font-bold leading-tight">
                                 Sustitución de Integrante del Jurado
                             </DialogTitle>
                             <DialogDescription className="text-xs text-muted-foreground mt-0.5">
@@ -229,27 +229,27 @@ export function SustituirJuradoModal({
                 </DialogHeader>
 
                 {proyecto && (
-                    <div className="rounded-xl border border-border bg-muted/20 p-3.5 text-xs flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between gap-2">
-                            <span className="font-semibold text-foreground flex items-center gap-1.5">
-                                <GraduationCap className="size-3.5 text-[#10B981]" />
-                                Tesista: {sustentantesTexto}
+                    <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-3.5 text-xs flex flex-col gap-1.5 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 min-w-0">
+                            <span className="font-semibold text-foreground flex items-center gap-1.5 min-w-0">
+                                <GraduationCap className="size-3.5 text-[#10B981] shrink-0" />
+                                <span className="truncate">Tesista: {sustentantesTexto}</span>
                             </span>
                             {proyecto.sustentantes[0]?.matricula && (
-                                <span className="font-mono text-muted-foreground">
+                                <span className="font-mono text-muted-foreground shrink-0 text-[11px]">
                                     Matrícula: {proyecto.sustentantes[0].matricula}
                                 </span>
                             )}
                         </div>
-                        <p className="text-muted-foreground truncate" title={proyecto.titulo}>
+                        <p className="text-muted-foreground line-clamp-2 break-words min-w-0" title={proyecto.titulo}>
                             <span className="font-medium text-foreground">Tesis:</span> {proyecto.titulo}
                         </p>
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-1">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-1 min-w-0">
                     {/* PASO 1: Docente a sustituir */}
-                    <div className="grid gap-1.5">
+                    <div className="grid gap-1.5 min-w-0">
                         <Label htmlFor="id_jurado_rechazado" className="text-xs font-semibold">
                             1. Integrante a sustituir (que rechazó la designación)
                         </Label>
@@ -263,11 +263,11 @@ export function SustituirJuradoModal({
                         >
                             <SelectTrigger
                                 id="id_jurado_rechazado"
-                                className="h-10 bg-background border-border text-sm"
+                                className="h-10 w-full bg-background border-border text-sm min-w-0"
                             >
                                 <SelectValue placeholder="Selecciona al integrante que rechazó" />
                             </SelectTrigger>
-                            <SelectContent className="bg-popover border-border">
+                            <SelectContent className="bg-popover border-border max-h-60 max-w-[calc(100vw-3rem)]">
                                 {miembrosJurado.map((miembro) => {
                                     const esRechazado = miembro.estado_aceptacion
                                         .toLowerCase()
@@ -277,38 +277,42 @@ export function SustituirJuradoModal({
                                             key={miembro.id_jurado_proyecto}
                                             value={String(miembro.id_jurado_proyecto)}
                                         >
-                                            <span className="font-semibold text-foreground">
-                                                {miembro.cargo}: {miembro.docente.nombre_completo}
-                                            </span>
-                                            <span
-                                                className={`ml-2 text-xs font-medium px-1.5 py-0.5 rounded ${
-                                                    esRechazado
-                                                        ? 'bg-red-500/15 text-red-600 dark:text-red-400'
-                                                        : 'bg-muted text-muted-foreground'
-                                                }`}
-                                            >
-                                                {miembro.estado_aceptacion}
-                                            </span>
+                                            <div className="flex items-center justify-between gap-2 w-full min-w-0">
+                                                <span className="font-semibold text-foreground truncate">
+                                                    {miembro.cargo}: {miembro.docente.nombre_completo}
+                                                </span>
+                                                <span
+                                                    className={`shrink-0 text-xs font-medium px-1.5 py-0.5 rounded ${
+                                                        esRechazado
+                                                            ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                                                            : 'bg-muted text-muted-foreground'
+                                                    }`}
+                                                >
+                                                    {miembro.estado_aceptacion}
+                                                </span>
+                                            </div>
                                         </SelectItem>
                                     );
                                 })}
                             </SelectContent>
                         </Select>
                         {errors.id_jurado_rechazado && (
-                            <p className="text-[11px] font-medium text-destructive flex items-center gap-1">
-                                <AlertCircle className="size-3.5" />
-                                {errors.id_jurado_rechazado}
+                            <p className="text-[11px] font-medium text-destructive flex items-center gap-1 min-w-0">
+                                <AlertCircle className="size-3.5 shrink-0" />
+                                <span>{errors.id_jurado_rechazado}</span>
                             </p>
                         )}
                     </div>
 
                     {/* PASO 2: Si es titular, elegir qué suplente asciende */}
                     {esTitular && miembroSeleccionado && (
-                        <div className="rounded-xl border border-blue-500/25 bg-blue-500/5 p-4 flex flex-col gap-3">
-                            <div>
-                                <Label htmlFor="id_suplente_promovido" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                                    <ArrowRight className="size-3.5 text-blue-600 dark:text-blue-400" />
-                                    2. Suplente que asumirá la titularidad ({miembroSeleccionado.cargo})
+                        <div className="rounded-xl border border-blue-500/25 bg-blue-500/5 p-3.5 sm:p-4 flex flex-col gap-3 min-w-0">
+                            <div className="min-w-0">
+                                <Label htmlFor="id_suplente_promovido" className="text-xs font-semibold text-foreground flex items-center gap-1.5 min-w-0">
+                                    <ArrowRight className="size-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                                    <span className="truncate">
+                                        2. Suplente que asumirá la titularidad ({miembroSeleccionado.cargo})
+                                    </span>
                                 </Label>
                                 <p className="text-[11px] text-muted-foreground mt-0.5">
                                     Elige cuál de los suplentes vigentes pasa a ser {miembroSeleccionado.cargo}.
@@ -325,13 +329,13 @@ export function SustituirJuradoModal({
                             >
                                 <SelectTrigger
                                     id="id_suplente_promovido"
-                                    className="h-10 bg-background border-border text-sm"
+                                    className="h-10 w-full bg-background border-border text-sm min-w-0"
                                 >
                                     <SelectValue placeholder="Selecciona al suplente que ascenderá" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-popover border-border">
+                                <SelectContent className="bg-popover border-border max-h-60 max-w-[calc(100vw-3rem)]">
                                     <SelectItem value="directo">
-                                        <span className="font-semibold text-[#10B981]">
+                                        <span className="font-semibold text-[#10B981] truncate">
                                             Reemplazo directo en {miembroSeleccionado.cargo} (sin mover suplentes)
                                         </span>
                                     </SelectItem>
@@ -346,14 +350,16 @@ export function SustituirJuradoModal({
                                                 value={String(suplente.id_jurado_proyecto)}
                                                 disabled={noPuedePresidir}
                                             >
-                                                <span className="font-semibold text-foreground">
-                                                    Promover a {suplente.cargo}: {suplente.docente.nombre_completo}
-                                                </span>
-                                                {noPuedePresidir && (
-                                                    <span className="ml-2 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                                                        (Asesor · No Presidente)
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span className="font-semibold text-foreground truncate">
+                                                        Promover a {suplente.cargo}: {suplente.docente.nombre_completo}
                                                     </span>
-                                                )}
+                                                    {noPuedePresidir && (
+                                                        <span className="shrink-0 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                                                            (Asesor · No Presidente)
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </SelectItem>
                                         );
                                     })}
@@ -361,25 +367,25 @@ export function SustituirJuradoModal({
                             </Select>
 
                             {suplenteEsAsesorParaPresidente && (
-                                <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                                    <ShieldAlert className="size-3.5 shrink-0" />
-                                    El suplente seleccionado es el Asesor del proyecto y no puede asumir la Presidencia.
+                                <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 flex items-start sm:items-center gap-1.5 min-w-0">
+                                    <ShieldAlert className="size-3.5 shrink-0 mt-0.5 sm:mt-0" />
+                                    <span>El suplente seleccionado es el Asesor del proyecto y no puede asumir la Presidencia.</span>
                                 </p>
                             )}
 
                             {errors.id_suplente_promovido && (
-                                <p className="text-[11px] font-medium text-destructive flex items-center gap-1">
-                                    <AlertCircle className="size-3.5" />
-                                    {errors.id_suplente_promovido}
+                                <p className="text-[11px] font-medium text-destructive flex items-center gap-1 min-w-0">
+                                    <AlertCircle className="size-3.5 shrink-0" />
+                                    <span>{errors.id_suplente_promovido}</span>
                                 </p>
                             )}
                         </div>
                     )}
 
                     {/* PASO 3: Nuevo docente para cubrir la vacante de suplente */}
-                    <div className="grid gap-2">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                            <Label htmlFor="id_nuevo_docente" className="text-xs font-semibold">
+                    <div className="grid gap-2 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 min-w-0">
+                            <Label htmlFor="id_nuevo_docente" className="text-xs font-semibold truncate">
                                 {esTitular
                                     ? `3. Nuevo docente para cubrir la vacante de ${
                                           suplenteSeleccionado?.cargo || 'Suplente'
@@ -388,20 +394,25 @@ export function SustituirJuradoModal({
                                           miembroSeleccionado?.cargo || 'Suplente'
                                       }`}
                             </Label>
-                            <span className="text-[11px] text-muted-foreground">
+                            <span className="text-[11px] text-muted-foreground shrink-0">
                                 {docentesElegibles.length} docentes activos disponibles
                             </span>
                         </div>
 
                         {/* Buscador de docentes */}
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                        <div className="relative w-full min-w-0">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
                             <Input
                                 type="text"
                                 value={busquedaDocente}
                                 onChange={(e) => setBusquedaDocente(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                    }
+                                }}
                                 placeholder="Filtrar por nombre, cédula o especialidad..."
-                                className="h-8 bg-background border-border pl-8 text-xs placeholder:text-muted-foreground rounded-lg"
+                                className="h-9 w-full bg-background border-border pl-8 text-xs placeholder:text-muted-foreground rounded-lg min-w-0"
                             />
                         </div>
 
@@ -415,11 +426,11 @@ export function SustituirJuradoModal({
                         >
                             <SelectTrigger
                                 id="id_nuevo_docente"
-                                className="h-10 bg-background border-border text-sm"
+                                className="h-10 w-full bg-background border-border text-sm min-w-0"
                             >
                                 <SelectValue placeholder="Selecciona al nuevo docente suplente" />
                             </SelectTrigger>
-                            <SelectContent className="bg-popover border-border max-h-60">
+                            <SelectContent className="bg-popover border-border max-h-60 max-w-[calc(100vw-3rem)]">
                                 {docentesElegibles.length === 0 ? (
                                     <div className="p-3 text-center text-xs text-muted-foreground">
                                         No se encontraron docentes disponibles con esa búsqueda.
@@ -430,11 +441,11 @@ export function SustituirJuradoModal({
                                             key={docente.id_usuario}
                                             value={String(docente.id_usuario)}
                                         >
-                                            <div className="flex flex-col text-left py-0.5">
-                                                <span className="font-semibold text-foreground">
+                                            <div className="flex flex-col text-left py-0.5 min-w-0">
+                                                <span className="font-semibold text-foreground truncate">
                                                     {docente.nombre_completo}
                                                 </span>
-                                                <span className="text-[10px] text-muted-foreground">
+                                                <span className="text-[10px] text-muted-foreground truncate">
                                                     {docente.especialidad || 'Sin especialidad'}
                                                     {docente.cedula_profesional ? ` · Cédula: ${docente.cedula_profesional}` : ''}
                                                 </span>
@@ -446,27 +457,27 @@ export function SustituirJuradoModal({
                         </Select>
 
                         {errors.id_nuevo_docente && (
-                            <p className="text-[11px] font-medium text-destructive flex items-center gap-1">
-                                <AlertCircle className="size-3.5" />
-                                {errors.id_nuevo_docente}
+                            <p className="text-[11px] font-medium text-destructive flex items-center gap-1 min-w-0">
+                                <AlertCircle className="size-3.5 shrink-0" />
+                                <span>{errors.id_nuevo_docente}</span>
                             </p>
                         )}
                     </div>
 
-                    <DialogFooter className="mt-3 gap-2 sm:gap-0">
+                    <DialogFooter className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2 pt-2 border-t border-border/40">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                             disabled={processing}
-                            className="border-border text-foreground hover:bg-accent"
+                            className="border-border text-foreground hover:bg-accent w-full sm:w-auto"
                         >
                             Cancelar
                         </Button>
                         <Button
                             type="submit"
                             disabled={!canSubmit}
-                            className="bg-[#10B981] hover:bg-[#0FA875] text-white font-semibold gap-2"
+                            className="bg-[#10B981] hover:bg-[#0FA875] text-white font-semibold gap-2 w-full sm:w-auto"
                         >
                             {processing ? (
                                 <Spinner className="size-4 text-white" />
