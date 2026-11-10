@@ -125,7 +125,7 @@ class ExpedienteController extends Controller
                     'email' => $proyecto->asesor_asignado->user?->email,
                 ] : null,
                 'revisores' => $proyecto->revisores
-                    ->filter(fn ($r): bool => ($r->pivot->estado_asignacion ?? 'Activo') === 'Activo')
+                    ->filter(fn ($r): bool => in_array($r->pivot->estado_asignacion ?? 'Activo', ['Activo', 'Finalizado'], true))
                     ->values()
                     ->map(function ($r) {
                         return [
@@ -168,7 +168,7 @@ class ExpedienteController extends Controller
                 'tiene_anteproyecto' => (bool) $anteproyectoDoc,
                 'tiene_asesor' => (bool) $proyecto?->asesor_asignado,
                 'tiene_revisores' => $proyecto
-                    ? $proyecto->revisores->filter(fn ($r): bool => ($r->pivot->estado_asignacion ?? 'Activo') === 'Activo')->count() >= 2
+                    ? $proyecto->revisores->filter(fn ($r): bool => in_array($r->pivot->estado_asignacion ?? 'Activo', ['Activo', 'Finalizado'], true))->count() >= 2
                     : false,
                 'tiene_versiones' => $versionesDocs->isNotEmpty(),
                 'tiene_oficios' => $oficiosDocs->isNotEmpty(),
@@ -288,4 +288,3 @@ class ExpedienteController extends Controller
         );
     }
 }
-

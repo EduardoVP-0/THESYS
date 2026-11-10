@@ -227,3 +227,31 @@ test('keeps reviewer approval in the exam requirements after finalization', func
             ->where('requisitos.director_aprobo', true)
         );
 });
+
+test('keeps finalized reviewers visible in alumno and admin expediente views', function () {
+    /** @var TestCase $this */
+    $escenario = crearTitulacionConRevisoresFinalizados();
+
+    $this->actingAs($escenario['alumno'])
+        ->get(route('alumno.expediente.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Alumno/expediente/index')
+            ->has('proyecto.revisores', 2)
+            ->where('resumen.tiene_revisores', true)
+        );
+
+    $admin = User::factory()->create([
+        'id_rol' => 1,
+        'estado' => true,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.expedientes.show', $escenario['alumno']->id))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/expedientes/show')
+            ->has('proyecto.revisores', 2)
+            ->where('resumen.tiene_revisores', true)
+        );
+});

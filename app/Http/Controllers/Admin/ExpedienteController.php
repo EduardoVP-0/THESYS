@@ -86,9 +86,9 @@ class ExpedienteController extends Controller
         // Calculo de metricas institucionales globales
         $totalAlumnos = Alumno::count();
         $conProyecto = Alumno::has('proyectos')->count();
-        $enRevision = Alumno::whereHas('proyectos', fn($q) => $q->where('estado', 'En revisión'))->count();
-        $aprobados = Alumno::whereHas('proyectos', fn($q) => $q->where('estado', 'Aprobado'))->count();
-        $conCambios = Alumno::whereHas('proyectos', fn($q) => $q->where('estado', 'Con cambios'))->count();
+        $enRevision = Alumno::whereHas('proyectos', fn ($q) => $q->where('estado', 'En revisión'))->count();
+        $aprobados = Alumno::whereHas('proyectos', fn ($q) => $q->where('estado', 'Aprobado'))->count();
+        $conCambios = Alumno::whereHas('proyectos', fn ($q) => $q->where('estado', 'Con cambios'))->count();
 
         // Transformacion para la tabla de expedientes
         $alumnos->getCollection()->transform(function ($alumno) {
@@ -118,7 +118,7 @@ class ExpedienteController extends Controller
                         'grado_academico' => $proyecto->asesor_asignado->grado_academico,
                     ] : null,
                     'revisores_count' => $proyecto->revisores
-                        ->filter(fn ($r): bool => ($r->pivot->estado_asignacion ?? 'Activo') === 'Activo')
+                        ->filter(fn ($r): bool => in_array($r->pivot->estado_asignacion ?? 'Activo', ['Activo', 'Finalizado'], true))
                         ->count(),
                     'versiones_count' => $totalVersiones,
                 ] : null,
@@ -251,7 +251,7 @@ class ExpedienteController extends Controller
                     'email' => $proyecto->asesor_asignado->user?->email,
                 ] : null,
                 'revisores' => $proyecto->revisores
-                    ->filter(fn ($r): bool => ($r->pivot->estado_asignacion ?? 'Activo') === 'Activo')
+                    ->filter(fn ($r): bool => in_array($r->pivot->estado_asignacion ?? 'Activo', ['Activo', 'Finalizado'], true))
                     ->values()
                     ->map(function ($r) {
                         return [
@@ -294,7 +294,7 @@ class ExpedienteController extends Controller
                 'tiene_anteproyecto' => (bool) $anteproyectoDoc,
                 'tiene_asesor' => (bool) $proyecto?->asesor_asignado,
                 'tiene_revisores' => $proyecto
-                    ? $proyecto->revisores->filter(fn ($r): bool => ($r->pivot->estado_asignacion ?? 'Activo') === 'Activo')->count() >= 2
+                    ? $proyecto->revisores->filter(fn ($r): bool => in_array($r->pivot->estado_asignacion ?? 'Activo', ['Activo', 'Finalizado'], true))->count() >= 2
                     : false,
                 'tiene_versiones' => $versionesDocs->isNotEmpty(),
                 'tiene_oficios' => $oficiosDocs->isNotEmpty(),
@@ -396,7 +396,7 @@ class ExpedienteController extends Controller
             $filename,
             [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                'Content-Disposition' => 'inline; filename="'.$filename.'"',
             ]
         );
     }
