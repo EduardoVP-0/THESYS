@@ -20,6 +20,7 @@ use App\Http\Controllers\Alumno\AlumnoTesisRevisoresController;
 use App\Http\Controllers\Alumno\AnteproyectoController as AlumnoAnteproyectoController;
 use App\Http\Controllers\Alumno\CalendarioController as AlumnoCalendarioController;
 use App\Http\Controllers\Alumno\DashboardController as AlumnoDashboardController;
+use App\Http\Controllers\Alumno\DocumentoController as AlumnoDocumentoController;
 use App\Http\Controllers\Alumno\ExamenController as AlumnoExamenController;
 use App\Http\Controllers\Alumno\ExpedienteController as AlumnoExpedienteController;
 use App\Http\Controllers\Alumno\JuradoController as AlumnoJuradoController;
@@ -140,6 +141,11 @@ Route::middleware(['auth', 'verified', 'role:5'])
         Route::get('/pagos/create', [AlumnoPagoController::class, 'create'])->name('pagos.create');
         Route::post('/pagos', [AlumnoPagoController::class, 'store'])->name('pagos.store');
         Route::get('/pagos/{pago}/documento', [AlumnoPagoController::class, 'verDocumento'])->name('pagos.documento');
+
+        /*
+        MODULO DE MIS DOCUMENTOS (SUSTENTANTE)
+        */
+        Route::get('/mis-documentos', [AlumnoDocumentoController::class, 'index'])->name('documentos.index');
 
         /*
         MODULO DE OFICIOS OFICIALES (SUSTENTANTE)

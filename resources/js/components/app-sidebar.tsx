@@ -19,6 +19,7 @@ import {
     UsersRound,
     BookOpenCheck,
     BookType,
+    Files,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -67,6 +68,11 @@ const alumnoNavItems: NavItem[] = [
         title: 'Mis Exámenes',
         href: '/alumno/mis-examenes',
         icon: BookOpenCheck,
+    },
+    {
+        title: 'Mis Documentos',
+        href: '/alumno/mis-documentos',
+        icon: Files,
     },
     {
         title: 'Oficios Oficiales',
